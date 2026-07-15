@@ -1,0 +1,168 @@
+<div class="form-overlay" (click)="onCancel()">
+  <div class="form-modal glass-panel" (click)="$event.stopPropagation()">
+    <!-- Modal Header -->
+    <div class="modal-header">
+      <h2>{{ isEditMode ? 'Edit Aset Kendaraan' : 'Daftarkan Kendaraan Baru' }}</h2>
+      <button class="close-btn" (click)="onCancel()" aria-label="Close modal">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Modal Body / Form -->
+    <form [formGroup]="carForm" (ngSubmit)="onSubmit()" class="modal-body">
+      <div class="form-grid">
+        <!-- SEKSI 1: DETAIL KENDARAAN -->
+        <div class="form-section">
+          <h3>Detail Kendaraan</h3>
+          
+          <!-- Pelat Nomor -->
+          <div class="form-group" [class.has-error]="isInvalid('plateNumber')">
+            <label for="plateNumber">Pelat Nomor</label>
+            <input type="text" id="plateNumber" formControlName="plateNumber" placeholder="Contoh: B 1030 PQS atau RI 12">
+            @if (isInvalid('plateNumber')) {
+              <span class="error-msg">{{ getErrorMessage('plateNumber') }}</span>
+            }
+          </div>
+
+          <div class="form-row">
+            <!-- Brand -->
+            <div class="form-group" [class.has-error]="isInvalid('brand')">
+              <label for="brand">Merk Mobil</label>
+              <select id="brand" formControlName="brand">
+                <option value="" disabled selected>Pilih Merk</option>
+                @for (b of brands; track b) {
+                  <option [value]="b">{{ b }}</option>
+                }
+              </select>
+              @if (isInvalid('brand')) {
+                <span class="error-msg">{{ getErrorMessage('brand') }}</span>
+              }
+            </div>
+
+            <!-- Type -->
+            <div class="form-group" [class.has-error]="isInvalid('type')">
+              <label for="type">Kategori / Tipe</label>
+              <select id="type" formControlName="type">
+                <option value="" disabled selected>Pilih Tipe</option>
+                @for (t of types; track t) {
+                  <option [value]="t">{{ t }}</option>
+                }
+              </select>
+              @if (isInvalid('type')) {
+                <span class="error-msg">{{ getErrorMessage('type') }}</span>
+              }
+            </div>
+          </div>
+
+          <!-- Model -->
+          <div class="form-group" [class.has-error]="isInvalid('model')">
+            <label for="model">Tipe Spesifik / Nama Model</label>
+            <input type="text" id="model" formControlName="model" placeholder="Contoh: Innova Zenix EV, Camry Hybrid">
+            @if (isInvalid('model')) {
+              <span class="error-msg">{{ getErrorMessage('model') }}</span>
+            }
+          </div>
+
+          <!-- Tahun Perolehan -->
+          <div class="form-group" [class.has-error]="isInvalid('acquisitionYear')">
+            <label for="acquisitionYear">Tahun Perolehan</label>
+            <input type="number" id="acquisitionYear" formControlName="acquisitionYear">
+            @if (isInvalid('acquisitionYear')) {
+              <span class="error-msg">{{ getErrorMessage('acquisitionYear') }}</span>
+            }
+          </div>
+        </div>
+
+        <!-- SEKSI 2: PENGGUNAAN & DRIVER -->
+        <div class="form-section">
+          <h3>Penggunaan & Driver</h3>
+
+          <!-- Instansi Penanggung Jawab -->
+          <div class="form-group" [class.has-error]="isInvalid('agency')">
+            <label for="agency">Instansi Pemerintah</label>
+            <select id="agency" formControlName="agency">
+              <option value="" disabled selected>Pilih Instansi</option>
+              @for (a of agencies; track a) {
+                <option [value]="a">{{ a }}</option>
+              }
+            </select>
+            @if (isInvalid('agency')) {
+              <span class="error-msg">{{ getErrorMessage('agency') }}</span>
+            }
+          </div>
+
+          <!-- Driver Name -->
+          <div class="form-group" [class.has-error]="isInvalid('driverName')">
+            <label for="driverName">Nama Pengemudi Dinas</label>
+            <input type="text" id="driverName" formControlName="driverName" placeholder="Nama lengkap driver">
+            @if (isInvalid('driverName')) {
+              <span class="error-msg">{{ getErrorMessage('driverName') }}</span>
+            }
+          </div>
+
+          <!-- Driver Phone -->
+          <div class="form-group" [class.has-error]="isInvalid('driverPhone')">
+            <label for="driverPhone">Nomor Telepon Driver</label>
+            <input type="text" id="driverPhone" formControlName="driverPhone" placeholder="Contoh: 08123456789">
+            @if (isInvalid('driverPhone')) {
+              <span class="error-msg">{{ getErrorMessage('driverPhone') }}</span>
+            }
+          </div>
+
+          <!-- Status Mobil -->
+          <div class="form-group" [class.has-error]="isInvalid('status')">
+            <label for="status">Status Operasional</label>
+            <select id="status" formControlName="status">
+              @for (s of statuses; track s) {
+                <option [value]="s">{{ s }}</option>
+              }
+            </select>
+            @if (isInvalid('status')) {
+              <span class="error-msg">{{ getErrorMessage('status') }}</span>
+            }
+          </div>
+        </div>
+
+        <!-- SEKSI 3: RIWAYAT PEMELIHARAAN -->
+        <div class="form-section full-width">
+          <h3>Jadwal Pemeliharaan</h3>
+          <div class="form-row">
+            <!-- Last Service -->
+            <div class="form-group" [class.has-error]="isInvalid('lastServiceDate')">
+              <label for="lastServiceDate">Tanggal Servis Terakhir</label>
+              <input type="date" id="lastServiceDate" formControlName="lastServiceDate">
+              @if (isInvalid('lastServiceDate')) {
+                <span class="error-msg">{{ getErrorMessage('lastServiceDate') }}</span>
+              }
+            </div>
+
+            <!-- Next Service -->
+            <div class="form-group" [class.has-error]="isInvalid('nextServiceDate')">
+              <label for="nextServiceDate">Rencana Servis Berikutnya</label>
+              <input type="date" id="nextServiceDate" formControlName="nextServiceDate">
+              @if (isInvalid('nextServiceDate')) {
+                <span class="error-msg">{{ getErrorMessage('nextServiceDate') }}</span>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="form-actions">
+        <button type="button" class="btn-secondary" (click)="onCancel()">Batal</button>
+        <button type="submit" class="btn-primary">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+            <polyline points="17 21 17 13 7 13 7 21"></polyline>
+            <polyline points="7 3 7 8 15 8"></polyline>
+          </svg>
+          Simpan Data
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

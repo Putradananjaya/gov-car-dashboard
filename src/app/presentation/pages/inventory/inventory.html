@@ -1,0 +1,299 @@
+<div class="inventory-container">
+  <!-- HEADER & CONTROLS -->
+  <div class="inventory-header">
+    <div class="header-title">
+      <h1>Inventaris Aset Kendaraan</h1>
+      <p>Kelola data armada dinas pemerintah daerah (Total: {{ filteredCars().length }} mobil ditemukan)</p>
+    </div>
+    
+    <button class="btn-primary" (click)="openAddModal()">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="12" y1="5" x2="12" y2="19"></line>
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+      </svg>
+      Tambah Mobil Dinas
+    </button>
+  </div>
+
+  <!-- FILTERS BAR -->
+  <section class="filters-bar glass-panel" aria-label="Filter Inventaris">
+    <div class="search-box">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="search-icon">
+        <circle cx="11" cy="11" r="8"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+      </svg>
+      <input type="text" placeholder="Cari pelat nomor, tipe, pengemudi..." [value]="searchQuery()" (input)="onSearchChange($event)">
+    </div>
+
+    <div class="dropdown-filters">
+      <!-- Filter Instansi -->
+      <div class="filter-group">
+        <select (change)="onAgencyFilterChange($event)" [value]="selectedAgency()">
+          <option value="All">Semua Instansi</option>
+          @for (a of agencies; track a) {
+            <option [value]="a">{{ a }}</option>
+          }
+        </select>
+      </div>
+
+      <!-- Filter Status -->
+      <div class="filter-group">
+        <select (change)="onStatusFilterChange($event)" [value]="selectedStatus()">
+          <option value="All">Semua Status</option>
+          @for (s of statuses; track s) {
+            <option [value]="s">{{ s }}</option>
+          }
+        </select>
+      </div>
+    </div>
+
+    <!-- Toggle View Mode -->
+    <div class="view-toggle">
+      <button class="toggle-btn" [class.active]="viewMode() === 'table'" (click)="setViewMode('table')" aria-label="Tampilan Tabel">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" y1="12" x2="21" y2="12"></line>
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+      </button>
+      <button class="toggle-btn" [class.active]="viewMode() === 'cards'" (click)="setViewMode('cards')" aria-label="Tampilan Kartu Grid">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7"></rect>
+          <rect x="14" y="3" width="7" height="7"></rect>
+          <rect x="14" y="14" width="7" height="7"></rect>
+          <rect x="3" y="14" width="7" height="7"></rect>
+        </svg>
+      </button>
+    </div>
+  </section>
+
+  <!-- WARNING BANNER FOR TAX EXPIRED FILTER -->
+  @if (showTaxExpiredOnly()) {
+    <div class="tax-expired-alert glass-panel border-red" style="padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <span style="color: var(--color-danger); display: flex; align-items: center;">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+            <line x1="12" y1="9" x2="12" y2="13"></line>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+        </span>
+        <div>
+          <span style="font-weight: 700; color: #ffffff; font-size: 0.85rem; display: block;">Mode Filter: Pajak & STNK Jatuh Tempo</span>
+          <span style="font-size: 0.72rem; color: var(--text-secondary);">Menampilkan aset dinas Kabupaten Bangli yang memerlukan pembayaran pajak / STNK segera.</span>
+        </div>
+      </div>
+      <button class="btn-secondary" style="padding: 6px 12px; font-size: 0.72rem; border-color: rgba(239, 68, 68, 0.3);" (click)="clearTaxFilter()">
+        Bersihkan Filter
+      </button>
+    </div>
+  }
+
+  <!-- CONTENT VIEW -->
+  <main class="inventory-content">
+    @if (filteredCars().length === 0) {
+      <div class="empty-state glass-panel">
+        <svg viewBox="0 0 24 24" width="60" height="60" fill="none" stroke="var(--text-muted)" stroke-width="1.5">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="8" y1="12" x2="16" y2="12"></line>
+        </svg>
+        <h3>Data Tidak Ditemukan</h3>
+        <p>Tidak ada aset mobil dinas yang sesuai dengan kriteria pencarian dan filter Anda.</p>
+      </div>
+    } @else {
+      <!-- 1. TABLE VIEW -->
+      @if (viewMode() === 'table') {
+        <div class="table-responsive glass-panel">
+          <table class="inventory-table">
+            <thead>
+              <tr>
+                <th>Kendaraan & Pelat</th>
+                <th>Tipe</th>
+                <th>Instansi</th>
+                <th>Pengemudi / Driver</th>
+                <th>Daya/Bahan Bakar</th>
+                <th>Status</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (car of filteredCars(); track car.id) {
+                <tr>
+                  <!-- Kendaraan -->
+                  <td>
+                    <div class="car-info-col">
+                      <span class="car-name">{{ car.brand }} {{ car.model }}</span>
+                      <span class="car-plate-badge">{{ car.plateNumber }}</span>
+                    </div>
+                  </td>
+                  
+                  <!-- Tipe -->
+                  <td>
+                    <span class="type-badge">{{ car.type }}</span>
+                  </td>
+                  
+                  <!-- Instansi -->
+                  <td>
+                    <span class="agency-text" [title]="car.agency">{{ car.agency }}</span>
+                  </td>
+                  
+                  <!-- Driver -->
+                  <td>
+                    <div class="driver-col">
+                      <span class="driver-name">{{ car.driverName }}</span>
+                      <span class="driver-phone">{{ car.driverPhone }}</span>
+                    </div>
+                  </td>
+                  
+                  <!-- Fuel -->
+                  <td>
+                    <div class="fuel-progress-wrapper">
+                      <div class="fuel-text">
+                        <span>{{ car.fuelLevel }}%</span>
+                        <span class="fuel-label">{{ car.type === 'Sepeda Motor' || car.type === 'MPV' || car.type === 'SUV' || car.type === 'Sedan' ? 'Bensin' : 'Baterai' }}</span>
+                      </div>
+                      <div class="fuel-bar-bg">
+                        <div class="fuel-bar-fill" [style.width]="car.fuelLevel + '%'" [ngClass]="{
+                          'fuel-low': car.fuelLevel < 20,
+                          'fuel-mid': car.fuelLevel >= 20 && car.fuelLevel < 60,
+                          'fuel-high': car.fuelLevel >= 60
+                        }"></div>
+                      </div>
+                    </div>
+                  </td>
+                  
+                  <!-- Status -->
+                  <td>
+                    <span class="badge" [ngClass]="{
+                      'badge-success': car.status === 'Aktif',
+                      'badge-info': car.status === 'Digunakan',
+                      'badge-warning': car.status === 'Service',
+                      'badge-danger': car.status === 'Rusak'
+                    }">
+                      <span class="badge-dot"></span>
+                      {{ car.status }}
+                    </span>
+                  </td>
+                  
+                  <!-- Aksi -->
+                  <td>
+                    <div class="actions-col">
+                      <a [routerLink]="['/tracking', car.id]" class="action-btn track" title="Lacak Lokasi Mobil">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                          <polygon points="3 11 22 2 13 21 11 13 3 11" />
+                        </svg>
+                      </a>
+                      <button class="action-btn edit" (click)="openEditModal(car.id)" title="Edit Aset">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                          <path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                        </svg>
+                      </button>
+                      <button class="action-btn delete" (click)="deleteCar(car.id)" title="Hapus Aset">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                          <polyline points="3 6 5 6 21 6"></polyline>
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                          <line x1="10" y1="11" x2="10" y2="17"></line>
+                          <line x1="14" y1="11" x2="14" y2="17"></line>
+                        </svg>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+
+      <!-- 2. GRID CARDS VIEW -->
+      @if (viewMode() === 'cards') {
+        <div class="cards-grid">
+          @for (car of filteredCars(); track car.id) {
+            <div class="car-card glass-panel" [ngClass]="{
+              'card-active': car.status === 'Aktif',
+              'card-moving': car.status === 'Digunakan',
+              'card-service': car.status === 'Service',
+              'card-broken': car.status === 'Rusak'
+            }">
+              <!-- Card Header -->
+              <div class="card-header">
+                <span class="car-card-plate">{{ car.plateNumber }}</span>
+                <span class="badge" [ngClass]="{
+                  'badge-success': car.status === 'Aktif',
+                  'badge-info': car.status === 'Digunakan',
+                  'badge-warning': car.status === 'Service',
+                  'badge-danger': car.status === 'Rusak'
+                }">
+                  <span class="badge-dot"></span>
+                  {{ car.status }}
+                </span>
+              </div>
+
+              <!-- Card Body -->
+              <div class="card-body">
+                <h3 class="car-card-title">{{ car.brand }} {{ car.model }}</h3>
+                <span class="car-card-type">{{ car.type }} • Tahun {{ car.acquisitionYear }}</span>
+                <p class="car-card-agency">{{ car.agency }}</p>
+                
+                <div class="card-details-divider"></div>
+
+                <!-- Driver Info -->
+                <div class="card-info-item">
+                  <span class="item-label">Pengemudi:</span>
+                  <span class="item-val">{{ car.driverName }}</span>
+                </div>
+
+                <!-- Fuel Gauge -->
+                <div class="card-info-item fuel-item">
+                  <span class="item-label">{{ car.type === 'Sepeda Motor' || car.type === 'MPV' || car.type === 'SUV' || car.type === 'Sedan' ? 'BBM' : 'Baterai' }}:</span>
+                  <div class="card-fuel-val">
+                    <span>{{ car.fuelLevel }}%</span>
+                    <div class="card-fuel-bar">
+                      <div class="card-fuel-fill" [style.width]="car.fuelLevel + '%'" [ngClass]="{
+                        'fuel-low': car.fuelLevel < 20,
+                        'fuel-mid': car.fuelLevel >= 20 && car.fuelLevel < 60,
+                        'fuel-high': car.fuelLevel >= 60
+                      }"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Card Actions -->
+              <div class="card-actions">
+                <a [routerLink]="['/tracking', car.id]" class="card-action-btn track-btn-card" title="Lacak">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="3 11 22 2 13 21 11 13 3 11" />
+                  </svg>
+                  Lacak
+                </a>
+                <button class="card-action-btn edit-btn-card" (click)="openEditModal(car.id)" title="Edit">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                    <path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                  </svg>
+                </button>
+                <button class="card-action-btn delete-btn-card" (click)="deleteCar(car.id)" title="Hapus">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    }
+  </main>
+
+  <!-- FORM MODAL COMPONENT DIALOG -->
+  @if (showFormModal) {
+    <app-car-form 
+      [carId]="selectedCarId" 
+      (closeForm)="closeFormModal()" 
+      (saved)="onFormSaved()">
+    </app-car-form>
+  }
+</div>
