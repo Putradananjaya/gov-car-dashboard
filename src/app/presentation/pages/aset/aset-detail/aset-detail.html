@@ -1,0 +1,217 @@
+<div class="inventory-container">
+  @if (!view()) {
+    <div class="empty-state glass-panel">
+      <h3>Aset Tidak Ditemukan</h3>
+      <p>NIBAR "{{ nibar() }}" tidak ada dalam basis data, atau sudah dihapus.</p>
+      <button class="btn-secondary" (click)="goBack()" style="margin-top: 12px;">Kembali ke Daftar Aset</button>
+    </div>
+  } @else {
+    <div class="inventory-header">
+      <div class="header-title">
+        <h1>{{ view()!.merek }} {{ view()!.tipe }} — {{ view()!.nomorPolisi }}</h1>
+        <p>NIBAR: {{ view()!.nibar }} • {{ view()!.namaBarang }}</p>
+      </div>
+      <button class="btn-secondary" (click)="goBack()">Kembali</button>
+    </div>
+
+    <!-- TAB NAV -->
+    <div class="filters-bar glass-panel" style="gap: 6px;">
+      <button class="tab-btn" [class.active]="activeTab() === 'identitas'" (click)="setTab('identitas')">Identitas</button>
+      <button class="tab-btn" [class.active]="activeTab() === 'legalitas'" (click)="setTab('legalitas')">Legalitas</button>
+      <button class="tab-btn" [class.active]="activeTab() === 'servis'" (click)="setTab('servis')">Riwayat Servis</button>
+      <button class="tab-btn" [class.active]="activeTab() === 'peminjaman'" (click)="setTab('peminjaman')">Riwayat Peminjaman</button>
+      <button class="tab-btn" [class.active]="activeTab() === 'foto'" (click)="setTab('foto')">Foto</button>
+      <button *hasPermission="'audit.lihat'" class="tab-btn" [class.active]="activeTab() === 'audit'" (click)="setTab('audit')">Jejak Perubahan</button>
+    </div>
+
+    <main class="inventory-content">
+      <!-- TAB: IDENTITAS -->
+      @if (activeTab() === 'identitas') {
+        <div class="glass-panel" style="padding: 20px;">
+          @if (showEditForm()) {
+            <app-asset-form [nibar]="nibar()" (saved)="onAssetSaved()" (cancelled)="showEditForm.set(false)"></app-asset-form>
+          } @else {
+            <div style="display: flex; justify-content: flex-end; margin-bottom: 12px;">
+              <button *hasPermission="'aset.ubah'" class="btn-primary" (click)="showEditForm.set(true)">Edit Identitas</button>
+            </div>
+            <div class="form-grid">
+              <div class="form-section">
+                <h3>Identitas Barang</h3>
+                <p><strong>Kode Barang:</strong> {{ view()!.kodeBarang.full || '—' }}</p>
+                <p><strong>Nama Barang:</strong> {{ view()!.namaBarang }}</p>
+                <p><strong>Spesifikasi:</strong> {{ view()!.spesifikasiNama }} — {{ view()!.spesifikasiLainnya }}</p>
+                <p><strong>OPD Penatausaha:</strong> {{ view()!.statusPenggunaan }}</p>
+                <p><strong>Pemegang:</strong> {{ view()!.pemegang || 'Operasional Bersama' }}</p>
+                <p><strong>Telepon:</strong> {{ view()!.telepon || '—' }}</p>
+              </div>
+              <div class="form-section">
+                <h3>Identitas Kendaraan</h3>
+                <p><strong>Nomor Polisi:</strong> {{ view()!.nomorPolisi }}</p>
+                @if (permissionService.can('aset.lihatDataSensitif')) {
+                  <p><strong>Nomor Rangka:</strong> {{ view()!.nomorRangka || '—' }}</p>
+                  <p><strong>Nomor BPKB:</strong> {{ view()!.nomorBpkb || '—' }}</p>
+                }
+                <p><strong>Kondisi:</strong> {{ view()!.kondisi }}</p>
+                <p><strong>Status Operasional:</strong> {{ view()!.status }}</p>
+                <p><strong>Catatan:</strong> {{ view()!.catatan || '—' }}</p>
+              </div>
+              <div class="form-section full-width">
+                <h3>Nilai & Perolehan</h3>
+                <p><strong>Jumlah:</strong> {{ view()!.jumlah }} {{ view()!.satuan }}</p>
+                <p><strong>Harga Satuan:</strong> Rp {{ view()!.hargaSatuanPerolehan | number }}</p>
+                <p><strong>Nilai Perolehan:</strong> Rp {{ view()!.nilaiPerolehan | number }}</p>
+                <p><strong>Cara Perolehan:</strong> {{ view()!.caraPerolehan }}</p>
+                <p><strong>Tanggal Perolehan:</strong> {{ view()!.tanggalPerolehan }}</p>
+              </div>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- TAB: LEGALITAS -->
+      @if (activeTab() === 'legalitas') {
+        <div class="glass-panel" style="padding: 20px;">
+          <div class="form-grid" style="margin-bottom: 16px;">
+            <div class="form-section">
+              <h3>Status Saat Ini</h3>
+              <p>
+                <strong>Masa Berlaku Pajak:</strong> {{ view()!.masaBerlakuPajak || 'Tidak diketahui' }}
+                <span class="badge" [ngClass]="{
+                  'badge-success': computeStatusPajak(view()!.masaBerlakuPajak) === 'berlaku',
+                  'badge-warning': computeStatusPajak(view()!.masaBerlakuPajak) === 'segera-habis',
+                  'badge-danger': computeStatusPajak(view()!.masaBerlakuPajak) === 'kadaluarsa'
+                }" style="margin-left: 8px;">
+                  <span class="badge-dot"></span>
+                  {{ computeStatusPajak(view()!.masaBerlakuPajak) }}
+                </span>
+              </p>
+              <p><strong>Masa Berlaku STNK:</strong> {{ view()!.masaBerlakuStnk || 'Tidak diketahui' }}</p>
+            </div>
+          </div>
+
+          @if (permissionService.can('servis.input')) {
+            <form [formGroup]="legalitasForm" (ngSubmit)="saveLegalitas()" class="form-row">
+              <div class="form-group">
+                <label for="masaBerlakuPajak">Masa Berlaku Pajak</label>
+                <input type="date" id="masaBerlakuPajak" formControlName="masaBerlakuPajak">
+              </div>
+              <div class="form-group">
+                <label for="masaBerlakuStnk">Masa Berlaku STNK</label>
+                <input type="date" id="masaBerlakuStnk" formControlName="masaBerlakuStnk">
+              </div>
+              <div class="form-group" style="justify-content: flex-end; display: flex;">
+                <button type="submit" class="btn-primary">Simpan</button>
+              </div>
+            </form>
+          }
+        </div>
+      }
+
+      <!-- TAB: RIWAYAT SERVIS -->
+      @if (activeTab() === 'servis') {
+        <div class="glass-panel" style="padding: 20px;">
+          @if (permissionService.can('servis.input')) {
+            <div style="display: flex; justify-content: flex-end; margin-bottom: 12px;">
+              <button class="btn-secondary" (click)="showAddServiceForm.set(!showAddServiceForm())">
+                {{ showAddServiceForm() ? 'Batal' : '+ Tambah Riwayat Servis' }}
+              </button>
+            </div>
+            @if (showAddServiceForm()) {
+              <form [formGroup]="serviceForm" (ngSubmit)="addServiceRecord()" class="form-grid" style="margin-bottom: 16px;">
+                <div class="form-group">
+                  <label for="tahun">Tahun</label>
+                  <input type="number" id="tahun" formControlName="tahun">
+                </div>
+                <div class="form-group">
+                  <label for="tanggal">Tanggal (opsional)</label>
+                  <input type="date" id="tanggal" formControlName="tanggal">
+                </div>
+                <div class="form-group">
+                  <label for="odometerKm">Odometer (km, opsional)</label>
+                  <input type="number" id="odometerKm" formControlName="odometerKm">
+                </div>
+                <div class="form-group">
+                  <label for="biaya">Biaya (Rp, opsional)</label>
+                  <input type="number" id="biaya" formControlName="biaya">
+                </div>
+                <div class="form-group full-width">
+                  <label for="uraian">Uraian</label>
+                  <textarea id="uraian" formControlName="uraian" rows="2"></textarea>
+                </div>
+                <div class="form-actions full-width">
+                  <button type="submit" class="btn-primary">Simpan Riwayat</button>
+                </div>
+              </form>
+            }
+          }
+
+          @if (serviceRecords().length === 0) {
+            <div class="empty-state">
+              <h3>Belum Ada Riwayat Servis</h3>
+              <p>Riwayat servis akan terisi otomatis dari impor Excel, atau bisa ditambahkan manual di atas.</p>
+            </div>
+          } @else {
+            @for (record of serviceRecords(); track record.id) {
+              <div style="padding: 10px 0; border-bottom: 1px solid var(--md-sys-color-outline);">
+                <p style="font-weight: 600; font-size: 0.8rem;">
+                  Tahun {{ record.tahun }}
+                  @if (record.biaya) { <span> — Rp {{ record.biaya | number }}</span> }
+                  <span style="font-size: 0.68rem; color: var(--text-muted); margin-left: 6px;">({{ record.sumber === 'impor' ? 'dari impor Excel' : 'input manual' }})</span>
+                </p>
+                <p style="font-size: 0.75rem; color: var(--md-sys-color-on-surface-variant);">{{ record.uraian }}</p>
+              </div>
+            }
+          }
+        </div>
+      }
+
+      <!-- TAB: RIWAYAT PEMINJAMAN -->
+      @if (activeTab() === 'peminjaman') {
+        <div class="glass-panel" style="padding: 20px;">
+          @if (loans().length === 0) {
+            <div class="empty-state">
+              <h3>Belum Ada Riwayat Peminjaman</h3>
+              <p>Alur pengajuan &amp; persetujuan peminjaman akan tersedia di tahap berikutnya.</p>
+            </div>
+          } @else {
+            @for (loan of loans(); track loan.id) {
+              <div style="padding: 10px 0; border-bottom: 1px solid var(--md-sys-color-outline);">
+                <p style="font-weight: 600; font-size: 0.8rem;">{{ loan.keperluan }} — {{ loan.status }}</p>
+                <p style="font-size: 0.75rem; color: var(--md-sys-color-on-surface-variant);">{{ loan.rencanaMulai }} s/d {{ loan.rencanaSelesai }}</p>
+              </div>
+            }
+          }
+        </div>
+      }
+
+      <!-- TAB: FOTO -->
+      @if (activeTab() === 'foto') {
+        <div class="glass-panel" style="padding: 20px;">
+          <div class="empty-state">
+            <h3>Foto Belum Tersedia</h3>
+            <p>Foto kendaraan akan terisi otomatis setelah fitur ekstraksi foto dari impor Excel selesai dibangun.</p>
+          </div>
+        </div>
+      }
+
+      <!-- TAB: JEJAK PERUBAHAN -->
+      @if (activeTab() === 'audit') {
+        <div class="glass-panel" style="padding: 20px;">
+          @if (auditEntries().length === 0) {
+            <div class="empty-state">
+              <h3>Belum Ada Jejak Perubahan</h3>
+              <p>Setiap perubahan pada aset ini akan tercatat di sini.</p>
+            </div>
+          } @else {
+            @for (entry of auditEntries(); track entry.id) {
+              <div style="padding: 10px 0; border-bottom: 1px solid var(--md-sys-color-outline);">
+                <p style="font-weight: 600; font-size: 0.8rem;">{{ entry.aksi }} — {{ entry.pelakuNama }}</p>
+                <p style="font-size: 0.72rem; color: var(--text-muted);">{{ entry.waktu | date: 'medium' }}</p>
+              </div>
+            }
+          }
+        </div>
+      }
+    </main>
+  }
+</div>

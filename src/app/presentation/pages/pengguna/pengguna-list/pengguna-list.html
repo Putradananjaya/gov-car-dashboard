@@ -1,0 +1,202 @@
+<div class="inventory-container">
+  <div class="inventory-header">
+    <div class="header-title">
+      <h1>Manajemen Pengguna</h1>
+      <p>Total: {{ users().length }} akun terdaftar</p>
+    </div>
+    <button class="btn-primary" (click)="openAddModal()">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="12" y1="5" x2="12" y2="19"></line>
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+      </svg>
+      Tambah Pengguna
+    </button>
+  </div>
+
+  <main class="inventory-content">
+    <div class="table-responsive glass-panel">
+      <table class="inventory-table">
+        <thead>
+          <tr>
+            <th>Nama</th>
+            <th>NIP</th>
+            <th>Jabatan</th>
+            <th>Unit Kerja</th>
+            <th>Peran</th>
+            <th>Status</th>
+            <th>Terakhir Masuk</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (user of users(); track user.id) {
+            <tr>
+              <td>{{ user.nama }}</td>
+              <td style="font-family: monospace;">{{ user.nip }}</td>
+              <td>{{ user.jabatan }}</td>
+              <td>{{ user.unitKerja }}</td>
+              <td>
+                <span class="badge" [ngClass]="{
+                  'badge-danger': user.peran === 'superadmin',
+                  'badge-info': user.peran === 'admin',
+                  'badge-success': user.peran === 'pegawai'
+                }">
+                  <span class="badge-dot"></span>
+                  {{ user.peran }}
+                </span>
+              </td>
+              <td>
+                <span class="badge" [ngClass]="user.aktif ? 'badge-success' : 'badge-warning'">
+                  <span class="badge-dot"></span>
+                  {{ user.aktif ? 'Aktif' : 'Nonaktif' }}
+                </span>
+              </td>
+              <td style="font-size: 0.72rem; color: var(--text-muted);">{{ user.terakhirMasuk ? (user.terakhirMasuk | date: 'medium') : 'Belum pernah' }}</td>
+              <td>
+                <div class="actions-col">
+                  <button class="action-btn edit" title="Edit" (click)="openEditModal(user)">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                      <path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                  </button>
+                  <button class="action-btn" title="Setel Ulang Kata Sandi" (click)="resetPassword(user)">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M21 2v6h-6"></path>
+                      <path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path>
+                      <path d="M3 22v-6h6"></path>
+                      <path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path>
+                    </svg>
+                  </button>
+                  <button class="action-btn delete" [title]="user.aktif ? 'Nonaktifkan' : 'Aktifkan'" (click)="toggleAktif(user)">
+                    @if (user.aktif) {
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
+                      </svg>
+                    } @else {
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20 6 9 17l-5-5"></path>
+                      </svg>
+                    }
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+  <!-- FORM MODAL: TAMBAH / EDIT -->
+  @if (showFormModal()) {
+    <div class="form-overlay" (click)="closeFormModal()">
+      <div class="form-modal glass-panel" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>{{ editingId() ? 'Edit Pengguna' : 'Tambah Pengguna' }}</h2>
+          <button class="close-btn" (click)="closeFormModal()" aria-label="Tutup">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+
+        <form [formGroup]="form" (ngSubmit)="onSubmit()" class="modal-body">
+          @if (formError()) {
+            <div class="login-error-alert" style="margin-bottom: 12px;">{{ formError() }}</div>
+          }
+          <div class="form-grid">
+            <div class="form-section full-width">
+              <div class="form-group" [class.has-error]="isInvalid('nip')">
+                <label for="nip">NIP</label>
+                <input type="text" id="nip" formControlName="nip" placeholder="Angka saja, 8-20 digit">
+                @if (isInvalid('nip')) {
+                  <span class="error-msg">NIP wajib angka, 8-20 digit</span>
+                }
+              </div>
+
+              <div class="form-group" [class.has-error]="isInvalid('nama')">
+                <label for="nama">Nama Lengkap</label>
+                <input type="text" id="nama" formControlName="nama">
+                @if (isInvalid('nama')) {
+                  <span class="error-msg">Kolom ini wajib diisi</span>
+                }
+              </div>
+
+              <div class="form-row">
+                <div class="form-group" [class.has-error]="isInvalid('jabatan')">
+                  <label for="jabatan">Jabatan</label>
+                  <input type="text" id="jabatan" formControlName="jabatan">
+                </div>
+                <div class="form-group" [class.has-error]="isInvalid('unitKerja')">
+                  <label for="unitKerja">Unit Kerja (OPD)</label>
+                  <select id="unitKerja" formControlName="unitKerja">
+                    <option value="" disabled selected>Pilih OPD</option>
+                    @for (opd of opdList; track opd) {
+                      <option [value]="opd">{{ opd }}</option>
+                    }
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-group" [class.has-error]="isInvalid('peran')">
+                <label for="peran">Peran</label>
+                <select id="peran" formControlName="peran">
+                  @for (p of peranOptions; track p) {
+                    <option [value]="p">{{ p }}</option>
+                  }
+                </select>
+              </div>
+
+              @if (!editingId()) {
+                <div class="form-group" [class.has-error]="isInvalid('password')">
+                  <label for="password">Kata Sandi Awal</label>
+                  <input type="password" id="password" formControlName="password" placeholder="Minimal 8 karakter">
+                  @if (isInvalid('password')) {
+                    <span class="error-msg">Minimal 8 karakter</span>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn-secondary" (click)="closeFormModal()">Batal</button>
+            <button type="submit" class="btn-primary">Simpan</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- MODAL: TAMPILKAN KATA SANDI SEMENTARA -->
+  @if (tempPasswordModal(); as temp) {
+    <div class="form-overlay" (click)="closeTempPasswordModal()">
+      <div class="form-modal glass-panel" style="max-width: 420px;" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>Kata Sandi Baru</h2>
+          <button class="close-btn" (click)="closeTempPasswordModal()" aria-label="Tutup">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        <div class="modal-body">
+          <p style="font-size: 0.8rem; margin-bottom: 10px;">
+            Kata sandi baru untuk <strong>{{ temp.nama }}</strong> — catat &amp; sampaikan secara aman, tidak akan
+            ditampilkan lagi setelah modal ini ditutup:
+          </p>
+          <p style="font-family: monospace; font-size: 1.1rem; font-weight: 700; padding: 10px; background: rgba(128,128,128,0.08); border-radius: var(--md-shape-corner-medium); text-align: center;">
+            {{ temp.password }}
+          </p>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn-primary" (click)="closeTempPasswordModal()">Sudah Dicatat</button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

@@ -1,0 +1,55 @@
+<div class="inventory-container">
+  <div class="inventory-header">
+    <div class="header-title">
+      <h1>Antrean Persetujuan Peminjaman</h1>
+      <p>{{ antrean().length }} pengajuan menunggu keputusan</p>
+    </div>
+  </div>
+
+  <main class="inventory-content">
+    @if (antrean().length === 0) {
+      <div class="empty-state glass-panel">
+        <svg viewBox="0 0 24 24" width="60" height="60" fill="none" stroke="var(--text-muted)" stroke-width="1.5">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+        <h3>Tidak Ada Antrean</h3>
+        <p>Semua pengajuan peminjaman sudah diputuskan.</p>
+      </div>
+    } @else {
+      <div class="table-responsive glass-panel">
+        <table class="inventory-table">
+          <thead>
+            <tr>
+              <th>Kendaraan</th>
+              <th>Pemohon</th>
+              <th>Keperluan / Tujuan</th>
+              <th>Rencana</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (loan of antrean(); track loan.id) {
+              <tr>
+                <td>{{ vehicleLabel(loan.nibar) }}</td>
+                <td>{{ pemohonNama(loan.pemohonId) }}</td>
+                <td>
+                  <div class="car-info-col">
+                    <span class="car-name">{{ loan.keperluan }}</span>
+                    <span style="font-size: 0.7rem; color: var(--text-muted);">{{ loan.tujuan }}</span>
+                  </div>
+                </td>
+                <td style="font-size: 0.75rem;">{{ loan.rencanaMulai }} s/d {{ loan.rencanaSelesai }}</td>
+                <td>
+                  <div class="actions-col">
+                    <button class="btn-primary" style="padding: 6px 12px; font-size: 0.72rem;" (click)="setujui(loan)">Setujui</button>
+                    <button class="btn-secondary" style="padding: 6px 12px; font-size: 0.72rem; border-color: rgba(239,68,68,0.3); color: #f87171;" (click)="tolak(loan)">Tolak</button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </main>
+</div>

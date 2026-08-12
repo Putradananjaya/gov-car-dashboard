@@ -1,0 +1,85 @@
+<div class="inventory-container">
+  <div class="inventory-header">
+    <div class="header-title">
+      <h1>Jejak Audit</h1>
+      <p>Total: {{ filteredEntries().length }} entri</p>
+    </div>
+  </div>
+
+  <section class="filters-bar glass-panel" aria-label="Filter Jejak Audit">
+    <div class="search-box">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="search-icon">
+        <circle cx="11" cy="11" r="8"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+      </svg>
+      <input type="text" placeholder="Cari aksi atau ID entitas..." [value]="searchQuery()" (input)="onSearchChange($event)">
+    </div>
+
+    <div class="dropdown-filters">
+      <div class="filter-group">
+        <select (change)="onEntitasChange($event)" [value]="selectedEntitas()">
+          <option value="All">Semua Entitas</option>
+          @for (e of entitasList(); track e) {
+            <option [value]="e">{{ e }}</option>
+          }
+        </select>
+      </div>
+      <div class="filter-group">
+        <select (change)="onPelakuChange($event)" [value]="selectedPelaku()">
+          <option value="All">Semua Pelaku</option>
+          @for (p of pelakuList(); track p) {
+            <option [value]="p">{{ p }}</option>
+          }
+        </select>
+      </div>
+      <div class="filter-group">
+        <input type="date" [value]="dariTanggal()" (change)="onDariChange($event)" aria-label="Dari tanggal">
+      </div>
+      <div class="filter-group">
+        <input type="date" [value]="sampaiTanggal()" (change)="onSampaiChange($event)" aria-label="Sampai tanggal">
+      </div>
+    </div>
+  </section>
+
+  <main class="inventory-content">
+    @if (filteredEntries().length === 0) {
+      <div class="empty-state glass-panel">
+        <svg viewBox="0 0 24 24" width="60" height="60" fill="none" stroke="var(--text-muted)" stroke-width="1.5">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="8" y1="12" x2="16" y2="12"></line>
+        </svg>
+        <h3>Belum Ada Jejak Audit</h3>
+        <p>Tidak ada entri yang sesuai dengan kriteria pencarian dan filter Anda.</p>
+      </div>
+    } @else {
+      <div class="table-responsive glass-panel">
+        <table class="inventory-table">
+          <thead>
+            <tr>
+              <th>Waktu</th>
+              <th>Pelaku</th>
+              <th>Aksi</th>
+              <th>Entitas</th>
+              <th>ID Entitas</th>
+              <th>Nilai Lama</th>
+              <th>Nilai Baru</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (entry of filteredEntries(); track entry.id) {
+              <tr>
+                <td style="font-size: 0.72rem; white-space: nowrap;">{{ entry.waktu | date: 'dd MMM yyyy HH:mm' }}</td>
+                <td>{{ entry.pelakuNama }}</td>
+                <td><span class="type-badge">{{ entry.aksi }}</span></td>
+                <td>{{ entry.entitas }}</td>
+                <td style="font-family: monospace; font-size: 0.7rem; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" [title]="entry.entitasId">{{ entry.entitasId }}</td>
+                <td style="font-size: 0.7rem; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" [title]="formatNilai(entry.nilaiLama)">{{ formatNilai(entry.nilaiLama) }}</td>
+                <td style="font-size: 0.7rem; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" [title]="formatNilai(entry.nilaiBaru)">{{ formatNilai(entry.nilaiBaru) }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </main>
+</div>

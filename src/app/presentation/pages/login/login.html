@@ -19,7 +19,7 @@
         </svg>
       </div>
       <h1>Portal Pusaka Bangli</h1>
-      <p>Masukkan kredensial admin untuk mengakses sistem inventaris</p>
+      <p>Masukkan NIP dan kata sandi untuk mengakses sistem inventaris</p>
     </div>
 
     <!-- Error Alert Message -->
@@ -31,14 +31,14 @@
 
     <!-- Form -->
     <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
-      <!-- Username Field -->
-      <div class="form-group" [class.has-error]="loginForm.get('username')?.invalid && loginForm.get('username')?.touched">
-        <div class="md-textbox" [class.has-error]="loginForm.get('username')?.invalid && loginForm.get('username')?.touched">
-          <input type="text" formControlName="username" placeholder=" " id="txt-username" required autocomplete="username">
-          <label for="txt-username">Username</label>
+      <!-- NIP Field -->
+      <div class="form-group" [class.has-error]="loginForm.get('nip')?.invalid && loginForm.get('nip')?.touched">
+        <div class="md-textbox" [class.has-error]="loginForm.get('nip')?.invalid && loginForm.get('nip')?.touched">
+          <input type="text" formControlName="nip" placeholder=" " id="txt-nip" required autocomplete="username" inputmode="numeric">
+          <label for="txt-nip">NIP</label>
         </div>
-        @if (loginForm.get('username')?.invalid && loginForm.get('username')?.touched) {
-          <span class="error-msg">Username wajib diisi</span>
+        @if (loginForm.get('nip')?.invalid && loginForm.get('nip')?.touched) {
+          <span class="error-msg">NIP wajib diisi</span>
         }
       </div>
 
@@ -68,15 +68,6 @@
           <span>Masuk Sistem</span>
         }
       </button>
-
-      <!-- Credentials Tip -->
-      <div class="login-credentials-tip">
-        <span>Informasi Kredensial Uji Coba:</span>
-        <div style="margin-top: 4px;">
-          <span>Username: <strong>admin</strong></span>
-          <span style="margin-left: 12px;">Password: <strong>admin</strong></span>
-        </div>
-      </div>
     </form>
   </div>
 

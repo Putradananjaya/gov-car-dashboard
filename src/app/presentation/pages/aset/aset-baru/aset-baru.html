@@ -1,0 +1,12 @@
+<div class="inventory-container">
+  <div class="inventory-header">
+    <div class="header-title">
+      <h1>Daftarkan Aset Baru</h1>
+      <p>NIBAR sementara akan diberikan otomatis — akan diperbarui saat data diimpor resmi dari Excel e-BMD.</p>
+    </div>
+  </div>
+
+  <div class="glass-panel" style="padding: 20px;">
+    <app-asset-form [nibar]="null" (saved)="onSaved($event)" (cancelled)="onCancelled()"></app-asset-form>
+  </div>
+</div>

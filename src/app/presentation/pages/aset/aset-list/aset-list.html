@@ -1,0 +1,201 @@
+<div class="inventory-container">
+  <!-- HEADER -->
+  <div class="inventory-header">
+    <div class="header-title">
+      <h1>Master Data Aset (BMD)</h1>
+      <p>
+        Total: {{ filteredViews().length }} aset ditemukan • Nilai:
+        Rp {{ totalNilai() | number }}
+        @if (permissionService.can('aset.lihat') && opdList) {
+          <span> — {{ selectedKategori() === 'All' ? 'Semua kategori' : selectedKategori() }}</span>
+        }
+      </p>
+    </div>
+
+    <button *hasPermission="'aset.ubah'" class="btn-primary" routerLink="/app/aset/baru">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="12" y1="5" x2="12" y2="19"></line>
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+      </svg>
+      Tambah Aset
+    </button>
+  </div>
+
+  <!-- FILTERS BAR -->
+  <section class="filters-bar glass-panel" aria-label="Filter Aset">
+    <div class="search-box">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="search-icon">
+        <circle cx="11" cy="11" r="8"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+      </svg>
+      <input type="text" placeholder="Cari NIBAR, pelat nomor, merek, pemegang..." [value]="searchQuery()" (input)="onSearchChange($event)">
+    </div>
+
+    <div class="dropdown-filters">
+      <div class="filter-group">
+        <select (change)="onKategoriChange($event)" [value]="selectedKategori()">
+          <option value="All">Semua Kategori</option>
+          @for (k of kategoriList(); track k) {
+            <option [value]="k">{{ k }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <select (change)="onTahunChange($event)" [value]="selectedTahun()">
+          <option value="All">Semua Tahun</option>
+          @for (t of tahunList(); track t) {
+            <option [value]="t">{{ t }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <select (change)="onKondisiChange($event)" [value]="selectedKondisi()">
+          <option value="All">Semua Kondisi</option>
+          @for (k of kondisiOptions; track k) {
+            <option [value]="k">{{ k }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <select (change)="onStatusPajakChange($event)" [value]="selectedStatusPajak()">
+          <option value="All">Semua Status Pajak</option>
+          <option value="berlaku">Berlaku</option>
+          <option value="segera-habis">Segera Habis (≤60 hari)</option>
+          <option value="kadaluarsa">Kadaluarsa</option>
+        </select>
+      </div>
+    </div>
+  </section>
+
+  <!-- BULK ACTION BAR -->
+  @if (selectedNibars().size > 0) {
+    <div class="tax-expired-alert glass-panel" style="padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+      <span style="font-size: 0.8rem; font-weight: 600;">{{ selectedNibars().size }} aset terpilih</span>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <button *hasPermission="'aset.ubahStatusOperasional'" class="btn-secondary" style="padding: 6px 12px; font-size: 0.72rem;" (click)="promptBulkUbahKondisi()">
+          Ubah Kondisi
+        </button>
+        <button *hasPermission="'aset.ubah'" class="btn-secondary" style="padding: 6px 12px; font-size: 0.72rem;" (click)="promptBulkTetapkanPemegang()">
+          Tetapkan Pemegang
+        </button>
+        <button class="btn-secondary" style="padding: 6px 12px; font-size: 0.72rem;" (click)="clearSelection()">
+          Batalkan Pilihan
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- CONTENT -->
+  <main class="inventory-content">
+    @if (filteredViews().length === 0) {
+      <div class="empty-state glass-panel">
+        <svg viewBox="0 0 24 24" width="60" height="60" fill="none" stroke="var(--text-muted)" stroke-width="1.5">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="8" y1="12" x2="16" y2="12"></line>
+        </svg>
+        <h3>Data Tidak Ditemukan</h3>
+        <p>Tidak ada aset BMD yang sesuai dengan kriteria pencarian dan filter Anda.</p>
+      </div>
+    } @else {
+      <div class="table-responsive glass-panel">
+        <table class="inventory-table">
+          <thead>
+            <tr>
+              <th></th>
+              <th>Kode Barang</th>
+              <th>NIBAR / Pelat</th>
+              <th>Merek / Tipe</th>
+              <th>Tahun</th>
+              <th>Nilai</th>
+              <th>Kondisi</th>
+              <th>Pemegang</th>
+              <th>Masa Pajak</th>
+              @if (permissionService.can('aset.lihatDataSensitif')) {
+                <th>Rangka / BPKB</th>
+              }
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (group of groups(); track group.namaBarang) {
+              <tr class="group-header-row">
+                <td colspan="11" style="font-weight: 700; background: rgba(128,128,128,0.05);">
+                  {{ group.namaBarang }} — {{ group.subtotalJumlah }} unit — Rp {{ group.subtotalNilai | number }}
+                </td>
+              </tr>
+              @for (v of group.items; track v.nibar) {
+                <tr>
+                  <td>
+                    <input type="checkbox" [checked]="isSelected(v.nibar)" (change)="toggleSelection(v.nibar)" aria-label="Pilih aset">
+                  </td>
+                  <td><span class="type-badge" [title]="v.kodeBarang.full">{{ v.kodeBarang.full || '—' }}</span></td>
+                  <td>
+                    <div class="car-info-col">
+                      <span class="car-name" [title]="v.nibar">{{ v.nibar.slice(0, 12) }}…</span>
+                      <span class="car-plate-badge">{{ v.nomorPolisi }}</span>
+                    </div>
+                  </td>
+                  <td>{{ v.merek }} {{ v.tipe }}</td>
+                  <td>{{ v.tahunAnggaran }}</td>
+                  <td>Rp {{ v.nilaiPerolehan | number }}</td>
+                  <td>
+                    <span class="badge" [ngClass]="{
+                      'badge-success': v.kondisi === 'Baik',
+                      'badge-warning': v.kondisi === 'Rusak Ringan',
+                      'badge-danger': v.kondisi === 'Rusak Berat'
+                    }">
+                      <span class="badge-dot"></span>
+                      {{ v.kondisi }}
+                    </span>
+                  </td>
+                  <td>{{ v.pemegang || 'Operasional Bersama' }}</td>
+                  <td>
+                    <span class="badge" [ngClass]="{
+                      'badge-success': computeStatusPajak(v.masaBerlakuPajak) === 'berlaku',
+                      'badge-warning': computeStatusPajak(v.masaBerlakuPajak) === 'segera-habis',
+                      'badge-danger': computeStatusPajak(v.masaBerlakuPajak) === 'kadaluarsa'
+                    }">
+                      <span class="badge-dot"></span>
+                      {{ v.masaBerlakuPajak || 'Tidak diketahui' }}
+                    </span>
+                  </td>
+                  @if (permissionService.can('aset.lihatDataSensitif')) {
+                    <td>
+                      <span style="font-size: 0.7rem; color: var(--text-muted);">{{ v.nomorRangka || '—' }} / {{ v.nomorBpkb || '—' }}</span>
+                    </td>
+                  }
+                  <td>
+                    <div class="actions-col">
+                      <a [routerLink]="['/app/aset', v.nibar]" class="action-btn edit" title="Lihat Detail">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                          <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                      </a>
+                      <button *hasPermission="'aset.hapus'" class="action-btn delete" title="Hapus (Soft Delete)" (click)="softDeleteAsset(v.nibar)">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                          <polyline points="3 6 5 6 21 6"></polyline>
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                      </button>
+                      <button *hasPermission="'aset.hapusPermanen'" class="action-btn delete" title="Hapus Permanen" (click)="removeAssetPermanently(v.nibar)">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                          <circle cx="12" cy="12" r="10"></circle>
+                          <line x1="15" y1="9" x2="9" y2="15"></line>
+                          <line x1="9" y1="9" x2="15" y2="15"></line>
+                        </svg>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </main>
+</div>

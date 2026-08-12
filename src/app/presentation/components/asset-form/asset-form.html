@@ -1,0 +1,152 @@
+<form [formGroup]="form" (ngSubmit)="onSubmit()" class="asset-form">
+  <div class="form-grid">
+    <!-- SEKSI 1: IDENTITAS BARANG -->
+    <div class="form-section">
+      <h3>Identitas Barang</h3>
+
+      <div class="form-group" [class.has-error]="isInvalid('namaBarang')">
+        <label for="namaBarang">Nama Barang / Kategori</label>
+        <input type="text" id="namaBarang" formControlName="namaBarang" placeholder="Contoh: Sepeda Motor, Mini Bus">
+        @if (isInvalid('namaBarang')) {
+          <span class="error-msg">Kolom ini wajib diisi</span>
+        }
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="spesifikasiNama">Spesifikasi Nama Barang</label>
+          <input type="text" id="spesifikasiNama" formControlName="spesifikasiNama">
+        </div>
+        <div class="form-group">
+          <label for="spesifikasiLainnya">Spesifikasi Lainnya</label>
+          <input type="text" id="spesifikasiLainnya" formControlName="spesifikasiLainnya">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="merek">Merek</label>
+          <input type="text" id="merek" formControlName="merek" placeholder="Contoh: Toyota">
+        </div>
+        <div class="form-group">
+          <label for="tipe">Tipe</label>
+          <input type="text" id="tipe" formControlName="tipe" placeholder="Contoh: Avanza 1.3 G">
+        </div>
+      </div>
+
+      <div class="form-group" [class.has-error]="isInvalid('statusPenggunaan')">
+        <label for="statusPenggunaan">OPD Penatausaha</label>
+        <select id="statusPenggunaan" formControlName="statusPenggunaan">
+          <option value="" disabled selected>Pilih OPD</option>
+          @for (opd of opdList; track opd) {
+            <option [value]="opd">{{ opd }}</option>
+          }
+        </select>
+        @if (isInvalid('statusPenggunaan')) {
+          <span class="error-msg">Kolom ini wajib diisi</span>
+        }
+      </div>
+
+      <div class="form-group">
+        <label for="pemegang">Pemegang (kosongkan bila kendaraan operasional bersama)</label>
+        <input type="text" id="pemegang" formControlName="pemegang" placeholder="Nama pemegang, atau kosongkan">
+      </div>
+    </div>
+
+    <!-- SEKSI 2: IDENTITAS KENDARAAN -->
+    <div class="form-section">
+      <h3>Identitas Kendaraan</h3>
+
+      <div class="form-group" [class.has-error]="isInvalid('nomorPolisi')">
+        <label for="nomorPolisi">Nomor Polisi</label>
+        <input type="text" id="nomorPolisi" formControlName="nomorPolisi" placeholder="Contoh: DK 1904 P">
+        @if (isInvalid('nomorPolisi')) {
+          <span class="error-msg">Kolom ini wajib diisi</span>
+        }
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="nomorRangka">Nomor Rangka</label>
+          <input type="text" id="nomorRangka" formControlName="nomorRangka">
+        </div>
+        <div class="form-group">
+          <label for="nomorBpkb">Nomor BPKB</label>
+          <input type="text" id="nomorBpkb" formControlName="nomorBpkb" placeholder="Boleh dikosongkan">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="kondisi">Kondisi</label>
+          <select id="kondisi" formControlName="kondisi">
+            @for (k of kondisiOptions; track k) {
+              <option [value]="k">{{ k }}</option>
+            }
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="status">Status Operasional</label>
+          <select id="status" formControlName="status">
+            @for (s of statusOptions; track s) {
+              <option [value]="s">{{ s }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="telepon">Nomor Telepon Penanggung Jawab</label>
+        <input type="text" id="telepon" formControlName="telepon" placeholder="Boleh dikosongkan">
+      </div>
+    </div>
+
+    <!-- SEKSI 3: NILAI & PEROLEHAN -->
+    <div class="form-section full-width">
+      <h3>Nilai & Perolehan</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="jumlah">Jumlah</label>
+          <input type="number" id="jumlah" formControlName="jumlah" min="1">
+        </div>
+        <div class="form-group">
+          <label for="satuan">Satuan</label>
+          <input type="text" id="satuan" formControlName="satuan">
+        </div>
+        <div class="form-group">
+          <label for="hargaSatuanPerolehan">Harga Satuan Perolehan (Rp)</label>
+          <input type="number" id="hargaSatuanPerolehan" formControlName="hargaSatuanPerolehan" min="0">
+        </div>
+        <div class="form-group">
+          <label for="nilaiPerolehan">Nilai Perolehan (Rp)</label>
+          <input type="number" id="nilaiPerolehan" formControlName="nilaiPerolehan" min="0">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="caraPerolehan">Cara Perolehan</label>
+          <input type="text" id="caraPerolehan" formControlName="caraPerolehan">
+        </div>
+        <div class="form-group" [class.has-error]="isInvalid('tanggalPerolehan')">
+          <label for="tanggalPerolehan">Tanggal Perolehan</label>
+          <input type="date" id="tanggalPerolehan" formControlName="tanggalPerolehan">
+          @if (isInvalid('tanggalPerolehan')) {
+            <span class="error-msg">Kolom ini wajib diisi</span>
+          }
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="catatan">Catatan</label>
+        <textarea id="catatan" formControlName="catatan" rows="2"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <button type="button" class="btn-secondary" (click)="onCancel()">Batal</button>
+    <button type="submit" class="btn-primary" [disabled]="isSaving()">
+      {{ isSaving() ? 'Menyimpan...' : (isEditMode ? 'Simpan Perubahan' : 'Daftarkan Aset') }}
+    </button>
+  </div>
+</form>

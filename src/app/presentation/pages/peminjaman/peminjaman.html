@@ -1,0 +1,148 @@
+<div class="inventory-container">
+  <div class="inventory-header">
+    <div class="header-title">
+      <h1>Peminjaman Kendaraan</h1>
+      <p>Halo, {{ currentUser()?.nama }}. {{ loans().length }} pengajuan ditemukan.</p>
+    </div>
+    <button class="btn-primary" (click)="openAjukanModal()">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="12" y1="5" x2="12" y2="19"></line>
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+      </svg>
+      Ajukan Peminjaman
+    </button>
+  </div>
+
+  <main class="inventory-content">
+    @if (loans().length === 0) {
+      <div class="empty-state glass-panel">
+        <svg viewBox="0 0 24 24" width="60" height="60" fill="none" stroke="var(--text-muted)" stroke-width="1.5">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+          <line x1="16" y1="2" x2="16" y2="6"></line>
+          <line x1="8" y1="2" x2="8" y2="6"></line>
+          <line x1="3" y1="10" x2="21" y2="10"></line>
+        </svg>
+        <h3>Belum Ada Pengajuan</h3>
+        <p>Klik "Ajukan Peminjaman" untuk membuat pengajuan baru.</p>
+      </div>
+    } @else {
+      <div class="table-responsive glass-panel">
+        <table class="inventory-table">
+          <thead>
+            <tr>
+              <th>Kendaraan</th>
+              <th>Pemohon</th>
+              <th>Keperluan</th>
+              <th>Rencana</th>
+              <th>Status</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (loan of loans(); track loan.id) {
+              <tr>
+                <td>{{ vehicleLabel(loan.nibar) }}</td>
+                <td>{{ pemohonNama(loan.pemohonId) }}</td>
+                <td>
+                  <div class="car-info-col">
+                    <span class="car-name">{{ loan.keperluan }}</span>
+                    <span style="font-size: 0.7rem; color: var(--text-muted);">{{ loan.tujuan }}</span>
+                  </div>
+                </td>
+                <td style="font-size: 0.75rem;">{{ loan.rencanaMulai }} s/d {{ loan.rencanaSelesai }}</td>
+                <td>
+                  <span class="badge" [ngClass]="{
+                    'badge-info': loan.status === 'Diajukan',
+                    'badge-warning': loan.status === 'Berjalan',
+                    'badge-success': loan.status === 'Selesai',
+                    'badge-danger': loan.status === 'Ditolak'
+                  }">
+                    <span class="badge-dot"></span>
+                    {{ loan.status }}
+                  </span>
+                  @if (loan.status === 'Ditolak' && loan.catatanPenolakan) {
+                    <p style="font-size: 0.68rem; color: var(--color-danger); margin-top: 4px;">{{ loan.catatanPenolakan }}</p>
+                  }
+                </td>
+                <td>
+                  @if (canKembalikan(loan)) {
+                    <button class="btn-secondary" style="padding: 6px 12px; font-size: 0.72rem;" (click)="kembalikan(loan)">
+                      Kembalikan
+                    </button>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </main>
+
+  <!-- MODAL: AJUKAN PEMINJAMAN -->
+  @if (showAjukanModal()) {
+    <div class="form-overlay" (click)="closeAjukanModal()">
+      <div class="form-modal glass-panel" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>Ajukan Peminjaman Kendaraan</h2>
+          <button class="close-btn" (click)="closeAjukanModal()" aria-label="Tutup">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+
+        <form [formGroup]="ajukanForm" (ngSubmit)="submitAjukan()" class="modal-body">
+          @if (availableVehicles().length === 0) {
+            <p style="font-size: 0.8rem; color: var(--color-danger);">Tidak ada kendaraan berstatus "Tersedia" saat ini.</p>
+          }
+          <div class="form-group" [class.has-error]="isInvalid('nibar')">
+            <label for="nibar">Kendaraan</label>
+            <select id="nibar" formControlName="nibar">
+              <option value="" disabled selected>Pilih kendaraan tersedia</option>
+              @for (v of availableVehicles(); track v.nibar) {
+                <option [value]="v.nibar">{{ v.merek }} {{ v.tipe }} — {{ v.nomorPolisi }}</option>
+              }
+            </select>
+            @if (isInvalid('nibar')) {
+              <span class="error-msg">Pilih kendaraan terlebih dahulu</span>
+            }
+          </div>
+
+          <div class="form-group" [class.has-error]="isInvalid('keperluan')">
+            <label for="keperluan">Keperluan</label>
+            <input type="text" id="keperluan" formControlName="keperluan" placeholder="Contoh: Rapat koordinasi kecamatan">
+            @if (isInvalid('keperluan')) {
+              <span class="error-msg">Kolom ini wajib diisi</span>
+            }
+          </div>
+
+          <div class="form-group" [class.has-error]="isInvalid('tujuan')">
+            <label for="tujuan">Tujuan</label>
+            <input type="text" id="tujuan" formControlName="tujuan" placeholder="Contoh: Kantor Camat Susut">
+            @if (isInvalid('tujuan')) {
+              <span class="error-msg">Kolom ini wajib diisi</span>
+            }
+          </div>
+
+          <div class="form-row">
+            <div class="form-group" [class.has-error]="isInvalid('rencanaMulai')">
+              <label for="rencanaMulai">Rencana Mulai</label>
+              <input type="date" id="rencanaMulai" formControlName="rencanaMulai">
+            </div>
+            <div class="form-group" [class.has-error]="isInvalid('rencanaSelesai')">
+              <label for="rencanaSelesai">Rencana Selesai</label>
+              <input type="date" id="rencanaSelesai" formControlName="rencanaSelesai">
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn-secondary" (click)="closeAjukanModal()">Batal</button>
+            <button type="submit" class="btn-primary" [disabled]="availableVehicles().length === 0">Ajukan</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>

@@ -1,0 +1,113 @@
+<div class="dashboard-container">
+  <section class="metrics-grid" aria-label="Metrik Utama Pegawai">
+    <div class="metric-card glass-panel border-blue">
+      <div class="metric-card-header">
+        <div class="metric-icon-bg color-blue">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="10" width="20" height="8" rx="2" ry="2" />
+            <path d="M17 14h.01M7 14h.01M21 10h-2L16 5H8L5 10H3" />
+            <circle cx="6.5" cy="18" r="2" />
+            <circle cx="17.5" cy="18" r="2" />
+          </svg>
+        </div>
+        <div class="metric-text-group">
+          <h3>Kendaraan Saya Pegang</h3>
+          <p class="value">{{ kendaraanDipegang().length }} <span class="unit">Unit</span></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="metric-card glass-panel border-orange">
+      <div class="metric-card-header">
+        <div class="metric-icon-bg color-orange">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3"></path>
+          </svg>
+        </div>
+        <div class="metric-text-group">
+          <h3>Pengajuan Berjalan</h3>
+          <p class="value">{{ pengajuanAktifCount() }} <span class="unit">Pengajuan</span></p>
+        </div>
+      </div>
+      <div class="metric-footer">
+        <a routerLink="/app/peminjaman" class="sub-label">Lihat pengajuan saya →</a>
+      </div>
+    </div>
+
+    <div class="metric-card glass-panel border-red">
+      <div class="metric-card-header">
+        <div class="metric-icon-bg color-red">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+          </svg>
+        </div>
+        <div class="metric-text-group">
+          <h3>Pengingat Pajak</h3>
+          <p class="value">{{ pengingatPajak().length }} <span class="unit">Unit</span></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="bottom-section" aria-label="Informasi Operasional">
+    <div class="info-panel glass-panel">
+      <div class="panel-header">
+        <h3>Kendaraan yang Saya Pegang</h3>
+      </div>
+      <div class="panel-content">
+        @if (kendaraanDipegang().length === 0) {
+          <div class="empty-state"><p>Tidak ada kendaraan yang tercatat atas nama Anda.</p></div>
+        } @else {
+          @for (v of kendaraanDipegang(); track v.nibar) {
+            <div style="padding: 8px 0; border-bottom: 1px solid var(--md-sys-color-outline); display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <p style="font-size: 0.8rem; font-weight: 600;">{{ v.merek }} {{ v.tipe }} — {{ v.nomorPolisi }}</p>
+                <p style="font-size: 0.72rem; color: var(--text-muted);">Masa pajak: {{ v.masaBerlakuPajak || 'Tidak diketahui' }}</p>
+              </div>
+              <span class="badge" [ngClass]="{
+                'badge-success': computeStatusPajak(v.masaBerlakuPajak) === 'berlaku',
+                'badge-warning': computeStatusPajak(v.masaBerlakuPajak) === 'segera-habis',
+                'badge-danger': computeStatusPajak(v.masaBerlakuPajak) === 'kadaluarsa'
+              }"><span class="badge-dot"></span>{{ computeStatusPajak(v.masaBerlakuPajak) }}</span>
+            </div>
+          }
+        }
+      </div>
+    </div>
+
+    <div class="info-panel glass-panel">
+      <div class="panel-header">
+        <h3>Status Pengajuan Peminjaman Saya</h3>
+      </div>
+      <div class="panel-content">
+        @if (pengajuanSaya().length === 0) {
+          <div class="empty-state"><p>Anda belum pernah mengajukan peminjaman.</p></div>
+        } @else {
+          <table class="panel-table">
+            <thead><tr><th>Kendaraan</th><th>Rencana</th><th>Status</th></tr></thead>
+            <tbody>
+              @for (loan of pengajuanSaya(); track loan.id) {
+                <tr>
+                  <td>{{ vehicleLabel(loan.nibar) }}</td>
+                  <td>{{ loan.rencanaMulai }}</td>
+                  <td>
+                    <span class="badge" [ngClass]="{
+                      'badge-info': loan.status === 'Diajukan',
+                      'badge-warning': loan.status === 'Berjalan',
+                      'badge-success': loan.status === 'Selesai',
+                      'badge-danger': loan.status === 'Ditolak'
+                    }"><span class="badge-dot"></span>{{ loan.status }}</span>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+        <div class="panel-footer-link">
+          <a routerLink="/app/peminjaman" class="btn-link">Ajukan Peminjaman Baru &rarr;</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>

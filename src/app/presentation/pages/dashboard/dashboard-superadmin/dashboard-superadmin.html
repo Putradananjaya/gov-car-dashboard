@@ -1,0 +1,199 @@
+<div class="dashboard-container">
+  <section class="metrics-grid" aria-label="Metrik Utama Superadmin">
+    <div class="metric-card glass-panel border-blue">
+      <div class="metric-card-header">
+        <div class="metric-icon-bg color-blue">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="10" width="20" height="8" rx="2" ry="2" />
+            <path d="M17 14h.01M7 14h.01M21 10h-2L16 5H8L5 10H3" />
+            <circle cx="6.5" cy="18" r="2" />
+            <circle cx="17.5" cy="18" r="2" />
+          </svg>
+        </div>
+        <div class="metric-text-group">
+          <h3>Total Aset (Seluruh OPD)</h3>
+          <p class="value">{{ totalAset() }} <span class="unit">Unit</span></p>
+        </div>
+      </div>
+      <div class="metric-footer">
+        <span class="sub-label">Nilai total: Rp {{ totalNilaiAset() | number }}</span>
+      </div>
+    </div>
+
+    <div class="metric-card glass-panel border-green">
+      <div class="metric-card-header">
+        <div class="metric-icon-bg color-green">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+          </svg>
+        </div>
+        <div class="metric-text-group">
+          <h3>Pengguna Aktif</h3>
+          <p class="value">{{ penggunaAktif() }} <span class="unit">Akun</span></p>
+        </div>
+      </div>
+      <div class="metric-footer">
+        <a routerLink="/app/pengguna" class="sub-label">Kelola pengguna →</a>
+      </div>
+    </div>
+
+    <div class="metric-card glass-panel border-orange">
+      <div class="metric-card-header">
+        <div class="metric-icon-bg color-orange">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+          </svg>
+        </div>
+        <div class="metric-text-group">
+          <h3>Aktivitas Sistem (24 jam)</h3>
+          <p class="value">{{ aktivitas24Jam() }} <span class="unit">Entri</span></p>
+        </div>
+      </div>
+      <div class="metric-footer">
+        <a routerLink="/app/audit" class="sub-label">Lihat jejak audit →</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="charts-section" aria-label="Grafik Statistik">
+    <div class="chart-card glass-panel">
+      <div class="chart-header">
+        <h3>Aset per OPD</h3>
+      </div>
+      <div class="chart-body">
+        <svg [attr.viewBox]="'0 0 ' + barChartData().width + ' ' + barChartData().height" class="bar-svg">
+          @for (bar of barChartData().bars; track bar.name) {
+            <rect [attr.x]="bar.x" [attr.y]="bar.y" [attr.width]="bar.width" [attr.height]="bar.height" fill="var(--color-info)" rx="4" class="svg-bar" />
+            <text [attr.x]="bar.x + bar.width/2" [attr.y]="bar.y - 6" text-anchor="middle" fill="var(--md-sys-color-on-background)" font-size="8" font-weight="700">{{ bar.count }}</text>
+            <text [attr.x]="bar.x + bar.width/2" [attr.y]="barChartData().height - 12" text-anchor="middle" fill="var(--text-muted)" font-size="6.5" font-weight="500" [attr.transform]="'rotate(20 ' + (bar.x + bar.width/2) + ',' + (barChartData().height - 12) + ')'">{{ bar.name.length > 18 ? (bar.name.slice(0,18) + '…') : bar.name }}</text>
+          }
+          <line x1="40" [attr.y1]="barChartData().height - 30" x2="430" [attr.y2]="barChartData().height - 30" stroke="var(--md-sys-color-outline)" stroke-width="1" />
+        </svg>
+      </div>
+    </div>
+
+    <div class="chart-card glass-panel donut-card">
+      <div class="chart-header">
+        <h3>Status Operasional Kendaraan</h3>
+      </div>
+      <div class="chart-body donut-wrapper">
+        <div class="donut-svg-container">
+          <svg viewBox="0 0 200 200" class="donut-svg">
+            <circle cx="100" cy="100" r="70" fill="none" stroke="var(--md-sys-color-outline-variant)" stroke-width="15" />
+            @for (item of statusDistribution(); track item.label) {
+              @if (item.count > 0) {
+                @if (item.isFull) {
+                  <circle cx="100" cy="100" r="70" fill="none" [attr.stroke]="item.color" stroke-width="15" />
+                } @else {
+                  <path [attr.d]="item.pathData" fill="none" [attr.stroke]="item.color" stroke-width="15" stroke-linecap="round" />
+                }
+              }
+            }
+            <text x="100" y="95" text-anchor="middle" fill="var(--text-muted)" font-size="9" font-weight="600">Total</text>
+            <text x="100" y="118" text-anchor="middle" fill="var(--text-primary)" font-size="22" font-weight="800">{{ totalAset() }}</text>
+            <text x="100" y="132" text-anchor="middle" fill="var(--text-muted)" font-size="8" font-weight="500">Unit</text>
+          </svg>
+        </div>
+        <div class="donut-legend">
+          @for (item of statusDistribution(); track item.label) {
+            <div class="legend-item">
+              <span class="legend-dot" [style.background-color]="item.color"></span>
+              <span class="legend-label">{{ item.label }}</span>
+              <span class="legend-value">{{ item.count }} <span class="legend-pct">({{ item.percentage }}%)</span></span>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="bottom-section" aria-label="Informasi Operasional">
+    <div class="info-panel glass-panel">
+      <div class="panel-header">
+        <h3>Peminjaman Terbaru</h3>
+      </div>
+      <div class="panel-content">
+        @if (loansTerbaru().length === 0) {
+          <div class="empty-state"><p>Belum ada pengajuan peminjaman.</p></div>
+        } @else {
+          <table class="panel-table">
+            <thead><tr><th>Kendaraan</th><th>Rencana</th><th>Status</th></tr></thead>
+            <tbody>
+              @for (loan of loansTerbaru(); track loan.id) {
+                <tr>
+                  <td>{{ vehicleLabel(loan.nibar) }}</td>
+                  <td>{{ loan.rencanaMulai }}</td>
+                  <td>
+                    <span class="badge" [ngClass]="{
+                      'badge-info': loan.status === 'Diajukan',
+                      'badge-warning': loan.status === 'Berjalan',
+                      'badge-success': loan.status === 'Selesai',
+                      'badge-danger': loan.status === 'Ditolak'
+                    }"><span class="badge-dot"></span>{{ loan.status }}</span>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+        <div class="panel-footer-link">
+          <a routerLink="/app/peminjaman" class="btn-link">Lihat Semua Peminjaman &rarr;</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-panel glass-panel">
+      <div class="panel-header">
+        <h3>Monitoring Kendaraan</h3>
+      </div>
+      <div class="panel-content map-preview-box">
+        <div class="mini-map-container">
+          <svg viewBox="0 0 300 180" class="mini-map-svg">
+            <rect width="100%" height="100%" fill="var(--md-sys-color-background)" rx="6" />
+            <path d="M 40 120 L 150 120 L 250 80 M 150 20 L 150 160" fill="none" stroke="var(--md-sys-color-surface-container)" stroke-width="10" stroke-linecap="round" />
+            <path d="M 40 120 L 150 120 L 250 80 M 150 20 L 150 160" fill="none" stroke="rgba(217,119,6,0.25)" stroke-width="0.5" stroke-dasharray="4,4" />
+            <circle cx="150" cy="120" r="4" fill="var(--md-sys-color-primary)" />
+            <text x="150" y="132" fill="var(--text-primary)" font-size="6" text-anchor="middle" font-weight="600">Bangli</text>
+            @for (c of miniMapCars(); track c.id) {
+              <circle [attr.cx]="c.x * (300/800)" [attr.cy]="c.y * (180/500)" r="4" fill="var(--color-info)" stroke="var(--md-sys-color-outline)" stroke-width="1">
+                <animate attributeName="r" values="3;5;3" dur="2s" repeatCount="indefinite" />
+              </circle>
+            }
+          </svg>
+        </div>
+        <div class="panel-footer-link">
+          <a routerLink="/app/tracking" class="btn-link">Lihat Peta Lengkap &rarr;</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-panel glass-panel">
+      <div class="panel-header">
+        <h3>Aktivitas Sistem Terbaru</h3>
+      </div>
+      <div class="panel-content scroll-list">
+        @if (aktivitasTerbaru().length === 0) {
+          <div class="empty-state"><p>Belum ada aktivitas tercatat.</p></div>
+        } @else {
+          <div class="notifications-list">
+            @for (entry of aktivitasTerbaru(); track entry.id) {
+              <div class="notif-item">
+                <div class="notif-icon-bg bg-blue-light text-blue"><span class="notif-dot"></span></div>
+                <div class="notif-desc">
+                  <p class="title">{{ entry.aksi }} — {{ entry.entitas }}</p>
+                  <p class="desc">oleh {{ entry.pelakuNama }}</p>
+                </div>
+                <span class="notif-time">{{ entry.waktu | date: 'dd MMM HH:mm' }}</span>
+              </div>
+            }
+          </div>
+        }
+        <div class="panel-footer-link">
+          <a routerLink="/app/audit" class="btn-link">Lihat Semua Jejak Audit &rarr;</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>

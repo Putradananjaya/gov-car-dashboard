@@ -2,6 +2,7 @@ import { Component, OnInit, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { AuthService } from '../../../core/auth/auth.service';
 
 @Component({
   selector: 'app-login',
@@ -12,6 +13,7 @@ import { Router, RouterLink } from '@angular/router';
 export class LoginComponent implements OnInit {
   private fb = inject(FormBuilder);
   private router = inject(Router);
+  private authService = inject(AuthService);
 
   loginForm!: FormGroup;
   errorMessage = signal<string | null>(null);
@@ -20,7 +22,7 @@ export class LoginComponent implements OnInit {
 
   ngOnInit() {
     this.loginForm = this.fb.group({
-      username: ['', Validators.required],
+      nip: ['', Validators.required],
       password: ['', Validators.required]
     });
 
@@ -38,19 +40,29 @@ export class LoginComponent implements OnInit {
     this.errorMessage.set(null);
     this.isLoading.set(true);
 
-    const { username, password } = this.loginForm.value;
+    const { nip, password } = this.loginForm.value;
 
-    // Simulasikan delay autentikasi untuk UX premium
+    // Beri jeda singkat agar spinner sempat dirender sebelum proses verifikasi
+    // (sinkron & cukup berat karena hashing kata sandi) berjalan.
     setTimeout(() => {
-      if (username === 'admin' && password === 'admin') {
-        localStorage.setItem('pusaka_bangli_auth', 'true');
-        this.isLoading.set(false);
-        this.router.navigate(['/dashboard']);
-      } else {
-        this.isLoading.set(false);
-        this.errorMessage.set('Username atau password salah!');
+      const result = this.authService.login(nip, password);
+      this.isLoading.set(false);
+
+      if (result.ok) {
+        const peran = this.authService.peran();
+        const tujuan = peran === 'pegawai' ? '/app/peminjaman' : '/app/beranda';
+        this.router.navigate([tujuan]);
+        return;
       }
-    }, 750);
+
+      if (result.reason === 'locked') {
+        const menit = Math.ceil(result.retryAfterMs / 60000);
+        this.errorMessage.set(`Akun terkunci sementara akibat terlalu banyak percobaan gagal. Coba lagi dalam ${menit} menit.`);
+        return;
+      }
+
+      this.errorMessage.set('NIP atau kata sandi tidak sesuai');
+    }, 100);
   }
 
   toggleTheme() {

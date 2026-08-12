@@ -1,0 +1,14 @@
+/** Daftar OPD Kabupaten Bangli — dipakai untuk saringan/pilihan instansi. */
+export const KNOWN_OPD_LIST = [
+  'Sekretariat Daerah',
+  'Dinas Pekerjaan Umum & Penataan Ruang',
+  'Dinas Kesehatan',
+  'Dinas Pendidikan, Pemuda & Olahraga',
+  'Dinas Perhubungan',
+  'Satuan Polisi Pamong Praja',
+  'Dinas Sosial',
+  'Badan Pengelolaan Keuangan, Pendapatan & Aset Daerah',
+  'Kecamatan Bangli',
+  'INSPEKTORAT DAERAH',
+  'Badan Keuangan, Pendapatan dan Aset Daerah'
+];
