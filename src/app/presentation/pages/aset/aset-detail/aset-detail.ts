@@ -45,6 +45,8 @@ export class AsetDetailComponent implements OnInit {
 
   public legalitasForm!: FormGroup;
   public serviceForm!: FormGroup;
+  public isSavingLegalitas = signal(false);
+  public legalitasError = signal<string | null>(null);
 
   computeStatusPajak = computeStatusPajak;
 
@@ -132,16 +134,26 @@ export class AsetDetailComponent implements OnInit {
 
     const { masaBerlakuPajak, masaBerlakuStnk } = this.legalitasForm.value;
     const updated = { ...asset, masaBerlakuPajak, masaBerlakuStnk };
-    await this.assetRepository.upsert(updated);
-    await this.auditRepository.append({
-      pelakuId: this.actorId(),
-      pelakuNama: this.actorLabel(),
-      aksi: 'ubah-legalitas',
-      entitas: 'VehicleAsset',
-      entitasId: this.nibar(),
-      nilaiLama: { masaBerlakuPajak: asset.masaBerlakuPajak, masaBerlakuStnk: asset.masaBerlakuStnk },
-      nilaiBaru: { masaBerlakuPajak, masaBerlakuStnk }
-    });
+
+    this.isSavingLegalitas.set(true);
+    this.legalitasError.set(null);
+    try {
+      await this.assetRepository.upsert(updated);
+      await this.auditRepository.append({
+        pelakuId: this.actorId(),
+        pelakuNama: this.actorLabel(),
+        aksi: 'ubah-legalitas',
+        entitas: 'VehicleAsset',
+        entitasId: this.nibar(),
+        nilaiLama: { masaBerlakuPajak: asset.masaBerlakuPajak, masaBerlakuStnk: asset.masaBerlakuStnk },
+        nilaiBaru: { masaBerlakuPajak, masaBerlakuStnk }
+      });
+    } catch (error) {
+      console.error('Gagal menyimpan legalitas:', error);
+      this.legalitasError.set('Gagal menyimpan. Periksa koneksi Anda dan coba lagi.');
+    } finally {
+      this.isSavingLegalitas.set(false);
+    }
   }
 
   async addServiceRecord(): Promise<void> {

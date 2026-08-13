@@ -84,7 +84,7 @@ export class CarCompatRepository implements CarRepository {
   }
 
   public addCar(carData: Omit<Car, 'id' | 'x' | 'y' | 'routeProgress' | 'speed' | 'fuelLevel' | 'routeId'>): void {
-    const newId = `car-${Date.now()}`;
+    const newId = this.generateCarNibar();
     const fullCar: Car = {
       ...carData,
       id: newId,
@@ -99,17 +99,29 @@ export class CarCompatRepository implements CarRepository {
     const asset = carToVehicleAsset(fullCar, new Date().getFullYear(), '20.00.00', 'input-manual');
     const operational = carToVehicleOperational(fullCar, this.actorLabel());
 
-    void Promise.all([this.assetRepository.upsert(asset), this.operationalRepository.upsert(operational)]).then(() => {
-      this.addLog(newId, fullCar.plateNumber, fullCar.driverName, `${fullCar.agency} • Aset kendaraan dinas baru terdaftar`, 'success');
-      void this.auditRepository.append({
-        pelakuId: this.actorId(),
-        pelakuNama: this.actorLabel(),
-        aksi: 'tambah',
-        entitas: 'VehicleAsset',
-        entitasId: newId,
-        nilaiBaru: asset
+    void Promise.all([this.assetRepository.upsert(asset), this.operationalRepository.upsert(operational)])
+      .then(() => {
+        this.addLog(newId, fullCar.plateNumber, fullCar.driverName, `${fullCar.agency} • Aset kendaraan dinas baru terdaftar`, 'success');
+        void this.auditRepository.append({
+          pelakuId: this.actorId(),
+          pelakuNama: this.actorLabel(),
+          aksi: 'tambah',
+          entitas: 'VehicleAsset',
+          entitasId: newId,
+          nilaiBaru: asset
+        });
+      })
+      .catch(error => {
+        console.error('Gagal menyimpan aset kendaraan baru:', error);
+        this.addLog(newId, fullCar.plateNumber, fullCar.driverName, `${fullCar.agency} • Gagal menyimpan aset — coba lagi`, 'danger');
       });
-    });
+  }
+
+  /** NIBAR 45 karakter — CarRepository.addCar() ini kontrak lama (Fase 1), interface-nya
+   * `void` (fire-and-forget), dipertahankan apa adanya sebagai adapter, tidak diubah ke async. */
+  private generateCarNibar(): string {
+    const raw = `CAR${Date.now()}${Math.floor(Math.random() * 10000)}`;
+    return raw.padEnd(45, '0').slice(0, 45);
   }
 
   public updateCar(id: string, updatedData: Partial<Car>): void {
@@ -124,40 +136,50 @@ export class CarCompatRepository implements CarRepository {
     const newAsset = carToVehicleAsset(mergedCar, asset.tahunAnggaran, asset.kodeLokasi, asset.sumberImporId);
     const newOperational = carToVehicleOperational(mergedCar, this.actorLabel());
 
-    void Promise.all([this.assetRepository.upsert(newAsset), this.operationalRepository.upsert(newOperational)]).then(() => {
-      if (updatedData.status && updatedData.status !== previousStatus) {
-        let type: 'info' | 'warning' | 'success' = 'info';
-        if (updatedData.status === 'Service') type = 'warning';
-        if (updatedData.status === 'Aktif') type = 'success';
-        this.addLog(id, mergedCar.plateNumber, mergedCar.driverName || 'Driver', `${mergedCar.agency} • Status diubah menjadi: ${updatedData.status}`, type);
-      }
-      void this.auditRepository.append({
-        pelakuId: this.actorId(),
-        pelakuNama: this.actorLabel(),
-        aksi: 'ubah',
-        entitas: 'VehicleAsset',
-        entitasId: id,
-        nilaiLama: asset,
-        nilaiBaru: newAsset
+    void Promise.all([this.assetRepository.upsert(newAsset), this.operationalRepository.upsert(newOperational)])
+      .then(() => {
+        if (updatedData.status && updatedData.status !== previousStatus) {
+          let type: 'info' | 'warning' | 'success' = 'info';
+          if (updatedData.status === 'Service') type = 'warning';
+          if (updatedData.status === 'Aktif') type = 'success';
+          this.addLog(id, mergedCar.plateNumber, mergedCar.driverName || 'Driver', `${mergedCar.agency} • Status diubah menjadi: ${updatedData.status}`, type);
+        }
+        void this.auditRepository.append({
+          pelakuId: this.actorId(),
+          pelakuNama: this.actorLabel(),
+          aksi: 'ubah',
+          entitas: 'VehicleAsset',
+          entitasId: id,
+          nilaiLama: asset,
+          nilaiBaru: newAsset
+        });
+      })
+      .catch(error => {
+        console.error('Gagal memperbarui aset kendaraan:', error);
+        this.addLog(id, mergedCar.plateNumber, mergedCar.driverName || 'Driver', `${mergedCar.agency} • Gagal menyimpan perubahan — coba lagi`, 'danger');
       });
-    });
   }
 
   public deleteCar(id: string): void {
     const asset = this.assetRepository.findByNibar(id);
     if (!asset) return;
 
-    void Promise.all([this.assetRepository.remove(id), this.operationalRepository.remove(id)]).then(() => {
-      this.addLog(id, asset.nomorPolisi, asset.pemegang ?? '', `${asset.lokasi} • Aset dihapus dari sistem`, 'warning');
-      void this.auditRepository.append({
-        pelakuId: this.actorId(),
-        pelakuNama: this.actorLabel(),
-        aksi: 'hapus',
-        entitas: 'VehicleAsset',
-        entitasId: id,
-        nilaiLama: asset
+    void Promise.all([this.assetRepository.remove(id), this.operationalRepository.remove(id)])
+      .then(() => {
+        this.addLog(id, asset.nomorPolisi, asset.pemegang ?? '', `${asset.lokasi} • Aset dihapus dari sistem`, 'warning');
+        void this.auditRepository.append({
+          pelakuId: this.actorId(),
+          pelakuNama: this.actorLabel(),
+          aksi: 'hapus',
+          entitas: 'VehicleAsset',
+          entitasId: id,
+          nilaiLama: asset
+        });
+      })
+      .catch(error => {
+        console.error('Gagal menghapus aset kendaraan:', error);
+        this.addLog(id, asset.nomorPolisi, asset.pemegang ?? '', `${asset.lokasi} • Gagal menghapus aset — coba lagi`, 'danger');
       });
-    });
   }
 
   public addLog(

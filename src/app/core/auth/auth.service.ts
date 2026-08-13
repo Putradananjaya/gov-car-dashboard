@@ -12,6 +12,7 @@ export type LoginResult =
 
 interface AuthResponse {
   accessToken: string;
+  refreshToken: string;
   user: User;
 }
 
@@ -20,11 +21,26 @@ interface LoginErrorBody {
   retryAfterMs?: number;
 }
 
+const REFRESH_TOKEN_STORAGE_KEY = 'pusaka_bangli_refresh_token';
+
 /**
- * Sejak Fase 5b, autentikasi sepenuhnya di backend (JWT + refresh token
- * httpOnly cookie) — tidak lagi membaca/membandingkan hash password di
- * browser lewat UserRepository seperti sebelumnya. Access token HANYA hidup
- * di memori (signal), tidak pernah ditulis ke sessionStorage/localStorage.
+ * Sejak Fase 5b, autentikasi sepenuhnya di backend (JWT + refresh token) —
+ * tidak lagi membaca/membandingkan hash password di browser lewat
+ * UserRepository seperti sebelumnya. Access token HANYA hidup di memori
+ * (signal), tidak pernah ditulis ke sessionStorage/localStorage.
+ *
+ * Refresh token AWALNYA (Fase 5b) murni cookie httpOnly. Fase 5c menambah
+ * jalur kedua: token JUGA dikembalikan di body respons & disimpan di
+ * sessionStorage, dikirim eksplisit di body permintaan `/auth/refresh` &
+ * `/auth/logout` — browser modern (Chromium dkk.) memblokir pengiriman
+ * cookie SameSite=None pada fetch/XHR cross-site ketika frontend & backend
+ * di domain yang SAMA SEKALI berbeda (github.io vs railway.app, bukan cuma
+ * beda port seperti dev lokal), meski cookie-nya tersimpan & valid di
+ * server — dikonfirmasi manual saat deploy sungguhan. Trade-off yang
+ * disadari: refresh token di sessionStorage bisa dibaca skrip XSS di
+ * halaman (beda dari access token yang tetap murni in-memory) — ini
+ * levelnya sama dengan token sesi Fase 1 lama, bukan regresi total karena
+ * password/hash tetap tidak pernah meninggalkan server.
  */
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -32,6 +48,7 @@ export class AuthService {
 
   private accessTokenSignal = signal<string | null>(null);
   private currentUserSignal = signal<User | null>(null);
+  private refreshInFlight: Promise<void> | null = null;
 
   public readonly currentUser = computed(() => this.currentUserSignal());
   public readonly isLoggedIn = computed(() => this.currentUserSignal() !== null);
@@ -47,37 +64,75 @@ export class AuthService {
       const response = await firstValueFrom(
         this.http.post<AuthResponse>(`${API_BASE_URL}/auth/login`, { nip, password }, { withCredentials: true })
       );
-      this.accessTokenSignal.set(response.accessToken);
-      this.currentUserSignal.set(response.user);
+      this.applySession(response);
       return { ok: true };
     } catch (error) {
       return this.mapLoginError(error);
     }
   }
 
-  /** Pulihkan sesi diam-diam lewat cookie refresh token (mis. saat aplikasi baru dimuat). */
-  public async refresh(): Promise<void> {
+  /**
+   * Pulihkan sesi diam-diam (mis. saat aplikasi baru dimuat). Refresh token
+   * DIROTASI setiap dipakai — kalau beberapa pemanggil (app initializer +
+   * auth.interceptor.ts yang dipicu beberapa repository sekaligus)
+   * memanggil ini bersamaan, masing-masing memakai token yang SAMA; siapa
+   * pun yang lebih dulu sampai ke server merotasi token dan membuat
+   * panggilan lain (yang masih pakai token lama) gagal 401 — bukan karena
+   * sesi tidak valid, tapi karena kalah balapan. Deduplikasi lewat
+   * `refreshInFlight` supaya hanya satu permintaan HTTP nyata yang jalan.
+   */
+  public refresh(): Promise<void> {
+    if (this.refreshInFlight) return this.refreshInFlight;
+
+    this.refreshInFlight = this.performRefresh().finally(() => {
+      this.refreshInFlight = null;
+    });
+    return this.refreshInFlight;
+  }
+
+  private async performRefresh(): Promise<void> {
+    const storedRefreshToken = sessionStorage.getItem(REFRESH_TOKEN_STORAGE_KEY);
     try {
       const response = await firstValueFrom(
-        this.http.post<AuthResponse>(`${API_BASE_URL}/auth/refresh`, {}, { withCredentials: true })
+        this.http.post<AuthResponse>(
+          `${API_BASE_URL}/auth/refresh`,
+          storedRefreshToken ? { refreshToken: storedRefreshToken } : {},
+          { withCredentials: true }
+        )
       );
-      this.accessTokenSignal.set(response.accessToken);
-      this.currentUserSignal.set(response.user);
+      this.applySession(response);
     } catch {
-      // Tidak ada cookie valid — bukan galat, cukup anggap belum masuk.
-      this.accessTokenSignal.set(null);
-      this.currentUserSignal.set(null);
+      // Tidak ada sesi valid — bukan galat, cukup anggap belum masuk.
+      this.clearSession();
     }
   }
 
   public async logout(): Promise<void> {
+    const storedRefreshToken = sessionStorage.getItem(REFRESH_TOKEN_STORAGE_KEY);
     try {
-      await firstValueFrom(this.http.post(`${API_BASE_URL}/auth/logout`, {}, { withCredentials: true }));
+      await firstValueFrom(
+        this.http.post(
+          `${API_BASE_URL}/auth/logout`,
+          storedRefreshToken ? { refreshToken: storedRefreshToken } : {},
+          { withCredentials: true }
+        )
+      );
     } catch {
       // Abaikan galat jaringan saat logout — state lokal tetap dibersihkan di bawah.
     }
+    this.clearSession();
+  }
+
+  private applySession(response: AuthResponse): void {
+    this.accessTokenSignal.set(response.accessToken);
+    this.currentUserSignal.set(response.user);
+    sessionStorage.setItem(REFRESH_TOKEN_STORAGE_KEY, response.refreshToken);
+  }
+
+  private clearSession(): void {
     this.accessTokenSignal.set(null);
     this.currentUserSignal.set(null);
+    sessionStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
   }
 
   private mapLoginError(error: unknown): LoginResult {

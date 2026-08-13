@@ -25,12 +25,8 @@
                 "input": "public"
               }
             ],
-            "styles": [
-              "src/styles.css"
-            ],
-            "allowedCommonJsDependencies": [
-              "jszip"
-            ]
+            "styles": ["src/styles.css"],
+            "allowedCommonJsDependencies": ["jszip"]
           },
           "configurations": {
             "production": {
@@ -46,7 +42,13 @@
                   "maximumError": "8kB"
                 }
               ],
-              "outputHashing": "all"
+              "outputHashing": "all",
+              "fileReplacements": [
+                {
+                  "replace": "src/app/core/config/api.config.ts",
+                  "with": "src/app/core/config/api.config.production.ts"
+                }
+              ]
             },
             "development": {
               "optimization": false,
@@ -70,6 +72,9 @@
         },
         "test": {
           "builder": "@angular/build:unit-test"
+        },
+        "deploy": {
+          "builder": "angular-cli-ghpages:deploy"
         }
       }
     }

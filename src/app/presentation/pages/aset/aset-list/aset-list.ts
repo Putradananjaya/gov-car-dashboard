@@ -149,21 +149,26 @@ export class AsetListComponent {
     const nibars = [...this.selectedNibars()];
     if (nibars.length === 0) return;
 
-    for (const nibar of nibars) {
-      const operational = this.operationalRepository.findByNibar(nibar);
-      if (!operational) continue;
-      await this.operationalRepository.upsert({ ...operational, kondisi, diperbaruiPada: new Date().toISOString(), diperbaruiOleh: this.actorLabel() });
-      await this.auditRepository.append({
-        pelakuId: this.actorId(),
-        pelakuNama: this.actorLabel(),
-        aksi: 'ubah-kondisi-massal',
-        entitas: 'VehicleOperational',
-        entitasId: nibar,
-        nilaiLama: operational.kondisi,
-        nilaiBaru: kondisi
-      });
+    try {
+      for (const nibar of nibars) {
+        const operational = this.operationalRepository.findByNibar(nibar);
+        if (!operational) continue;
+        await this.operationalRepository.upsert({ ...operational, kondisi, diperbaruiPada: new Date().toISOString(), diperbaruiOleh: this.actorLabel() });
+        await this.auditRepository.append({
+          pelakuId: this.actorId(),
+          pelakuNama: this.actorLabel(),
+          aksi: 'ubah-kondisi-massal',
+          entitas: 'VehicleOperational',
+          entitasId: nibar,
+          nilaiLama: operational.kondisi,
+          nilaiBaru: kondisi
+        });
+      }
+      this.clearSelection();
+    } catch (error) {
+      console.error('Gagal mengubah kondisi massal:', error);
+      alert('Gagal mengubah kondisi — sebagian mungkin sudah tersimpan. Periksa daftar aset dan coba lagi.');
     }
-    this.clearSelection();
   }
 
   async bulkTetapkanPemegang(pemegang: string) {
@@ -171,21 +176,26 @@ export class AsetListComponent {
     if (nibars.length === 0) return;
     const trimmed = pemegang.trim();
 
-    for (const nibar of nibars) {
-      const asset = this.assetRepository.findByNibar(nibar);
-      if (!asset) continue;
-      await this.assetRepository.upsert({ ...asset, pemegang: trimmed || null, isOperasionalBersama: !trimmed });
-      await this.auditRepository.append({
-        pelakuId: this.actorId(),
-        pelakuNama: this.actorLabel(),
-        aksi: 'tetapkan-pemegang-massal',
-        entitas: 'VehicleAsset',
-        entitasId: nibar,
-        nilaiLama: asset.pemegang,
-        nilaiBaru: trimmed || null
-      });
+    try {
+      for (const nibar of nibars) {
+        const asset = this.assetRepository.findByNibar(nibar);
+        if (!asset) continue;
+        await this.assetRepository.upsert({ ...asset, pemegang: trimmed || null, isOperasionalBersama: !trimmed });
+        await this.auditRepository.append({
+          pelakuId: this.actorId(),
+          pelakuNama: this.actorLabel(),
+          aksi: 'tetapkan-pemegang-massal',
+          entitas: 'VehicleAsset',
+          entitasId: nibar,
+          nilaiLama: asset.pemegang,
+          nilaiBaru: trimmed || null
+        });
+      }
+      this.clearSelection();
+    } catch (error) {
+      console.error('Gagal menetapkan pemegang massal:', error);
+      alert('Gagal menetapkan pemegang — sebagian mungkin sudah tersimpan. Periksa daftar aset dan coba lagi.');
     }
-    this.clearSelection();
   }
 
   promptBulkUbahKondisi() {
@@ -206,29 +216,39 @@ export class AsetListComponent {
     const alasan = prompt('Alasan penghapusan aset ini:');
     if (!alasan) return;
 
-    await this.assetRepository.softDelete(nibar);
-    await this.auditRepository.append({
-      pelakuId: this.actorId(),
-      pelakuNama: this.actorLabel(),
-      aksi: 'hapus',
-      entitas: 'VehicleAsset',
-      entitasId: nibar,
-      nilaiBaru: `Dihapus (soft delete). Alasan: ${alasan}`
-    });
+    try {
+      await this.assetRepository.softDelete(nibar);
+      await this.auditRepository.append({
+        pelakuId: this.actorId(),
+        pelakuNama: this.actorLabel(),
+        aksi: 'hapus',
+        entitas: 'VehicleAsset',
+        entitasId: nibar,
+        nilaiBaru: `Dihapus (soft delete). Alasan: ${alasan}`
+      });
+    } catch (error) {
+      console.error('Gagal menghapus aset:', error);
+      alert('Gagal menghapus aset. Periksa koneksi Anda dan coba lagi.');
+    }
   }
 
   async removeAssetPermanently(nibar: string) {
     const confirmed = confirm('Aset akan dihapus PERMANEN dan tidak bisa dikembalikan. Lanjutkan?');
     if (!confirmed) return;
 
-    await this.assetRepository.remove(nibar);
-    await this.operationalRepository.remove(nibar);
-    await this.auditRepository.append({
-      pelakuId: this.actorId(),
-      pelakuNama: this.actorLabel(),
-      aksi: 'hapus-permanen',
-      entitas: 'VehicleAsset',
-      entitasId: nibar
-    });
+    try {
+      await this.assetRepository.remove(nibar);
+      await this.operationalRepository.remove(nibar);
+      await this.auditRepository.append({
+        pelakuId: this.actorId(),
+        pelakuNama: this.actorLabel(),
+        aksi: 'hapus-permanen',
+        entitas: 'VehicleAsset',
+        entitasId: nibar
+      });
+    } catch (error) {
+      console.error('Gagal menghapus aset secara permanen:', error);
+      alert('Gagal menghapus aset. Periksa koneksi Anda dan coba lagi.');
+    }
   }
 }

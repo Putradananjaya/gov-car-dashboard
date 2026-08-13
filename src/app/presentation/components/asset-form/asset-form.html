@@ -143,6 +143,10 @@
     </div>
   </div>
 
+  @if (saveError()) {
+    <p class="error-msg" style="margin-bottom: 8px;">{{ saveError() }}</p>
+  }
+
   <div class="form-actions">
     <button type="button" class="btn-secondary" (click)="onCancel()">Batal</button>
     <button type="submit" class="btn-primary" [disabled]="isSaving()">

@@ -144,21 +144,27 @@ export class PeminjamanComponent {
     }
 
     const updated: Loan = { ...loan, status: 'Selesai', realisasiKembali: new Date().toISOString().slice(0, 10), odometerMasuk };
-    await this.loanRepository.upsert(updated);
 
-    const operational = this.operationalRepository.findByNibar(loan.nibar);
-    if (operational) {
-      await this.operationalRepository.upsert({ ...operational, status: 'Tersedia', diperbaruiPada: new Date().toISOString(), diperbaruiOleh: this.actorLabel() });
+    try {
+      await this.loanRepository.upsert(updated);
+
+      const operational = this.operationalRepository.findByNibar(loan.nibar);
+      if (operational) {
+        await this.operationalRepository.upsert({ ...operational, status: 'Tersedia', diperbaruiPada: new Date().toISOString(), diperbaruiOleh: this.actorLabel() });
+      }
+
+      await this.auditRepository.append({
+        pelakuId: this.actorId(),
+        pelakuNama: this.actorLabel(),
+        aksi: 'kembalikan-peminjaman',
+        entitas: 'Loan',
+        entitasId: loan.id,
+        nilaiLama: loan.status,
+        nilaiBaru: 'Selesai'
+      });
+    } catch (error) {
+      console.error('Gagal memproses pengembalian:', error);
+      alert('Gagal memproses pengembalian. Periksa koneksi Anda dan coba lagi.');
     }
-
-    await this.auditRepository.append({
-      pelakuId: this.actorId(),
-      pelakuNama: this.actorLabel(),
-      aksi: 'kembalikan-peminjaman',
-      entitas: 'Loan',
-      entitasId: loan.id,
-      nilaiLama: loan.status,
-      nilaiBaru: 'Selesai'
-    });
   }
 }

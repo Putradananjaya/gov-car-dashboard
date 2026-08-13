@@ -30,6 +30,7 @@ export class AssetFormComponent implements OnInit, OnChanges {
   public isEditMode = false;
   public form!: FormGroup;
   public isSaving = signal(false);
+  public saveError = signal<string | null>(null);
 
   public opdList = KNOWN_OPD_LIST;
   public kondisiOptions: KondisiAset[] = ['Baik', 'Rusak Ringan', 'Rusak Berat'];
@@ -116,12 +117,13 @@ export class AssetFormComponent implements OnInit, OnChanges {
     }
 
     this.isSaving.set(true);
+    this.saveError.set(null);
     const values = this.form.value;
     const pemegang: string | null = values.pemegang?.trim() || null;
     const now = new Date().toISOString();
 
     const previousAsset = this.nibar ? this.assetRepository.findByNibar(this.nibar) : undefined;
-    const nibar = this.nibar ?? `manual-${Date.now()}`;
+    const nibar = this.nibar ?? this.generateManualNibar();
 
     const asset: VehicleAsset = {
       nibar,
@@ -167,24 +169,35 @@ export class AssetFormComponent implements OnInit, OnChanges {
       diperbaruiOleh: this.actorLabel()
     };
 
-    await Promise.all([this.assetRepository.upsert(asset), this.operationalRepository.upsert(operational)]);
+    try {
+      await Promise.all([this.assetRepository.upsert(asset), this.operationalRepository.upsert(operational)]);
 
-    await this.auditRepository.append({
-      pelakuId: this.actorId(),
-      pelakuNama: this.actorLabel(),
-      aksi: this.isEditMode ? 'ubah' : 'tambah',
-      entitas: 'VehicleAsset',
-      entitasId: nibar,
-      nilaiLama: previousAsset,
-      nilaiBaru: asset
-    });
+      await this.auditRepository.append({
+        pelakuId: this.actorId(),
+        pelakuNama: this.actorLabel(),
+        aksi: this.isEditMode ? 'ubah' : 'tambah',
+        entitas: 'VehicleAsset',
+        entitasId: nibar,
+        nilaiLama: previousAsset,
+        nilaiBaru: asset
+      });
 
-    this.isSaving.set(false);
-    this.saved.emit(nibar);
+      this.saved.emit(nibar);
+    } catch {
+      this.saveError.set('Gagal menyimpan aset. Periksa koneksi Anda dan coba lagi.');
+    } finally {
+      this.isSaving.set(false);
+    }
   }
 
   onCancel(): void {
     this.cancelled.emit();
+  }
+
+  /** NIBAR 45 karakter untuk aset baru yang didaftarkan manual (bukan lewat impor Excel). */
+  private generateManualNibar(): string {
+    const raw = `MANUAL${Date.now()}${Math.floor(Math.random() * 10000)}`;
+    return raw.padEnd(45, '0').slice(0, 45);
   }
 
   isInvalid(controlName: string): boolean {

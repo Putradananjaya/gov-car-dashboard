@@ -61,22 +61,28 @@ export class PersetujuanComponent {
     }
 
     const updated: Loan = { ...loan, status: 'Berjalan', disetujuiOleh: this.actorLabel(), odometerKeluar };
-    await this.loanRepository.upsert(updated);
 
-    const operational = this.operationalRepository.findByNibar(loan.nibar);
-    if (operational) {
-      await this.operationalRepository.upsert({ ...operational, status: 'Dipinjam', diperbaruiPada: new Date().toISOString(), diperbaruiOleh: this.actorLabel() });
+    try {
+      await this.loanRepository.upsert(updated);
+
+      const operational = this.operationalRepository.findByNibar(loan.nibar);
+      if (operational) {
+        await this.operationalRepository.upsert({ ...operational, status: 'Dipinjam', diperbaruiPada: new Date().toISOString(), diperbaruiOleh: this.actorLabel() });
+      }
+
+      await this.auditRepository.append({
+        pelakuId: this.actorId(),
+        pelakuNama: this.actorLabel(),
+        aksi: 'setujui-peminjaman',
+        entitas: 'Loan',
+        entitasId: loan.id,
+        nilaiLama: 'Diajukan',
+        nilaiBaru: 'Berjalan'
+      });
+    } catch (error) {
+      console.error('Gagal menyetujui peminjaman:', error);
+      alert('Gagal menyetujui peminjaman. Periksa koneksi Anda dan coba lagi.');
     }
-
-    await this.auditRepository.append({
-      pelakuId: this.actorId(),
-      pelakuNama: this.actorLabel(),
-      aksi: 'setujui-peminjaman',
-      entitas: 'Loan',
-      entitasId: loan.id,
-      nilaiLama: 'Diajukan',
-      nilaiBaru: 'Berjalan'
-    });
   }
 
   async tolak(loan: Loan): Promise<void> {

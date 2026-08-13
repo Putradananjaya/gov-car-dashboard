@@ -10,9 +10,9 @@ import { CarCompatRepository } from './data/repositories/indexed-db/car-compat.r
 import { UserRepository } from './core/repositories/user.repository';
 import { IndexedDbUserRepository } from './data/repositories/indexed-db/user.repository';
 import { VehicleAssetRepository } from './core/repositories/vehicle-asset.repository';
-import { IndexedDbVehicleAssetRepository } from './data/repositories/indexed-db/vehicle-asset.repository';
+import { HttpVehicleAssetRepository } from './data/repositories/http/vehicle-asset.repository';
 import { VehicleOperationalRepository } from './core/repositories/vehicle-operational.repository';
-import { IndexedDbVehicleOperationalRepository } from './data/repositories/indexed-db/vehicle-operational.repository';
+import { HttpVehicleOperationalRepository } from './data/repositories/http/vehicle-operational.repository';
 import { LoanRepository } from './core/repositories/loan.repository';
 import { IndexedDbLoanRepository } from './data/repositories/indexed-db/loan.repository';
 import { ServiceRepository } from './core/repositories/service.repository';
@@ -32,8 +32,12 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(withInterceptors([authInterceptor])),
     { provide: CarRepository, useClass: CarCompatRepository },
     { provide: UserRepository, useClass: IndexedDbUserRepository },
-    { provide: VehicleAssetRepository, useClass: IndexedDbVehicleAssetRepository },
-    { provide: VehicleOperationalRepository, useClass: IndexedDbVehicleOperationalRepository },
+    // Fase 5c: aset & data operasional sekarang backend-only (Postgres via
+    // Railway), bukan lagi IndexedDB per-browser — momen ini dipilih karena
+    // backend akhirnya benar-benar online (sebelumnya sengaja ditunda di
+    // Fase 5a/5b supaya dev lokal murni tidak butuh backend berjalan).
+    { provide: VehicleAssetRepository, useClass: HttpVehicleAssetRepository },
+    { provide: VehicleOperationalRepository, useClass: HttpVehicleOperationalRepository },
     { provide: LoanRepository, useClass: IndexedDbLoanRepository },
     { provide: ServiceRepository, useClass: IndexedDbServiceRepository },
     { provide: AuditRepository, useClass: IndexedDbAuditRepository },

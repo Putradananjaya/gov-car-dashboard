@@ -100,8 +100,13 @@
                 <input type="date" id="masaBerlakuStnk" formControlName="masaBerlakuStnk">
               </div>
               <div class="form-group" style="justify-content: flex-end; display: flex;">
-                <button type="submit" class="btn-primary">Simpan</button>
+                <button type="submit" class="btn-primary" [disabled]="isSavingLegalitas()">
+                  {{ isSavingLegalitas() ? 'Menyimpan...' : 'Simpan' }}
+                </button>
               </div>
+              @if (legalitasError()) {
+                <p class="error-msg" style="width: 100%;">{{ legalitasError() }}</p>
+              }
             </form>
           }
         </div>

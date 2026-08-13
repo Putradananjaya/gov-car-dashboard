@@ -1,13 +1,15 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, effect, inject, signal, untracked } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { VehicleOperationalRepository } from '../../../core/repositories/vehicle-operational.repository';
 import { VehicleOperational } from '../../../core/models/vehicle-operational.model';
 import { API_BASE_URL } from '../../../core/config/api.config';
+import { AuthService } from '../../../core/auth/auth.service';
 
 @Injectable({ providedIn: 'root' })
 export class HttpVehicleOperationalRepository implements VehicleOperationalRepository {
   private http = inject(HttpClient);
+  private authService = inject(AuthService);
   private itemsSignal = signal<VehicleOperational[]>([]);
 
   public readonly operational = this.itemsSignal.asReadonly();
@@ -15,13 +17,26 @@ export class HttpVehicleOperationalRepository implements VehicleOperationalRepos
 
   constructor() {
     this.ready = this.reload();
+
+    // Sama seperti HttpVehicleAssetRepository — permintaan pertama sebelum
+    // login SELALU 401 (wajar), dan repository singleton ini perlu dipicu
+    // ulang secara eksplisit begitu login berhasil.
+    effect(() => {
+      if (this.authService.isLoggedIn()) {
+        untracked(() => void this.reload());
+      }
+    });
   }
 
   private async reload(): Promise<void> {
-    const items = await firstValueFrom(
-      this.http.get<VehicleOperational[]>(`${API_BASE_URL}/vehicle-operational`)
-    );
-    this.itemsSignal.set(items);
+    try {
+      const items = await firstValueFrom(
+        this.http.get<VehicleOperational[]>(`${API_BASE_URL}/vehicle-operational`)
+      );
+      this.itemsSignal.set(items);
+    } catch {
+      // Belum login / sesi belum pulih — bukan galat fatal untuk `ready`.
+    }
   }
 
   public findByNibar(nibar: string): VehicleOperational | undefined {

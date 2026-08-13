@@ -75,6 +75,8 @@ export class AsetImporComponent {
   public isApplying = signal(false);
   public appliedBatch = signal<ImportBatch | null>(null);
   public isUndoing = signal(false);
+  public applyError = signal<string | null>(null);
+  public undoError = signal<string | null>(null);
 
   public formatTerdeteksi = computed(() => {
     const kop = this.parseResult()?.kop;
@@ -212,7 +214,22 @@ export class AsetImporComponent {
     if (!result) return;
 
     this.isApplying.set(true);
+    this.applyError.set(null);
 
+    try {
+      await this.terapkanImporInternal(result);
+    } catch (error) {
+      console.error('Gagal menerapkan impor:', error);
+      this.applyError.set(
+        'Gagal menerapkan impor — kemungkinan koneksi ke server terputus di tengah proses. ' +
+          'Sebagian baris mungkin sudah tersimpan; periksa /app/aset sebelum mengulang impor ini.'
+      );
+    } finally {
+      this.isApplying.set(false);
+    }
+  }
+
+  private async terapkanImporInternal(result: ParsedImportResult): Promise<void> {
     const photoBlobByNibar = await this.extractPhotosByNibar(result.rowNumberByNibar);
     this.photosImportedCount.set(photoBlobByNibar.size);
 
@@ -309,7 +326,6 @@ export class AsetImporComponent {
     });
 
     this.appliedBatch.set(batch);
-    this.isApplying.set(false);
     this.langkah.set(6);
   }
 
@@ -335,28 +351,38 @@ export class AsetImporComponent {
     if (!confirmed) return;
 
     this.isUndoing.set(true);
+    this.undoError.set(null);
 
-    for (const [nibar, snapshot] of Object.entries(batch.previousSnapshots)) {
-      if (snapshot === null) {
-        await this.assetRepository.remove(nibar);
-        await this.operationalRepository.remove(nibar);
-        await this.photoRepository.remove(nibar);
-      } else {
-        await this.assetRepository.upsert(snapshot);
+    try {
+      for (const [nibar, snapshot] of Object.entries(batch.previousSnapshots)) {
+        if (snapshot === null) {
+          await this.assetRepository.remove(nibar);
+          await this.operationalRepository.remove(nibar);
+          await this.photoRepository.remove(nibar);
+        } else {
+          await this.assetRepository.upsert(snapshot);
+        }
       }
+
+      await this.importBatchRepository.upsert({ ...batch, dibatalkan: true });
+      await this.auditRepository.append({
+        pelakuId: this.actorId(),
+        pelakuNama: this.actorLabel(),
+        aksi: 'batalkan-impor',
+        entitas: 'ImportBatch',
+        entitasId: batch.batchId
+      });
+
+      this.router.navigate(['/app/aset']);
+    } catch (error) {
+      console.error('Gagal membatalkan impor:', error);
+      this.undoError.set(
+        'Gagal membatalkan impor — kemungkinan koneksi ke server terputus di tengah proses. ' +
+          'Sebagian baris mungkin sudah dibatalkan; periksa /app/aset sebelum mencoba lagi.'
+      );
+    } finally {
+      this.isUndoing.set(false);
     }
-
-    await this.importBatchRepository.upsert({ ...batch, dibatalkan: true });
-    await this.auditRepository.append({
-      pelakuId: this.actorId(),
-      pelakuNama: this.actorLabel(),
-      aksi: 'batalkan-impor',
-      entitas: 'ImportBatch',
-      entitasId: batch.batchId
-    });
-
-    this.isUndoing.set(false);
-    this.router.navigate(['/app/aset']);
   }
 
   selesai(): void {

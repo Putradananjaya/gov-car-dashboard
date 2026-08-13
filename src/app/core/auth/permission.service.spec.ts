@@ -26,6 +26,7 @@ describe('PermissionService', () => {
   let httpMock: HttpTestingController;
 
   beforeEach(() => {
+    sessionStorage.clear();
     TestBed.configureTestingModule({
       providers: [provideHttpClient(), provideHttpClientTesting()]
     });
@@ -36,11 +37,14 @@ describe('PermissionService', () => {
 
   afterEach(() => {
     httpMock.verify();
+    sessionStorage.clear();
   });
 
   async function loginAs(peran: Peran): Promise<void> {
     const loginPromise = authService.login('000000000000000000', 'password-uji');
-    httpMock.expectOne(`${API_BASE_URL}/auth/login`).flush({ accessToken: 'token-uji', user: buildUser(peran) });
+    httpMock
+      .expectOne(`${API_BASE_URL}/auth/login`)
+      .flush({ accessToken: 'token-uji', refreshToken: 'refresh-uji', user: buildUser(peran) });
     await loginPromise;
   }
 
