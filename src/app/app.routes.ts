@@ -32,6 +32,12 @@ export const routes: Routes = [
         loadComponent: () => import('./presentation/pages/aset/aset-baru/aset-baru').then(m => m.AsetBaruComponent)
       },
       {
+        path: 'aset/impor',
+        canActivate: [roleGuard],
+        data: { peran: ['superadmin', 'admin'] },
+        loadComponent: () => import('./presentation/pages/aset/aset-impor/aset-impor').then(m => m.AsetImporComponent)
+      },
+      {
         path: 'aset/:nibar',
         canActivate: [roleGuard],
         data: { peran: ['superadmin', 'admin'] },

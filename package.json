@@ -19,6 +19,7 @@
     "@angular/router": "^22.0.0",
     "bcryptjs": "^3.0.3",
     "idb": "^8.0.3",
+    "jszip": "^3.10.1",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"

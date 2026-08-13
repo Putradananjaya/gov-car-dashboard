@@ -187,10 +187,14 @@
       <!-- TAB: FOTO -->
       @if (activeTab() === 'foto') {
         <div class="glass-panel" style="padding: 20px;">
-          <div class="empty-state">
-            <h3>Foto Belum Tersedia</h3>
-            <p>Foto kendaraan akan terisi otomatis setelah fitur ekstraksi foto dari impor Excel selesai dibangun.</p>
-          </div>
+          @if (photoUrl(); as url) {
+            <img [src]="url" alt="Foto kendaraan {{ view()!.nomorPolisi }}" style="max-width: 100%; max-height: 480px; border-radius: var(--md-shape-corner-medium); display: block; margin: 0 auto;">
+          } @else {
+            <div class="empty-state">
+              <h3>Foto Belum Tersedia</h3>
+              <p>Foto kendaraan akan terisi otomatis lewat impor Excel yang berkasnya menyertakan foto tertanam.</p>
+            </div>
+          }
         </div>
       }
 

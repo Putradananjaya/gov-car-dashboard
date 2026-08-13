@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, computed, effect, inject, signal, untracked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -7,6 +7,7 @@ import { VehicleOperationalRepository } from '../../../../core/repositories/vehi
 import { ServiceRepository } from '../../../../core/repositories/service.repository';
 import { LoanRepository } from '../../../../core/repositories/loan.repository';
 import { AuditRepository } from '../../../../core/repositories/audit.repository';
+import { PhotoRepository } from '../../../../core/repositories/photo.repository';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { PermissionService } from '../../../../core/auth/permission.service';
 import { HasPermissionDirective } from '../../../components/has-permission/has-permission.directive';
@@ -32,7 +33,9 @@ export class AsetDetailComponent implements OnInit {
   private serviceRepository = inject(ServiceRepository);
   private loanRepository = inject(LoanRepository);
   private auditRepository = inject(AuditRepository);
+  private photoRepository = inject(PhotoRepository);
   private authService = inject(AuthService);
+  private destroyRef = inject(DestroyRef);
   public permissionService = inject(PermissionService);
 
   public nibar = signal('');
@@ -65,6 +68,24 @@ export class AsetDetailComponent implements OnInit {
       .slice()
       .sort((a, b) => b.waktu.localeCompare(a.waktu))
   );
+
+  private photoBlob = computed(() => this.photoRepository.findByNibar(this.nibar())?.blob ?? null);
+  /** Dicabut (revokeObjectURL) tiap kali foto berganti & saat komponen dihancurkan (dokumen v2 bag. 4.4). */
+  public photoUrl = signal<string | null>(null);
+
+  constructor() {
+    effect(() => {
+      const blob = this.photoBlob();
+      const previousUrl = untracked(() => this.photoUrl());
+      if (previousUrl) URL.revokeObjectURL(previousUrl);
+      this.photoUrl.set(blob ? URL.createObjectURL(blob) : null);
+    });
+
+    this.destroyRef.onDestroy(() => {
+      const url = this.photoUrl();
+      if (url) URL.revokeObjectURL(url);
+    });
+  }
 
   ngOnInit(): void {
     this.route.paramMap.subscribe(params => {

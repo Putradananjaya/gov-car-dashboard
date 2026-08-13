@@ -19,6 +19,8 @@ export interface ParsedImportResult {
   warnings: ValidationIssue[];
   /** Baris rekap/kosong yang bukan baris detail (kolom Nomor Polisi kosong) — dilewati, bukan ditolak. */
   skippedRowCount: number;
+  /** Nomor baris asli (1-indexed) per NIBAR yang diterima — dipakai memetakan anchor foto ke NIBAR. */
+  rowNumberByNibar: Record<string, number>;
 }
 
 export interface ParseEbmdMeta {
@@ -62,6 +64,7 @@ export function parseEbmdWorkbook(buffer: ArrayBuffer, meta: ParseEbmdMeta, now:
   const assets: VehicleAsset[] = [];
   const serviceRecords: ServiceRecord[] = [];
   const batchRows: RowForBatchValidation[] = [];
+  const rowNumberByNibar: Record<string, number> = {};
   let skippedRowCount = 0;
 
   for (let i = FIRST_DETAIL_ROW_INDEX; i < rows.length; i++) {
@@ -143,6 +146,7 @@ export function parseEbmdWorkbook(buffer: ArrayBuffer, meta: ParseEbmdMeta, now:
     };
 
     assets.push(asset);
+    rowNumberByNibar[nibar] = rowNumber;
     batchRows.push({ rowNumber, nibar, nomorRangka, nomorBpkb: nomorBpkbText || null, tanggalPerolehanIso, masaBerlakuPajakIso, masaBerlakuStnkIso });
 
     const riwayatServisUraian = collapseSpaces(raw[COLUMN.RIWAYAT_SERVIS]);
@@ -163,5 +167,5 @@ export function parseEbmdWorkbook(buffer: ArrayBuffer, meta: ParseEbmdMeta, now:
 
   warnings.push(...validateBatch(batchRows, now));
 
-  return { kop, assets, serviceRecords, errors, warnings, skippedRowCount };
+  return { kop, assets, serviceRecords, errors, warnings, skippedRowCount, rowNumberByNibar };
 }

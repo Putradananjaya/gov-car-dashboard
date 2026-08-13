@@ -1,0 +1,212 @@
+<div class="inventory-container">
+  <div class="inventory-header">
+    <div class="header-title">
+      <h1>Impor Data Aset dari Excel e-BMD</h1>
+      <p>Langkah {{ langkah() }} dari 6</p>
+    </div>
+  </div>
+
+  <!-- STEP INDICATOR -->
+  <div class="filters-bar glass-panel" style="gap: 6px; flex-wrap: wrap;">
+    <span class="tab-btn" [class.active]="langkah() === 1">1. Unggah</span>
+    <span class="tab-btn" [class.active]="langkah() === 2">2. Deteksi Format</span>
+    <span class="tab-btn" [class.active]="langkah() === 3">3. Pemetaan Kolom</span>
+    <span class="tab-btn" [class.active]="langkah() === 4">4. Validasi</span>
+    <span class="tab-btn" [class.active]="langkah() === 5">5. Resolusi Konflik</span>
+    <span class="tab-btn" [class.active]="langkah() === 6">6. Terapkan</span>
+  </div>
+
+  <main class="inventory-content">
+    <div class="glass-panel" style="padding: 20px;">
+
+      <!-- LANGKAH 1: UNGGAH -->
+      @if (langkah() === 1) {
+        <h3 style="margin-bottom: 10px;">Unggah Berkas Excel (FORMAT II.O.2.2)</h3>
+        <p style="font-size: 0.8rem; color: var(--md-sys-color-on-surface-variant); margin-bottom: 12px;">
+          Berkas harus berformat .xlsx, maksimum 150MB.
+        </p>
+        <input type="file" accept=".xlsx" (change)="onFileSelected($event)">
+        @if (fileError()) {
+          <p class="error-msg" style="margin-top: 8px;">{{ fileError() }}</p>
+        }
+        @if (selectedFile()) {
+          <p style="margin-top: 8px; font-size: 0.8rem;">Dipilih: <strong>{{ selectedFile()!.name }}</strong> ({{ (selectedFile()!.size / 1024 / 1024).toFixed(1) }} MB)</p>
+        }
+        <div class="form-actions">
+          <button class="btn-primary" [disabled]="!selectedFile() || isParsing()" (click)="prosesBerkas()">
+            {{ isParsing() ? 'Memproses...' : 'Lanjutkan' }}
+          </button>
+        </div>
+      }
+
+      <!-- LANGKAH 2: DETEKSI FORMAT -->
+      @if (langkah() === 2 && parseResult()) {
+        <h3 style="margin-bottom: 10px;">Deteksi Format</h3>
+        @if (formatTerdeteksi()) {
+          <div class="login-error-alert" style="background: rgba(16,185,129,0.1); color: #10b981; border-color: rgba(16,185,129,0.2);">
+            Format FORMAT II.O.2.2 terdeteksi dengan baik.
+          </div>
+        } @else {
+          <div class="login-error-alert">
+            Kop berkas tidak sepenuhnya terbaca — data mungkin tidak akurat. Anda tetap bisa melanjutkan.
+          </div>
+        }
+        <div class="form-grid" style="margin-top: 12px;">
+          <div class="form-section">
+            <p><strong>Tahun Anggaran:</strong> {{ parseResult()!.kop.tahunAnggaran }}</p>
+            <p><strong>Pengguna Barang:</strong> {{ parseResult()!.kop.penggunaBarang || '—' }}</p>
+            <p><strong>Kode Lokasi:</strong> {{ parseResult()!.kop.kodeLokasi || '—' }}</p>
+            <p><strong>Baris Detail Ditemukan:</strong> {{ parseResult()!.assets.length + parseResult()!.errors.length }}</p>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn-secondary" (click)="kembaliKeLangkah(1)">Kembali</button>
+          <button class="btn-primary" (click)="lanjutKeLangkah(3)">Lanjutkan</button>
+        </div>
+      }
+
+      <!-- LANGKAH 3: PEMETAAN KOLOM -->
+      @if (langkah() === 3) {
+        <h3 style="margin-bottom: 6px;">Pratinjau Pemetaan Kolom</h3>
+        <p style="font-size: 0.78rem; color: var(--md-sys-color-on-surface-variant); margin-bottom: 12px;">
+          Pemetaan ini tetap (mengikuti FORMAT II.O.2.2) — belum bisa dikoreksi manual dari layar ini.
+          Bila format OPD sumber berbeda tipis, hasil validasi di langkah berikutnya akan menandainya.
+        </p>
+        <div class="table-responsive">
+          <table class="inventory-table">
+            <thead><tr><th>Kolom Excel</th><th>Field Sistem</th></tr></thead>
+            <tbody>
+              @for (row of kolomMappingReferensi; track row.kolom) {
+                <tr><td style="font-family: monospace;">{{ row.kolom }}</td><td>{{ row.field }}</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <div class="form-actions">
+          <button class="btn-secondary" (click)="kembaliKeLangkah(2)">Kembali</button>
+          <button class="btn-primary" (click)="lanjutKeLangkah(4)">Lanjutkan</button>
+        </div>
+      }
+
+      <!-- LANGKAH 4: VALIDASI -->
+      @if (langkah() === 4 && parseResult()) {
+        <h3 style="margin-bottom: 10px;">Hasil Validasi</h3>
+        <div style="display: flex; gap: 16px; margin-bottom: 12px; flex-wrap: wrap;">
+          <span class="badge badge-success"><span class="badge-dot"></span>{{ parseResult()!.assets.length }} baris diterima</span>
+          <span class="badge badge-danger"><span class="badge-dot"></span>{{ parseResult()!.errors.length }} galat (ditolak)</span>
+          <span class="badge badge-warning"><span class="badge-dot"></span>{{ parseResult()!.warnings.length }} peringatan</span>
+        </div>
+
+        @if (parseResult()!.errors.length > 0) {
+          <h4 style="font-size: 0.85rem; margin-bottom: 6px;">Galat (baris tidak ikut diimpor)</h4>
+          <div class="table-responsive" style="margin-bottom: 16px;">
+            <table class="inventory-table">
+              <thead><tr><th>Baris</th><th>NIBAR</th><th>Pesan</th></tr></thead>
+              <tbody>
+                @for (e of parseResult()!.errors; track e.rowNumber + e.message) {
+                  <tr><td>{{ e.rowNumber }}</td><td style="font-family: monospace; font-size: 0.7rem;">{{ e.nibar || '—' }}</td><td>{{ e.message }}</td></tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+
+        @if (parseResult()!.warnings.length > 0) {
+          <h4 style="font-size: 0.85rem; margin-bottom: 6px;">Peringatan (baris masuk, perlu verifikasi)</h4>
+          <div class="table-responsive">
+            <table class="inventory-table">
+              <thead><tr><th>Baris</th><th>NIBAR</th><th>Pesan</th></tr></thead>
+              <tbody>
+                @for (w of parseResult()!.warnings; track w.rowNumber + w.message) {
+                  <tr><td>{{ w.rowNumber }}</td><td style="font-family: monospace; font-size: 0.7rem;">{{ w.nibar || '—' }}</td><td>{{ w.message }}</td></tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+
+        <div class="form-actions">
+          <button class="btn-secondary" (click)="kembaliKeLangkah(3)">Kembali</button>
+          <button class="btn-primary" [disabled]="parseResult()!.assets.length === 0" (click)="lanjutKeLangkah(5)">Lanjutkan</button>
+        </div>
+      }
+
+      <!-- LANGKAH 5: RESOLUSI KONFLIK -->
+      @if (langkah() === 5) {
+        <h3 style="margin-bottom: 6px;">Resolusi Konflik NIBAR</h3>
+        <p style="font-size: 0.78rem; color: var(--md-sys-color-on-surface-variant); margin-bottom: 12px;">
+          {{ newRows().length }} NIBAR baru akan ditambahkan otomatis. {{ conflictRows().length }} NIBAR sudah ada di basis data — pilih tindakan untuk masing-masing.
+        </p>
+
+        @if (conflictRows().length === 0) {
+          <div class="empty-state"><p>Tidak ada NIBAR yang konflik — semua baris baru.</p></div>
+        } @else {
+          <div class="table-responsive">
+            <table class="inventory-table">
+              <thead><tr><th>NIBAR</th><th>Nomor Polisi</th><th>Tindakan</th></tr></thead>
+              <tbody>
+                @for (row of conflictRows(); track row.nibar) {
+                  <tr>
+                    <td style="font-family: monospace; font-size: 0.7rem;">{{ row.nibar }}</td>
+                    <td>{{ row.nomorPolisi }}</td>
+                    <td>
+                      <select [value]="getResolution(row.nibar)" (change)="setResolution(row.nibar, $any($event.target).value)">
+                        <option value="perbarui-semua">Perbarui Semua Field</option>
+                        <option value="perbarui-kosong">Perbarui Field Kosong Saja</option>
+                        <option value="lewati">Lewati</option>
+                      </select>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+
+        @if (isExtractingPhotos()) {
+          <p style="font-size: 0.78rem; margin-top: 12px;">
+            Mengekstrak &amp; mengompres foto: {{ photoProgressDone() }}/{{ photoProgressTotal() }}
+          </p>
+        }
+
+        <div class="form-actions">
+          <button class="btn-secondary" (click)="kembaliKeLangkah(4)">Kembali</button>
+          <button class="btn-primary" [disabled]="isApplying()" (click)="terapkanImpor()">
+            {{ isExtractingPhotos() ? 'Memproses foto...' : (isApplying() ? 'Menerapkan...' : 'Terapkan Impor') }}
+          </button>
+        </div>
+      }
+
+      <!-- LANGKAH 6: RINGKASAN -->
+      @if (langkah() === 6 && appliedBatch()) {
+        <h3 style="margin-bottom: 10px;">Impor Selesai</h3>
+        <div style="display: flex; gap: 16px; margin-bottom: 16px; flex-wrap: wrap;">
+          <span class="badge badge-success"><span class="badge-dot"></span>{{ appliedBatch()!.jumlahDitambah }} ditambah</span>
+          <span class="badge badge-info"><span class="badge-dot"></span>{{ appliedBatch()!.jumlahDiperbarui }} diperbarui</span>
+          <span class="badge badge-warning"><span class="badge-dot"></span>{{ appliedBatch()!.jumlahDilewati }} dilewati</span>
+          @if (photosImportedCount() > 0) {
+            <span class="badge badge-info"><span class="badge-dot"></span>{{ photosImportedCount() }} foto terpasang</span>
+          }
+        </div>
+
+        @if (photoExtractionError()) {
+          <div class="login-error-alert" style="margin-bottom: 12px;">
+            Foto tidak berhasil diproses: {{ photoExtractionError() }} — data aset tetap tersimpan.
+          </div>
+        }
+
+        <p style="font-size: 0.8rem; margin-bottom: 16px;">
+          Aset baru mendapat kondisi awal "Baik" — perlu diverifikasi manual di halaman detail masing-masing.
+        </p>
+
+        <div class="form-actions" style="justify-content: flex-start; gap: 10px;">
+          <button class="btn-secondary" (click)="downloadValidationReport()">Unduh Log Galat &amp; Peringatan</button>
+          <button class="btn-secondary" style="border-color: rgba(239,68,68,0.3); color: #f87171;" [disabled]="isUndoing()" (click)="batalkanImpor()">
+            {{ isUndoing() ? 'Membatalkan...' : 'Batalkan Impor Ini' }}
+          </button>
+          <button class="btn-primary" (click)="selesai()">Selesai — Lihat Daftar Aset</button>
+        </div>
+      }
+    </div>
+  </main>
+</div>

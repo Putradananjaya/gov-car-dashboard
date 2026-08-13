@@ -1,5 +1,6 @@
 import { ApplicationConfig, provideBrowserGlobalErrorListeners, provideAppInitializer, inject, EnvironmentInjector, runInInjectionContext } from '@angular/core';
 import { provideRouter } from '@angular/router';
+import { provideHttpClient } from '@angular/common/http';
 
 import { routes } from './app.routes';
 import { CarRepository } from './core/repositories/car.repository';
@@ -16,12 +17,17 @@ import { ServiceRepository } from './core/repositories/service.repository';
 import { IndexedDbServiceRepository } from './data/repositories/indexed-db/service.repository';
 import { AuditRepository } from './core/repositories/audit.repository';
 import { IndexedDbAuditRepository } from './data/repositories/indexed-db/audit.repository';
+import { ImportBatchRepository } from './core/repositories/import-batch.repository';
+import { IndexedDbImportBatchRepository } from './data/repositories/indexed-db/import-batch.repository';
+import { PhotoRepository } from './core/repositories/photo.repository';
+import { IndexedDbPhotoRepository } from './data/repositories/indexed-db/photo.repository';
 import { migrateOrSeedDatabase } from './data/db/migration';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes),
+    provideHttpClient(),
     { provide: CarRepository, useClass: CarCompatRepository },
     { provide: UserRepository, useClass: IndexedDbUserRepository },
     { provide: VehicleAssetRepository, useClass: IndexedDbVehicleAssetRepository },
@@ -29,6 +35,8 @@ export const appConfig: ApplicationConfig = {
     { provide: LoanRepository, useClass: IndexedDbLoanRepository },
     { provide: ServiceRepository, useClass: IndexedDbServiceRepository },
     { provide: AuditRepository, useClass: IndexedDbAuditRepository },
+    { provide: ImportBatchRepository, useClass: IndexedDbImportBatchRepository },
+    { provide: PhotoRepository, useClass: IndexedDbPhotoRepository },
     // Pastikan skema/migrasi/seed IndexedDB & semua repository selesai memuat
     // SEBELUM navigasi/guard pertama jalan — menghindari race AuthService
     // membaca UserRepository yang masih kosong saat halaman di-reload.
@@ -49,7 +57,9 @@ export const appConfig: ApplicationConfig = {
             inject(VehicleOperationalRepository),
             inject(LoanRepository),
             inject(ServiceRepository),
-            inject(AuditRepository)
+            inject(AuditRepository),
+            inject(ImportBatchRepository),
+            inject(PhotoRepository)
           ];
           return Promise.all(repositories.map(repository => repository.ready));
         })
