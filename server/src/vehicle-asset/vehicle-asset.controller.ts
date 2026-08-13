@@ -1,8 +1,12 @@
-import { Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards } from '@nestjs/common';
 import { VehicleAssetService } from './vehicle-asset.service';
 import { UpsertVehicleAssetDto } from './dto/upsert-vehicle-asset.dto';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../auth/roles.guard';
+import { Roles } from '../auth/roles.decorator';
 
 @Controller('vehicle-assets')
+@UseGuards(JwtAuthGuard)
 export class VehicleAssetController {
   constructor(private readonly service: VehicleAssetService) {}
 
@@ -22,6 +26,8 @@ export class VehicleAssetController {
   }
 
   @Delete(':nibar')
+  @UseGuards(RolesGuard)
+  @Roles('superadmin')
   remove(@Param('nibar') nibar: string) {
     return this.service.remove(nibar);
   }

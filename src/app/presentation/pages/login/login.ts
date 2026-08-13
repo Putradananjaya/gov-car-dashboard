@@ -31,7 +31,7 @@ export class LoginComponent implements OnInit {
     this.isDarkTheme.set(false);
   }
 
-  onSubmit() {
+  async onSubmit() {
     if (this.loginForm.invalid) {
       this.loginForm.markAllAsTouched();
       return;
@@ -41,28 +41,28 @@ export class LoginComponent implements OnInit {
     this.isLoading.set(true);
 
     const { nip, password } = this.loginForm.value;
+    const result = await this.authService.login(nip, password);
+    this.isLoading.set(false);
 
-    // Beri jeda singkat agar spinner sempat dirender sebelum proses verifikasi
-    // (sinkron & cukup berat karena hashing kata sandi) berjalan.
-    setTimeout(() => {
-      const result = this.authService.login(nip, password);
-      this.isLoading.set(false);
+    if (result.ok) {
+      const peran = this.authService.peran();
+      const tujuan = peran === 'pegawai' ? '/app/peminjaman' : '/app/beranda';
+      this.router.navigate([tujuan]);
+      return;
+    }
 
-      if (result.ok) {
-        const peran = this.authService.peran();
-        const tujuan = peran === 'pegawai' ? '/app/peminjaman' : '/app/beranda';
-        this.router.navigate([tujuan]);
-        return;
-      }
+    if (result.reason === 'locked') {
+      const menit = Math.ceil(result.retryAfterMs / 60000);
+      this.errorMessage.set(`Akun terkunci sementara akibat terlalu banyak percobaan gagal. Coba lagi dalam ${menit} menit.`);
+      return;
+    }
 
-      if (result.reason === 'locked') {
-        const menit = Math.ceil(result.retryAfterMs / 60000);
-        this.errorMessage.set(`Akun terkunci sementara akibat terlalu banyak percobaan gagal. Coba lagi dalam ${menit} menit.`);
-        return;
-      }
+    if (result.reason === 'error') {
+      this.errorMessage.set('Tidak dapat terhubung ke server. Coba lagi.');
+      return;
+    }
 
-      this.errorMessage.set('NIP atau kata sandi tidak sesuai');
-    }, 100);
+    this.errorMessage.set('NIP atau kata sandi tidak sesuai');
   }
 
   toggleTheme() {

@@ -1,14 +1,22 @@
-# PUSAKA BANGLI — Backend (Fase 5a)
+# PUSAKA BANGLI — Backend (Fase 5a + 5b)
 
-API REST NestJS + PostgreSQL untuk `vehicle-asset` dan `vehicle-operational`
-(dokumen v2 bag. 5). Ini fondasi awal Fase 5 — **belum ada autentikasi sama
-sekali** di endpoint manapun. Jangan expose ke jaringan publik atau mesin
-mana pun selain `localhost` sampai putaran "Auth backend" selesai.
+API REST NestJS + PostgreSQL untuk `vehicle-asset`, `vehicle-operational`,
+dan autentikasi (JWT + refresh token). Sejak Fase 5b, semua endpoint
+`/vehicle-assets` dan `/vehicle-operational` **memerlukan login** (header
+`Authorization: Bearer <accessToken>`); `DELETE /vehicle-assets/:nibar`
+(hapus permanen) khusus peran `superadmin`.
+
+**Catatan penting**: otorisasi granular penuh (matriks 14 kemampuan yang ada
+di `PermissionService` sisi Angular, pembatasan data per-OPD) belum
+direplikasi di backend — baru "harus login" + satu contoh role-guard nyata.
+`/app/pengguna` (Angular) juga masih memakai daftar pengguna lokal terpisah
+(IndexedDB), belum tersambung ke tabel `users` Postgres di sini.
 
 ## Menjalankan secara lokal
 
-1. Salin `.env.example` ke `.env` (nilai default sudah cocok untuk
-   `docker-compose.yml` di bawah).
+1. Salin `.env.example` ke `.env` — **ganti `JWT_SECRET`** dengan rahasia
+   acak sendiri (mis. `openssl rand -hex 32`), jangan pernah pakai nilai
+   placeholder di `.env.example`.
 2. Nyalakan PostgreSQL:
    ```
    docker compose up -d
@@ -23,23 +31,35 @@ mana pun selain `localhost` sampai putaran "Auth backend" selesai.
    ```
    Server berjalan di `http://localhost:3000`. Skema tabel dibuat otomatis
    dari entity TypeORM (`synchronize: true`, hanya untuk pengembangan lokal).
+   Tiga akun demo (superadmin/admin/pegawai) otomatis di-seed saat boot
+   pertama bila tabel `users` masih kosong — NIP/kata sandi identik dengan
+   `src/app/data/db/seed.ts` di sisi Angular.
 
-## Endpoint
+## Endpoint autentikasi
 
-- `GET /vehicle-assets` — daftar semua aset
-- `GET /vehicle-assets/:nibar` — satu aset
-- `PUT /vehicle-assets/:nibar` — buat/perbarui (upsert), body = objek
-  `VehicleAsset` penuh (termasuk `kodeBarang` bersarang)
-- `DELETE /vehicle-assets/:nibar` — hapus permanen
-- `POST /vehicle-assets/:nibar/soft-delete` — isi `dihapusPada`
+- `POST /auth/login` — body `{nip, password}`. Sukses: `{accessToken, user}`
+  + cookie `refresh_token` (httpOnly). Gagal: 401 `{reason:'invalid'}` atau
+  `{reason:'locked', retryAfterMs}` (5x gagal beruntun per NIP → kunci 15
+  menit). Dibatasi 10 permintaan/menit per IP.
+- `POST /auth/refresh` — baca cookie `refresh_token`, terbitkan
+  `accessToken` baru + **rotasi** cookie (token lama langsung dicabut).
+- `POST /auth/logout` — cabut refresh token yang aktif + hapus cookie.
 
-- `GET /vehicle-operational`
-- `GET /vehicle-operational/:nibar`
-- `PUT /vehicle-operational/:nibar` — upsert, body = objek
-  `VehicleOperational` penuh (termasuk `telemetri` bersarang, boleh `null`)
-- `DELETE /vehicle-operational/:nibar`
+Semua endpoint dibatasi laju 100 permintaan/menit per IP secara umum
+(`@nestjs/throttler`).
 
-CORS hanya dibuka untuk `http://localhost:4300` (dev server Angular).
+## Endpoint data
+
+- `GET /vehicle-assets`, `GET /vehicle-assets/:nibar`,
+  `PUT /vehicle-assets/:nibar`, `POST /vehicle-assets/:nibar/soft-delete` —
+  butuh login (peran apa saja)
+- `DELETE /vehicle-assets/:nibar` — butuh login **peran superadmin**
+- `GET /vehicle-operational`, `GET /vehicle-operational/:nibar`,
+  `PUT /vehicle-operational/:nibar`, `DELETE /vehicle-operational/:nibar` —
+  butuh login (peran apa saja)
+
+CORS hanya dibuka untuk `http://localhost:4300` (dev server Angular), dengan
+`credentials: true` (dibutuhkan agar cookie refresh token terkirim).
 
 ## Mematikan
 

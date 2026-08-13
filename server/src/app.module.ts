@@ -1,8 +1,13 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 import { VehicleAssetModule } from './vehicle-asset/vehicle-asset.module';
 import { VehicleOperationalModule } from './vehicle-operational/vehicle-operational.module';
+import { UserModule } from './user/user.module';
+import { AuthModule } from './auth/auth.module';
+import { SeedModule } from './seed/seed.module';
 
 @Module({
   imports: [
@@ -24,8 +29,15 @@ import { VehicleOperationalModule } from './vehicle-operational/vehicle-operatio
         synchronize: true
       })
     }),
+    // Lapis pembatasan laju generik per-IP (dokumen v2 bag. 5, "pembatasan
+    // laju") — di atas lockout per-NIP yang lebih spesifik di AuthService.
+    ThrottlerModule.forRoot([{ ttl: 60000, limit: 100 }]),
+    UserModule,
+    AuthModule,
+    SeedModule,
     VehicleAssetModule,
     VehicleOperationalModule
-  ]
+  ],
+  providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }]
 })
 export class AppModule {}

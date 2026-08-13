@@ -1,8 +1,10 @@
 import { ApplicationConfig, provideBrowserGlobalErrorListeners, provideAppInitializer, inject, EnvironmentInjector, runInInjectionContext } from '@angular/core';
 import { provideRouter } from '@angular/router';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
 
 import { routes } from './app.routes';
+import { AuthService } from './core/auth/auth.service';
+import { authInterceptor } from './core/auth/auth.interceptor';
 import { CarRepository } from './core/repositories/car.repository';
 import { CarCompatRepository } from './data/repositories/indexed-db/car-compat.repository';
 import { UserRepository } from './core/repositories/user.repository';
@@ -27,7 +29,7 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes),
-    provideHttpClient(),
+    provideHttpClient(withInterceptors([authInterceptor])),
     { provide: CarRepository, useClass: CarCompatRepository },
     { provide: UserRepository, useClass: IndexedDbUserRepository },
     { provide: VehicleAssetRepository, useClass: IndexedDbVehicleAssetRepository },
@@ -38,8 +40,11 @@ export const appConfig: ApplicationConfig = {
     { provide: ImportBatchRepository, useClass: IndexedDbImportBatchRepository },
     { provide: PhotoRepository, useClass: IndexedDbPhotoRepository },
     // Pastikan skema/migrasi/seed IndexedDB & semua repository selesai memuat
-    // SEBELUM navigasi/guard pertama jalan — menghindari race AuthService
-    // membaca UserRepository yang masih kosong saat halaman di-reload.
+    // SEBELUM navigasi/guard pertama jalan — plus pulihkan sesi login (kalau
+    // ada cookie refresh token valid) lewat AuthService.refresh(), supaya
+    // authGuard/roleGuard tidak salah menganggap pengguna belum masuk saat
+    // halaman baru saja di-reload (Fase 5b — auth sekarang backend-only,
+    // AuthService tidak lagi bergantung UserRepository).
     //
     // inject() hanya boleh dipanggil secara sinkron dalam konteks injeksi —
     // begitu melewati satu `await`, konteksnya hilang (NG0203). Karena
@@ -61,7 +66,8 @@ export const appConfig: ApplicationConfig = {
             inject(ImportBatchRepository),
             inject(PhotoRepository)
           ];
-          return Promise.all(repositories.map(repository => repository.ready));
+          const authService = inject(AuthService);
+          return Promise.all([...repositories.map(repository => repository.ready), authService.refresh()]);
         })
       );
     })

@@ -105,8 +105,8 @@ export class App implements OnInit {
     this.isDarkTheme.set(isDark);
   }
 
-  logout() {
-    this.authService.logout();
+  async logout() {
+    await this.authService.logout();
     this.router.navigate(['/']);
   }
 

@@ -1,50 +1,56 @@
-import 'fake-indexeddb/auto';
 import { TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { AuthService } from './auth.service';
 import { PermissionService } from './permission.service';
-import { UserRepository } from '../repositories/user.repository';
-import { IndexedDbUserRepository } from '../../data/repositories/indexed-db/user.repository';
-import { resetBangliDbConnection } from '../../data/db/database';
-import { migrateOrSeedDatabase } from '../../data/db/migration';
+import { User, Peran } from '../models/user.model';
+import { API_BASE_URL } from '../config/api.config';
 
-const SUPERADMIN_NIP = '196801011990031001';
-const SUPERADMIN_PASSWORD = 'Superadmin#123';
-const ADMIN_NIP = '198203152010012005';
-const ADMIN_PASSWORD = 'Admin#123';
-const PEGAWAI_NIP = '199005202015031002';
-const PEGAWAI_PASSWORD = 'Pegawai#123';
+function buildUser(peran: Peran): User {
+  return {
+    id: `user-${peran}-1`,
+    nip: '000000000000000000',
+    nama: 'Pengguna Uji',
+    jabatan: 'Jabatan Uji',
+    unitKerja: 'Unit Uji',
+    peran,
+    aktif: true,
+    passwordHash: '',
+    terakhirMasuk: null
+  };
+}
 
 describe('PermissionService', () => {
   let authService: AuthService;
   let permissionService: PermissionService;
+  let httpMock: HttpTestingController;
 
-  beforeEach(async () => {
-    sessionStorage.clear();
-    localStorage.clear();
-    await resetBangliDbConnection();
-    await new Promise<void>(resolve => {
-      const request = indexedDB.deleteDatabase('pusaka-bangli');
-      request.onsuccess = () => resolve();
-      request.onerror = () => resolve();
-      request.onblocked = () => resolve();
-    });
-    await migrateOrSeedDatabase();
-
+  beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [{ provide: UserRepository, useClass: IndexedDbUserRepository }]
+      providers: [provideHttpClient(), provideHttpClientTesting()]
     });
-    await TestBed.inject(UserRepository).ready;
     authService = TestBed.inject(AuthService);
     permissionService = TestBed.inject(PermissionService);
+    httpMock = TestBed.inject(HttpTestingController);
   });
+
+  afterEach(() => {
+    httpMock.verify();
+  });
+
+  async function loginAs(peran: Peran): Promise<void> {
+    const loginPromise = authService.login('000000000000000000', 'password-uji');
+    httpMock.expectOne(`${API_BASE_URL}/auth/login`).flush({ accessToken: 'token-uji', user: buildUser(peran) });
+    await loginPromise;
+  }
 
   it('denies everything when nobody is logged in', () => {
     expect(permissionService.can('aset.lihat')).toBe(false);
     expect(permissionService.can('peminjaman.ajukan')).toBe(false);
   });
 
-  it('grants superadmin full access, including system-only capabilities', () => {
-    authService.login(SUPERADMIN_NIP, SUPERADMIN_PASSWORD);
+  it('grants superadmin full access, including system-only capabilities', async () => {
+    await loginAs('superadmin');
 
     expect(permissionService.can('aset.lihat')).toBe(true);
     expect(permissionService.can('aset.hapusPermanen')).toBe(true);
@@ -53,8 +59,8 @@ describe('PermissionService', () => {
     expect(permissionService.can('sistem.resetBasisData')).toBe(true);
   });
 
-  it('grants admin asset management but not system-level capabilities', () => {
-    authService.login(ADMIN_NIP, ADMIN_PASSWORD);
+  it('grants admin asset management but not system-level capabilities', async () => {
+    await loginAs('admin');
 
     expect(permissionService.can('aset.lihat')).toBe(true);
     expect(permissionService.can('aset.ubah')).toBe(true);
@@ -65,8 +71,8 @@ describe('PermissionService', () => {
     expect(permissionService.can('sistem.resetBasisData')).toBe(false);
   });
 
-  it('restricts pegawai to self-service capabilities only', () => {
-    authService.login(PEGAWAI_NIP, PEGAWAI_PASSWORD);
+  it('restricts pegawai to self-service capabilities only', async () => {
+    await loginAs('pegawai');
 
     expect(permissionService.can('peminjaman.ajukan')).toBe(true);
     expect(permissionService.can('kerusakan.lapor')).toBe(true);

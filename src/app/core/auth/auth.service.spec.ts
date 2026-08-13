@@ -1,90 +1,131 @@
-import 'fake-indexeddb/auto';
 import { TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { AuthService } from './auth.service';
-import { UserRepository } from '../repositories/user.repository';
-import { IndexedDbUserRepository } from '../../data/repositories/indexed-db/user.repository';
-import { resetBangliDbConnection } from '../../data/db/database';
-import { migrateOrSeedDatabase } from '../../data/db/migration';
+import { User } from '../models/user.model';
+import { API_BASE_URL } from '../config/api.config';
 
-// NIP/kata sandi akun contoh, lihat data/db/seed.ts
-const SUPERADMIN_NIP = '196801011990031001';
-const SUPERADMIN_PASSWORD = 'Superadmin#123';
-const PEGAWAI_NIP = '199005202015031002';
-const PEGAWAI_PASSWORD = 'Pegawai#123';
+const SAMPLE_USER: User = {
+  id: 'user-superadmin-1',
+  nip: '196801011990031001',
+  nama: 'I Wayan Sudiarta',
+  jabatan: 'Kepala Badan',
+  unitKerja: 'Badan Keuangan, Pendapatan dan Aset Daerah',
+  peran: 'superadmin',
+  aktif: true,
+  passwordHash: '',
+  terakhirMasuk: null
+};
 
 describe('AuthService', () => {
   let authService: AuthService;
+  let httpMock: HttpTestingController;
 
-  beforeEach(async () => {
-    sessionStorage.clear();
-    localStorage.clear();
-    await resetBangliDbConnection();
-    await new Promise<void>(resolve => {
-      const request = indexedDB.deleteDatabase('pusaka-bangli');
-      request.onsuccess = () => resolve();
-      request.onerror = () => resolve();
-      request.onblocked = () => resolve();
-    });
-    await migrateOrSeedDatabase();
-
+  beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [{ provide: UserRepository, useClass: IndexedDbUserRepository }]
+      providers: [provideHttpClient(), provideHttpClientTesting()]
     });
-    await TestBed.inject(UserRepository).ready;
     authService = TestBed.inject(AuthService);
+    httpMock = TestBed.inject(HttpTestingController);
   });
 
-  it('starts logged out when no session exists', () => {
+  afterEach(() => {
+    httpMock.verify();
+  });
+
+  it('starts logged out', () => {
     expect(authService.isLoggedIn()).toBe(false);
     expect(authService.currentUser()).toBeNull();
+    expect(authService.peran()).toBeNull();
+    expect(authService.getAccessToken()).toBeNull();
   });
 
-  it('logs in with valid NIP and password', () => {
-    const result = authService.login(SUPERADMIN_NIP, SUPERADMIN_PASSWORD);
+  it('login success sets accessToken + currentUser and returns {ok:true}', async () => {
+    const loginPromise = authService.login('196801011990031001', 'Superadmin#123');
 
-    expect(result.ok).toBe(true);
+    const req = httpMock.expectOne(`${API_BASE_URL}/auth/login`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ nip: '196801011990031001', password: 'Superadmin#123' });
+    expect(req.request.withCredentials).toBe(true);
+    req.flush({ accessToken: 'token-abc', user: SAMPLE_USER });
+
+    const result = await loginPromise;
+    expect(result).toEqual({ ok: true });
     expect(authService.isLoggedIn()).toBe(true);
+    expect(authService.currentUser()).toEqual(SAMPLE_USER);
     expect(authService.peran()).toBe('superadmin');
+    expect(authService.getAccessToken()).toBe('token-abc');
   });
 
-  it('rejects an unknown NIP with a generic reason', () => {
-    const result = authService.login('000000000000000000', 'apa-saja');
+  it('login with wrong password returns {ok:false, reason:"invalid"}', async () => {
+    const loginPromise = authService.login('196801011990031001', 'salah');
 
-    expect(result.ok).toBe(false);
-    expect(result.ok === false && result.reason).toBe('invalid');
+    const req = httpMock.expectOne(`${API_BASE_URL}/auth/login`);
+    req.flush({ reason: 'invalid', message: 'NIP atau kata sandi tidak sesuai' }, { status: 401, statusText: 'Unauthorized' });
+
+    const result = await loginPromise;
+    expect(result).toEqual({ ok: false, reason: 'invalid' });
     expect(authService.isLoggedIn()).toBe(false);
   });
 
-  it('rejects a wrong password with a generic reason', () => {
-    const result = authService.login(SUPERADMIN_NIP, 'salah-sekali');
+  it('login while locked returns {ok:false, reason:"locked", retryAfterMs}', async () => {
+    const loginPromise = authService.login('196801011990031001', 'salah');
 
-    expect(result.ok).toBe(false);
-    expect(result.ok === false && result.reason).toBe('invalid');
+    const req = httpMock.expectOne(`${API_BASE_URL}/auth/login`);
+    req.flush({ reason: 'locked', retryAfterMs: 900000 }, { status: 401, statusText: 'Unauthorized' });
+
+    const result = await loginPromise;
+    expect(result).toEqual({ ok: false, reason: 'locked', retryAfterMs: 900000 });
   });
 
-  it('locks the account after 5 failed attempts', () => {
-    for (let i = 0; i < 4; i++) {
-      const result = authService.login(PEGAWAI_NIP, 'salah');
-      expect(result.ok === false && result.reason).toBe('invalid');
-    }
+  it('login on network/server failure returns {ok:false, reason:"error"}', async () => {
+    const loginPromise = authService.login('196801011990031001', 'Superadmin#123');
 
-    const fifth = authService.login(PEGAWAI_NIP, 'salah');
-    expect(fifth.ok).toBe(false);
-    expect(fifth.ok === false && fifth.reason).toBe('locked');
+    const req = httpMock.expectOne(`${API_BASE_URL}/auth/login`);
+    req.flush({ message: 'Internal error' }, { status: 500, statusText: 'Internal Server Error' });
 
-    // Percobaan berikutnya, walau kata sandi benar, tetap ditolak karena terkunci.
-    const sixth = authService.login(PEGAWAI_NIP, PEGAWAI_PASSWORD);
-    expect(sixth.ok).toBe(false);
-    expect(sixth.ok === false && sixth.reason).toBe('locked');
+    const result = await loginPromise;
+    expect(result).toEqual({ ok: false, reason: 'error' });
   });
 
-  it('logs out and clears the session', () => {
-    authService.login(SUPERADMIN_NIP, SUPERADMIN_PASSWORD);
+  it('refresh() restores session from a valid cookie', async () => {
+    const refreshPromise = authService.refresh();
+
+    const req = httpMock.expectOne(`${API_BASE_URL}/auth/refresh`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.withCredentials).toBe(true);
+    req.flush({ accessToken: 'token-xyz', user: SAMPLE_USER });
+
+    await refreshPromise;
+    expect(authService.isLoggedIn()).toBe(true);
+    expect(authService.getAccessToken()).toBe('token-xyz');
+  });
+
+  it('refresh() with no valid cookie silently leaves the user logged out (not an error)', async () => {
+    const refreshPromise = authService.refresh();
+
+    const req = httpMock.expectOne(`${API_BASE_URL}/auth/refresh`);
+    req.flush({ message: 'Unauthorized' }, { status: 401, statusText: 'Unauthorized' });
+
+    await refreshPromise;
+    expect(authService.isLoggedIn()).toBe(false);
+    expect(authService.getAccessToken()).toBeNull();
+  });
+
+  it('logout() clears local session state', async () => {
+    const loginPromise = authService.login('196801011990031001', 'Superadmin#123');
+    httpMock.expectOne(`${API_BASE_URL}/auth/login`).flush({ accessToken: 'token-abc', user: SAMPLE_USER });
+    await loginPromise;
     expect(authService.isLoggedIn()).toBe(true);
 
-    authService.logout();
+    const logoutPromise = authService.logout();
+    const req = httpMock.expectOne(`${API_BASE_URL}/auth/logout`);
+    expect(req.request.withCredentials).toBe(true);
+    req.flush({ ok: true });
+    await logoutPromise;
 
     expect(authService.isLoggedIn()).toBe(false);
     expect(authService.currentUser()).toBeNull();
+    expect(authService.getAccessToken()).toBeNull();
   });
 });
