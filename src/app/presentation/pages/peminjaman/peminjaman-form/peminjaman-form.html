@@ -1,0 +1,272 @@
+<div class="inventory-container">
+  <div class="inventory-header">
+    <div class="header-title">
+      <h1>Formulir Permohonan Penggunaan/Peminjaman Kendaraan Dinas</h1>
+      <p>Mengikuti Formulir FRM-01 — PUSAKA BANGLI. Tanggal Permohonan: {{ tanggalPermohonan }}</p>
+    </div>
+  </div>
+
+  <main class="inventory-content">
+    <form [formGroup]="form" class="glass-panel" style="padding: 24px;">
+      <div class="form-grid">
+        <!-- HEADER: STATUS & JENIS PERMOHONAN -->
+        <div class="form-section full-width">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Status</label>
+              <div class="form-radio-row form-radio-row--inline">
+                @for (opt of statusPermohonanOptions; track opt) {
+                  <label class="form-radio-option">
+                    <input type="radio" formControlName="statusPermohonan" [value]="opt">
+                    {{ opt }}
+                  </label>
+                }
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Jenis Permohonan</label>
+              <div class="form-radio-row form-radio-row--inline">
+                @for (opt of jenisPermohonanOptions; track opt) {
+                  <label class="form-radio-option">
+                    <input type="radio" formControlName="jenisPermohonan" [value]="opt">
+                    {{ opt }}
+                  </label>
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- A. IDENTITAS PEMOHON/PENGGUNA -->
+        <div class="form-section full-width">
+          <h3>A. Identitas Pemohon/Pengguna</h3>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Nama</label>
+              <input type="text" [value]="currentUser()?.nama" disabled>
+            </div>
+            <div class="form-group">
+              <label>NIP/NIK</label>
+              <input type="text" [value]="currentUser()?.nip" disabled>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Jabatan</label>
+              <input type="text" [value]="currentUser()?.jabatan" disabled>
+            </div>
+            <div class="form-group">
+              <label>Bidang/Unit Kerja</label>
+              <input type="text" [value]="currentUser()?.unitKerja" disabled>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group" [class.has-error]="isInvalid('noHp')">
+              <label for="noHp">Nomor HP *</label>
+              <input type="text" id="noHp" formControlName="noHp" placeholder="08xxxxxxxxxx">
+              @if (isInvalid('noHp')) {
+                <span class="error-msg">Kolom ini wajib diisi</span>
+              }
+            </div>
+            <div class="form-group">
+              <label for="namaPengemudi">Nama Pengemudi (kosongkan bila menyetir sendiri)</label>
+              <input type="text" id="namaPengemudi" formControlName="namaPengemudi" placeholder="Nama pengemudi dinas yang ditugaskan">
+            </div>
+          </div>
+        </div>
+
+        <!-- B. RENCANA PENGGUNAAN -->
+        <div class="form-section full-width">
+          <h3>B. Rencana Penggunaan</h3>
+          <div class="form-group" [class.has-error]="isInvalid('keperluan')">
+            <label for="keperluan">Maksud/Keperluan *</label>
+            <textarea id="keperluan" formControlName="keperluan" rows="2" placeholder="Contoh: Menghadiri Rapat Koordinasi"></textarea>
+            @if (isInvalid('keperluan')) {
+              <span class="error-msg">Kolom ini wajib diisi</span>
+            }
+          </div>
+
+          <div class="form-group" [class.has-error]="isInvalid('tujuan')">
+            <label for="tujuan">Tujuan/Lokasi *</label>
+            <input type="text" id="tujuan" formControlName="tujuan" placeholder="Contoh: Kantor Camat Susut">
+            @if (isInvalid('tujuan')) {
+              <span class="error-msg">Kolom ini wajib diisi</span>
+            }
+          </div>
+
+          <div class="form-row">
+            <div class="form-group" [class.has-error]="isInvalid('rencanaMulai')">
+              <label for="rencanaMulai">Hari/Tanggal Berangkat *</label>
+              <input type="date" id="rencanaMulai" formControlName="rencanaMulai">
+              @if (isInvalid('rencanaMulai')) {
+                <span class="error-msg">Wajib diisi</span>
+              }
+            </div>
+            <div class="form-group" [class.has-error]="isInvalid('rencanaSelesai')">
+              <label for="rencanaSelesai">Hari/Tanggal Kembali *</label>
+              <input type="date" id="rencanaSelesai" formControlName="rencanaSelesai">
+              @if (isInvalid('rencanaSelesai')) {
+                <span class="error-msg">Wajib diisi</span>
+              }
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="nomorSurat">Surat Tugas/Dasar Kegiatan — Nomor</label>
+              <input type="text" id="nomorSurat" formControlName="nomorSurat" placeholder="Contoh: 900.1.3.2/123/BKPAD/2026">
+            </div>
+            <div class="form-group">
+              <label for="tanggalSurat">Surat Tugas/Dasar Kegiatan — Tanggal</label>
+              <input type="date" id="tanggalSurat" formControlName="tanggalSurat">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Tingkat Urgensi *</label>
+            <div class="form-radio-row form-radio-row--inline">
+              @for (opt of tingkatUrgensiOptions; track opt) {
+                <label class="form-radio-option">
+                  <input type="radio" formControlName="tingkatUrgensi" [value]="opt">
+                  {{ opt }}
+                </label>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- C. KEBUTUHAN KENDARAAN -->
+        <div class="form-section full-width">
+          <h3>C. Kebutuhan Kendaraan</h3>
+          <div class="form-group">
+            <label>Jenis Kendaraan *</label>
+            <div class="form-radio-row form-radio-row--inline">
+              @for (opt of jenisKendaraanOptions; track opt) {
+                <label class="form-radio-option">
+                  <input type="radio" formControlName="jenisKendaraan" [value]="opt">
+                  {{ opt }}
+                </label>
+              }
+            </div>
+            @if (form.get('jenisKendaraan')?.value === 'Lainnya') {
+              <input type="text" formControlName="jenisKendaraanLainnya" placeholder="Sebutkan jenis kendaraan" style="margin-top: 6px;">
+            }
+          </div>
+
+          <div class="form-group">
+            <label for="kapasitasSpesifikasi">Kapasitas/Spesifikasi</label>
+            <input type="text" id="kapasitasSpesifikasi" formControlName="kapasitasSpesifikasi" placeholder="Contoh: minimal 7 penumpang">
+          </div>
+
+          <div class="form-group" [class.has-error]="isInvalid('nibar')">
+            <label for="nibar">Kendaraan yang Diusulkan *</label>
+            <select id="nibar" formControlName="nibar">
+              <option value="" disabled selected>Pilih kendaraan tersedia</option>
+              @for (v of availableVehicles(); track v.nibar) {
+                <option [value]="v.nibar">{{ v.merek }} {{ v.tipe }} — {{ v.nomorPolisi }}</option>
+              }
+            </select>
+            @if (availableVehicles().length === 0) {
+              <span class="error-msg" style="color: var(--md-sys-color-on-surface-variant);">Tidak ada kendaraan berstatus "Tersedia" saat ini.</span>
+            }
+            @if (isInvalid('nibar')) {
+              <span class="error-msg">Pilih kendaraan terlebih dahulu</span>
+            }
+          </div>
+
+          <div class="form-group">
+            <label for="keteranganTambahan">Keterangan Tambahan</label>
+            <textarea id="keteranganTambahan" formControlName="keteranganTambahan" rows="3" placeholder="Tuliskan keterangan tambahan jika diperlukan..."></textarea>
+          </div>
+        </div>
+
+        <!-- DOKUMEN PENDUKUNG (digitalisasi lampiran Surat Tugas/Undangan) -->
+        <div class="form-section full-width">
+          <h3>Dokumen Pendukung (opsional)</h3>
+          <div class="form-group">
+            <label>Unggah Surat Tugas/Dasar Kegiatan</label>
+            @if (hasMainDocument()) {
+              <div class="file-chip">
+                <span class="file-chip-icon">📄</span>
+                <div class="file-chip-info">
+                  <span class="file-chip-name">{{ mainDocumentFile()?.name ?? existingMainDocument()?.fileName }}</span>
+                  <span class="file-chip-size">{{ formatUkuran(mainDocumentFile()?.size ?? existingMainDocument()?.size ?? 0) }}</span>
+                </div>
+                <button type="button" class="file-chip-remove" (click)="removeMainFile()" aria-label="Hapus berkas">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                </button>
+              </div>
+            } @else {
+              <label class="file-dropzone" (dragover)="$event.preventDefault()" (drop)="onMainFileDropped($event)">
+                <input type="file" accept=".pdf,.jpg,.jpeg,.png" (change)="onMainFileSelected($event)" hidden>
+                <span class="file-dropzone-icon">⬆</span>
+                <span><strong>Klik untuk upload</strong> atau drag & drop file di sini</span>
+                <span class="file-dropzone-hint">Maks. 5 MB (PDF, JPG, PNG)</span>
+              </label>
+            }
+            @if (mainDocumentError()) {
+              <span class="error-msg">{{ mainDocumentError() }}</span>
+            }
+          </div>
+
+          <div class="form-group">
+            <label>Dokumen Lain (opsional)</label>
+            @for (doc of existingOtherDocuments(); track doc.id) {
+              <div class="file-chip">
+                <span class="file-chip-icon">📎</span>
+                <div class="file-chip-info">
+                  <span class="file-chip-name">{{ doc.fileName }}</span>
+                  <span class="file-chip-size">{{ formatUkuran(doc.size) }}</span>
+                </div>
+                <button type="button" class="file-chip-remove" (click)="removeExistingOtherDocument(doc)" aria-label="Hapus berkas">✕</button>
+              </div>
+            }
+            @for (file of otherDocumentFiles(); track $index) {
+              <div class="file-chip">
+                <span class="file-chip-icon">📎</span>
+                <div class="file-chip-info">
+                  <span class="file-chip-name">{{ file.name }}</span>
+                  <span class="file-chip-size">{{ formatUkuran(file.size) }}</span>
+                </div>
+                <button type="button" class="file-chip-remove" (click)="removeOtherFile($index)" aria-label="Hapus berkas">✕</button>
+              </div>
+            }
+            <label class="file-dropzone" (dragover)="$event.preventDefault()" (drop)="onOtherFilesDropped($event)">
+              <input type="file" accept=".pdf,.jpg,.jpeg,.png" multiple (change)="onOtherFilesSelected($event)" hidden>
+              <span class="file-dropzone-icon">⬆</span>
+              <span><strong>Klik untuk upload</strong> atau drag & drop file di sini</span>
+              <span class="file-dropzone-hint">Maks. 5 MB per berkas (PDF, JPG, PNG)</span>
+            </label>
+            @if (otherDocumentError()) {
+              <span class="error-msg">{{ otherDocumentError() }}</span>
+            }
+          </div>
+        </div>
+
+        <!-- PERNYATAAN PEMOHON -->
+        <div class="form-section full-width">
+          <label class="form-checkbox-row" [class.has-error]="isInvalid('pernyataan')">
+            <input type="checkbox" formControlName="pernyataan">
+            <span><strong>Pernyataan Pemohon:</strong> Saya menyatakan bahwa data di atas benar dan kendaraan akan digunakan hanya untuk kepentingan kedinasan, sesuai tujuan, waktu, rute, SOP, serta ketentuan yang berlaku.</span>
+          </label>
+        </div>
+      </div>
+
+      @if (saveError()) {
+        <p class="error-msg" style="margin-top: 12px;">{{ saveError() }}</p>
+      }
+
+      <div class="form-actions">
+        <button type="button" class="btn-secondary" routerLink="/app/peminjaman">
+          Batal
+        </button>
+        <button type="button" class="btn-secondary" [disabled]="isSaving()" (click)="simpanDraf()">
+          {{ isSaving() ? 'Menyimpan...' : 'Simpan Draf' }}
+        </button>
+        <button type="button" class="btn-primary" [disabled]="isSaving()" (click)="ajukanPermohonan()">
+          {{ isSaving() ? 'Memproses...' : 'Ajukan Permohonan' }}
+        </button>
+      </div>
+    </form>
+  </main>
+</div>

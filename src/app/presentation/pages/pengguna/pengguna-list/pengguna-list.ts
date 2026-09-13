@@ -1,7 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { hashSync } from 'bcryptjs';
 import { UserRepository } from '../../../../core/repositories/user.repository';
 import { AuditRepository } from '../../../../core/repositories/audit.repository';
 import { AuthService } from '../../../../core/auth/auth.service';
@@ -100,30 +99,37 @@ export class PenggunaListComponent {
 
     const previous = editingId ? this.userRepository.findById(editingId) : undefined;
 
-    const user: User = editingId
-      ? { ...previous!, nama: values.nama, jabatan: values.jabatan, unitKerja: values.unitKerja, peran: values.peran }
-      : {
-          id: `user-${Date.now()}`,
-          nip: values.nip,
-          nama: values.nama,
-          jabatan: values.jabatan,
-          unitKerja: values.unitKerja,
-          peran: values.peran,
-          aktif: true,
-          passwordHash: hashSync(values.password, 10),
-          terakhirMasuk: null
-        };
-
-    await this.userRepository.upsert(user);
-    await this.auditRepository.append({
-      pelakuId: this.actorId(),
-      pelakuNama: this.actorLabel(),
-      aksi: editingId ? 'ubah' : 'tambah',
-      entitas: 'User',
-      entitasId: user.id,
-      nilaiLama: previous ? { nama: previous.nama, jabatan: previous.jabatan, unitKerja: previous.unitKerja, peran: previous.peran } : undefined,
-      nilaiBaru: { nama: user.nama, jabatan: user.jabatan, unitKerja: user.unitKerja, peran: user.peran }
-    });
+    if (editingId) {
+      const user: User = { ...previous!, nama: values.nama, jabatan: values.jabatan, unitKerja: values.unitKerja, peran: values.peran };
+      await this.userRepository.update(user);
+      await this.auditRepository.append({
+        pelakuId: this.actorId(),
+        pelakuNama: this.actorLabel(),
+        aksi: 'ubah',
+        entitas: 'User',
+        entitasId: user.id,
+        nilaiLama: { nama: previous!.nama, jabatan: previous!.jabatan, unitKerja: previous!.unitKerja, peran: previous!.peran },
+        nilaiBaru: { nama: user.nama, jabatan: user.jabatan, unitKerja: user.unitKerja, peran: user.peran }
+      });
+    } else {
+      await this.userRepository.create({
+        nip: values.nip,
+        nama: values.nama,
+        jabatan: values.jabatan,
+        unitKerja: values.unitKerja,
+        peran: values.peran,
+        password: values.password
+      });
+      const created = this.userRepository.findByNip(values.nip);
+      await this.auditRepository.append({
+        pelakuId: this.actorId(),
+        pelakuNama: this.actorLabel(),
+        aksi: 'tambah',
+        entitas: 'User',
+        entitasId: created?.id ?? values.nip,
+        nilaiBaru: { nama: values.nama, jabatan: values.jabatan, unitKerja: values.unitKerja, peran: values.peran }
+      });
+    }
 
     this.closeFormModal();
   }
@@ -139,7 +145,7 @@ export class PenggunaListComponent {
     }
 
     const updated = { ...user, aktif: !user.aktif };
-    await this.userRepository.upsert(updated);
+    await this.userRepository.update(updated);
     await this.auditRepository.append({
       pelakuId: this.actorId(),
       pelakuNama: this.actorLabel(),
@@ -156,8 +162,7 @@ export class PenggunaListComponent {
     if (!confirmed) return;
 
     const tempPassword = generateTemporaryPassword();
-    const updated = { ...user, passwordHash: hashSync(tempPassword, 10) };
-    await this.userRepository.upsert(updated);
+    await this.userRepository.resetPassword(user.id, tempPassword);
     await this.auditRepository.append({
       pelakuId: this.actorId(),
       pelakuNama: this.actorLabel(),

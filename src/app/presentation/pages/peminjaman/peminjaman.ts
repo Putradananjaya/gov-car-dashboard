@@ -1,6 +1,6 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { VehicleAssetRepository } from '../../../core/repositories/vehicle-asset.repository';
 import { VehicleOperationalRepository } from '../../../core/repositories/vehicle-operational.repository';
 import { LoanRepository } from '../../../core/repositories/loan.repository';
@@ -8,16 +8,16 @@ import { AuditRepository } from '../../../core/repositories/audit.repository';
 import { UserRepository } from '../../../core/repositories/user.repository';
 import { AuthService } from '../../../core/auth/auth.service';
 import { PermissionService } from '../../../core/auth/permission.service';
+import { HasPermissionDirective } from '../../components/has-permission/has-permission.directive';
 import { Loan } from '../../../core/models/loan.model';
 
 @Component({
   selector: 'app-peminjaman',
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, RouterLink, HasPermissionDirective],
   templateUrl: './peminjaman.html',
   standalone: true
 })
 export class PeminjamanComponent {
-  private fb = inject(FormBuilder);
   private assetRepository = inject(VehicleAssetRepository);
   private operationalRepository = inject(VehicleOperationalRepository);
   private loanRepository = inject(LoanRepository);
@@ -29,19 +29,6 @@ export class PeminjamanComponent {
   public currentUser = this.authService.currentUser;
   private isAdmin = computed(() => this.authService.peran() === 'admin');
   private isPegawai = computed(() => this.authService.peran() === 'pegawai');
-
-  public showAjukanModal = signal(false);
-  public ajukanForm!: FormGroup;
-
-  public availableVehicles = computed(() => {
-    const operationalByNibar = new Map(this.operationalRepository.operational().map(o => [o.nibar, o]));
-    const unitKerja = this.currentUser()?.unitKerja;
-
-    return this.assetRepository.assets()
-      .filter(a => !a.dihapusPada)
-      .filter(a => operationalByNibar.get(a.nibar)?.status === 'Tersedia')
-      .filter(a => !this.isAdmin() || a.statusPenggunaan === unitKerja);
-  });
 
   public loans = computed<Loan[]>(() => {
     const all = this.loanRepository.loans().slice().sort((a, b) => b.rencanaMulai.localeCompare(a.rencanaMulai));
@@ -73,60 +60,8 @@ export class PeminjamanComponent {
     return this.currentUser()?.id ?? '';
   }
 
-  openAjukanModal(): void {
-    this.ajukanForm = this.fb.group({
-      nibar: ['', Validators.required],
-      keperluan: ['', Validators.required],
-      tujuan: ['', Validators.required],
-      rencanaMulai: ['', Validators.required],
-      rencanaSelesai: ['', Validators.required]
-    });
-    this.showAjukanModal.set(true);
-  }
-
-  closeAjukanModal(): void {
-    this.showAjukanModal.set(false);
-  }
-
-  isInvalid(controlName: string): boolean {
-    const control = this.ajukanForm.get(controlName);
-    return !!(control && control.invalid && (control.dirty || control.touched));
-  }
-
-  async submitAjukan(): Promise<void> {
-    if (this.ajukanForm.invalid) {
-      this.ajukanForm.markAllAsTouched();
-      return;
-    }
-
-    const values = this.ajukanForm.value;
-    const loan: Loan = {
-      id: `loan-${Date.now()}`,
-      nibar: values.nibar,
-      pemohonId: this.actorId(),
-      keperluan: values.keperluan,
-      tujuan: values.tujuan,
-      rencanaMulai: values.rencanaMulai,
-      rencanaSelesai: values.rencanaSelesai,
-      realisasiKembali: null,
-      status: 'Diajukan',
-      disetujuiOleh: null,
-      catatanPenolakan: null,
-      odometerKeluar: null,
-      odometerMasuk: null
-    };
-
-    await this.loanRepository.upsert(loan);
-    await this.auditRepository.append({
-      pelakuId: this.actorId(),
-      pelakuNama: this.actorLabel(),
-      aksi: 'ajukan-peminjaman',
-      entitas: 'Loan',
-      entitasId: loan.id,
-      nilaiBaru: loan
-    });
-
-    this.closeAjukanModal();
+  isDraftMilikSendiri(loan: Loan): boolean {
+    return loan.status === 'Draft' && loan.pemohonId === this.currentUser()?.id;
   }
 
   canKembalikan(loan: Loan): boolean {

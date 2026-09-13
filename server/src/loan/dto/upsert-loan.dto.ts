@@ -1,0 +1,86 @@
+import { Type } from 'class-transformer';
+import { IsIn, IsInt, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { LoanApplicantSnapshotDto } from './loan-applicant-snapshot.dto';
+
+export class UpsertLoanDto {
+  @IsString()
+  nibar!: string;
+
+  @IsString()
+  pemohonId!: string;
+
+  @ValidateNested()
+  @Type(() => LoanApplicantSnapshotDto)
+  pemohon!: LoanApplicantSnapshotDto;
+
+  @IsIn(['Baru', 'Perubahan', 'Darurat'])
+  statusPermohonan!: 'Baru' | 'Perubahan' | 'Darurat';
+
+  @IsIn(['Penggunaan', 'Peminjaman'])
+  jenisPermohonan!: 'Penggunaan' | 'Peminjaman';
+
+  @IsOptional()
+  @IsString()
+  namaPengemudi!: string | null;
+
+  @IsString()
+  keperluan!: string;
+
+  @IsString()
+  tujuan!: string;
+
+  @IsString()
+  rencanaMulai!: string;
+
+  @IsString()
+  rencanaSelesai!: string;
+
+  @IsOptional()
+  @IsString()
+  nomorSurat!: string | null;
+
+  @IsOptional()
+  @IsString()
+  tanggalSurat!: string | null;
+
+  @IsIn(['Biasa', 'Penting', 'Mendesak/Darurat'])
+  tingkatUrgensi!: 'Biasa' | 'Penting' | 'Mendesak/Darurat';
+
+  @IsIn(['Roda 2', 'Roda 4', 'Lainnya'])
+  jenisKendaraan!: 'Roda 2' | 'Roda 4' | 'Lainnya';
+
+  @IsOptional()
+  @IsString()
+  jenisKendaraanLainnya!: string | null;
+
+  @IsOptional()
+  @IsString()
+  kapasitasSpesifikasi!: string | null;
+
+  @IsOptional()
+  @IsString()
+  keteranganTambahan!: string | null;
+
+  @IsOptional()
+  @IsString()
+  realisasiKembali!: string | null;
+
+  @IsIn(['Draft', 'Diajukan', 'Disetujui', 'Ditolak', 'Berjalan', 'Selesai'])
+  status!: 'Draft' | 'Diajukan' | 'Disetujui' | 'Ditolak' | 'Berjalan' | 'Selesai';
+
+  @IsOptional()
+  @IsString()
+  disetujuiOleh!: string | null;
+
+  @IsOptional()
+  @IsString()
+  catatanPenolakan!: string | null;
+
+  @IsOptional()
+  @IsInt()
+  odometerKeluar!: number | null;
+
+  @IsOptional()
+  @IsInt()
+  odometerMasuk!: number | null;
+}

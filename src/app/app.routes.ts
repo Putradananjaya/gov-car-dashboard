@@ -66,6 +66,14 @@ export const routes: Routes = [
         loadComponent: () => import('./presentation/pages/peminjaman/peminjaman').then(m => m.PeminjamanComponent)
       },
       {
+        path: 'peminjaman/buat',
+        loadComponent: () => import('./presentation/pages/peminjaman/peminjaman-form/peminjaman-form').then(m => m.PeminjamanFormComponent)
+      },
+      {
+        path: 'peminjaman/buat/:id',
+        loadComponent: () => import('./presentation/pages/peminjaman/peminjaman-form/peminjaman-form').then(m => m.PeminjamanFormComponent)
+      },
+      {
         path: 'peminjaman/persetujuan',
         canActivate: [roleGuard],
         data: { peran: ['superadmin', 'admin'] },

@@ -2,12 +2,13 @@ import { DBSchema, IDBPDatabase, openDB } from 'idb';
 import { VehicleAsset } from '../../core/models/vehicle-asset.model';
 import { VehicleOperational } from '../../core/models/vehicle-operational.model';
 import { Loan } from '../../core/models/loan.model';
+import { LoanDocument } from '../../core/models/loan-document.model';
 import { ServiceRecord } from '../../core/models/service-record.model';
 import { User } from '../../core/models/user.model';
 import { AuditLog } from '../../core/models/audit-log.model';
 
 const DB_NAME = 'pusaka-bangli';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 export interface BangliDbSchema extends DBSchema {
   assets: {
@@ -48,6 +49,11 @@ export interface BangliDbSchema extends DBSchema {
     key: string; // batchId
     value: { batchId: string; [key: string]: unknown };
   };
+  loanDocuments: {
+    key: string; // id
+    value: LoanDocument;
+    indexes: { loanId: string };
+  };
 }
 
 let dbPromise: Promise<IDBPDatabase<BangliDbSchema>> | null = null;
@@ -55,28 +61,34 @@ let dbPromise: Promise<IDBPDatabase<BangliDbSchema>> | null = null;
 export function openBangliDb(): Promise<IDBPDatabase<BangliDbSchema>> {
   if (!dbPromise) {
     dbPromise = openDB<BangliDbSchema>(DB_NAME, DB_VERSION, {
-      upgrade(db) {
-        const assets = db.createObjectStore('assets', { keyPath: 'nibar' });
-        assets.createIndex('kodeBarang', 'kodeBarang.full');
-        assets.createIndex('nomorPolisi', 'nomorPolisi');
-        assets.createIndex('statusPenggunaan', 'statusPenggunaan');
+      upgrade(db, oldVersion) {
+        if (oldVersion < 1) {
+          const assets = db.createObjectStore('assets', { keyPath: 'nibar' });
+          assets.createIndex('kodeBarang', 'kodeBarang.full');
+          assets.createIndex('nomorPolisi', 'nomorPolisi');
+          assets.createIndex('statusPenggunaan', 'statusPenggunaan');
 
-        db.createObjectStore('operational', { keyPath: 'nibar' });
+          db.createObjectStore('operational', { keyPath: 'nibar' });
 
-        const loans = db.createObjectStore('loans', { keyPath: 'id' });
-        loans.createIndex('nibar', 'nibar');
-        loans.createIndex('pemohonId', 'pemohonId');
-        loans.createIndex('status', 'status');
+          const loans = db.createObjectStore('loans', { keyPath: 'id' });
+          loans.createIndex('nibar', 'nibar');
+          loans.createIndex('pemohonId', 'pemohonId');
+          loans.createIndex('status', 'status');
 
-        const services = db.createObjectStore('services', { keyPath: 'id' });
-        services.createIndex('nibar', 'nibar');
+          const services = db.createObjectStore('services', { keyPath: 'id' });
+          services.createIndex('nibar', 'nibar');
 
-        const users = db.createObjectStore('users', { keyPath: 'id' });
-        users.createIndex('nip', 'nip');
+          const users = db.createObjectStore('users', { keyPath: 'id' });
+          users.createIndex('nip', 'nip');
 
-        db.createObjectStore('audit', { keyPath: 'id' });
-        db.createObjectStore('photos', { keyPath: 'nibar' });
-        db.createObjectStore('imports', { keyPath: 'batchId' });
+          db.createObjectStore('audit', { keyPath: 'id' });
+          db.createObjectStore('photos', { keyPath: 'nibar' });
+          db.createObjectStore('imports', { keyPath: 'batchId' });
+        }
+        if (oldVersion < 2) {
+          const loanDocuments = db.createObjectStore('loanDocuments', { keyPath: 'id' });
+          loanDocuments.createIndex('loanId', 'loanId');
+        }
       }
     });
   }

@@ -8,21 +8,23 @@ import { authInterceptor } from './core/auth/auth.interceptor';
 import { CarRepository } from './core/repositories/car.repository';
 import { CarCompatRepository } from './data/repositories/indexed-db/car-compat.repository';
 import { UserRepository } from './core/repositories/user.repository';
-import { IndexedDbUserRepository } from './data/repositories/indexed-db/user.repository';
+import { HttpUserRepository } from './data/repositories/http/user.repository';
 import { VehicleAssetRepository } from './core/repositories/vehicle-asset.repository';
 import { HttpVehicleAssetRepository } from './data/repositories/http/vehicle-asset.repository';
 import { VehicleOperationalRepository } from './core/repositories/vehicle-operational.repository';
 import { HttpVehicleOperationalRepository } from './data/repositories/http/vehicle-operational.repository';
 import { LoanRepository } from './core/repositories/loan.repository';
-import { IndexedDbLoanRepository } from './data/repositories/indexed-db/loan.repository';
+import { HttpLoanRepository } from './data/repositories/http/loan.repository';
 import { ServiceRepository } from './core/repositories/service.repository';
-import { IndexedDbServiceRepository } from './data/repositories/indexed-db/service.repository';
+import { HttpServiceRepository } from './data/repositories/http/service.repository';
 import { AuditRepository } from './core/repositories/audit.repository';
-import { IndexedDbAuditRepository } from './data/repositories/indexed-db/audit.repository';
+import { HttpAuditRepository } from './data/repositories/http/audit.repository';
 import { ImportBatchRepository } from './core/repositories/import-batch.repository';
 import { IndexedDbImportBatchRepository } from './data/repositories/indexed-db/import-batch.repository';
 import { PhotoRepository } from './core/repositories/photo.repository';
-import { IndexedDbPhotoRepository } from './data/repositories/indexed-db/photo.repository';
+import { HttpPhotoRepository } from './data/repositories/http/photo.repository';
+import { LoanDocumentRepository } from './core/repositories/loan-document.repository';
+import { HttpLoanDocumentRepository } from './data/repositories/http/loan-document.repository';
 import { migrateOrSeedDatabase } from './data/db/migration';
 
 export const appConfig: ApplicationConfig = {
@@ -31,18 +33,20 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes),
     provideHttpClient(withInterceptors([authInterceptor])),
     { provide: CarRepository, useClass: CarCompatRepository },
-    { provide: UserRepository, useClass: IndexedDbUserRepository },
-    // Fase 5c: aset & data operasional sekarang backend-only (Postgres via
-    // Railway), bukan lagi IndexedDB per-browser — momen ini dipilih karena
-    // backend akhirnya benar-benar online (sebelumnya sengaja ditunda di
-    // Fase 5a/5b supaya dev lokal murni tidak butuh backend berjalan).
+    // Fase 5c: aset & data operasional pindah backend-only (Postgres via
+    // Railway) lebih dulu; fase berikutnya (migrasi go-live) memindahkan
+    // User/Loan/LoanDocument/Audit/Service/Photo dengan pola yang sama —
+    // IndexedDB tidak lagi dipakai untuk keenamnya (data harus sinkron
+    // lintas pengguna/perangkat, bukan cuma tersimpan per-browser).
+    { provide: UserRepository, useClass: HttpUserRepository },
     { provide: VehicleAssetRepository, useClass: HttpVehicleAssetRepository },
     { provide: VehicleOperationalRepository, useClass: HttpVehicleOperationalRepository },
-    { provide: LoanRepository, useClass: IndexedDbLoanRepository },
-    { provide: ServiceRepository, useClass: IndexedDbServiceRepository },
-    { provide: AuditRepository, useClass: IndexedDbAuditRepository },
+    { provide: LoanRepository, useClass: HttpLoanRepository },
+    { provide: ServiceRepository, useClass: HttpServiceRepository },
+    { provide: AuditRepository, useClass: HttpAuditRepository },
     { provide: ImportBatchRepository, useClass: IndexedDbImportBatchRepository },
-    { provide: PhotoRepository, useClass: IndexedDbPhotoRepository },
+    { provide: PhotoRepository, useClass: HttpPhotoRepository },
+    { provide: LoanDocumentRepository, useClass: HttpLoanDocumentRepository },
     // Pastikan skema/migrasi/seed IndexedDB & semua repository selesai memuat
     // SEBELUM navigasi/guard pertama jalan — plus pulihkan sesi login (kalau
     // ada cookie refresh token valid) lewat AuthService.refresh(), supaya
@@ -68,7 +72,8 @@ export const appConfig: ApplicationConfig = {
             inject(ServiceRepository),
             inject(AuditRepository),
             inject(ImportBatchRepository),
-            inject(PhotoRepository)
+            inject(PhotoRepository),
+            inject(LoanDocumentRepository)
           ];
           const authService = inject(AuthService);
           return Promise.all([...repositories.map(repository => repository.ready), authService.refresh()]);

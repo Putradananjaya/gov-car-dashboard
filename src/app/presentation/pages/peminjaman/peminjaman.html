@@ -4,7 +4,7 @@
       <h1>Peminjaman Kendaraan</h1>
       <p>Halo, {{ currentUser()?.nama }}. {{ loans().length }} pengajuan ditemukan.</p>
     </div>
-    <button class="btn-primary" (click)="openAjukanModal()">
+    <button *hasPermission="'peminjaman.ajukan'" class="btn-primary" routerLink="/app/peminjaman/buat">
       <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <line x1="12" y1="5" x2="12" y2="19"></line>
         <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -41,17 +41,18 @@
           <tbody>
             @for (loan of loans(); track loan.id) {
               <tr>
-                <td>{{ vehicleLabel(loan.nibar) }}</td>
+                <td>{{ loan.nibar ? vehicleLabel(loan.nibar) : '—' }}</td>
                 <td>{{ pemohonNama(loan.pemohonId) }}</td>
                 <td>
                   <div class="car-info-col">
-                    <span class="car-name">{{ loan.keperluan }}</span>
+                    <span class="car-name">{{ loan.keperluan || '(belum diisi)' }}</span>
                     <span style="font-size: 0.7rem; color: var(--text-muted);">{{ loan.tujuan }}</span>
                   </div>
                 </td>
                 <td style="font-size: 0.75rem;">{{ loan.rencanaMulai }} s/d {{ loan.rencanaSelesai }}</td>
                 <td>
                   <span class="badge" [ngClass]="{
+                    'badge-muted': loan.status === 'Draft',
                     'badge-info': loan.status === 'Diajukan',
                     'badge-warning': loan.status === 'Berjalan',
                     'badge-success': loan.status === 'Selesai',
@@ -65,6 +66,11 @@
                   }
                 </td>
                 <td>
+                  @if (isDraftMilikSendiri(loan)) {
+                    <a class="btn-secondary" style="padding: 6px 12px; font-size: 0.72rem;" [routerLink]="['/app/peminjaman/buat', loan.id]">
+                      Lanjutkan
+                    </a>
+                  }
                   @if (canKembalikan(loan)) {
                     <button class="btn-secondary" style="padding: 6px 12px; font-size: 0.72rem;" (click)="kembalikan(loan)">
                       Kembalikan
@@ -78,71 +84,4 @@
       </div>
     }
   </main>
-
-  <!-- MODAL: AJUKAN PEMINJAMAN -->
-  @if (showAjukanModal()) {
-    <div class="form-overlay" (click)="closeAjukanModal()">
-      <div class="form-modal glass-panel" (click)="$event.stopPropagation()">
-        <div class="modal-header">
-          <h2>Ajukan Peminjaman Kendaraan</h2>
-          <button class="close-btn" (click)="closeAjukanModal()" aria-label="Tutup">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
-          </button>
-        </div>
-
-        <form [formGroup]="ajukanForm" (ngSubmit)="submitAjukan()" class="modal-body">
-          @if (availableVehicles().length === 0) {
-            <p style="font-size: 0.8rem; color: var(--color-danger);">Tidak ada kendaraan berstatus "Tersedia" saat ini.</p>
-          }
-          <div class="form-group" [class.has-error]="isInvalid('nibar')">
-            <label for="nibar">Kendaraan</label>
-            <select id="nibar" formControlName="nibar">
-              <option value="" disabled selected>Pilih kendaraan tersedia</option>
-              @for (v of availableVehicles(); track v.nibar) {
-                <option [value]="v.nibar">{{ v.merek }} {{ v.tipe }} — {{ v.nomorPolisi }}</option>
-              }
-            </select>
-            @if (isInvalid('nibar')) {
-              <span class="error-msg">Pilih kendaraan terlebih dahulu</span>
-            }
-          </div>
-
-          <div class="form-group" [class.has-error]="isInvalid('keperluan')">
-            <label for="keperluan">Keperluan</label>
-            <input type="text" id="keperluan" formControlName="keperluan" placeholder="Contoh: Rapat koordinasi kecamatan">
-            @if (isInvalid('keperluan')) {
-              <span class="error-msg">Kolom ini wajib diisi</span>
-            }
-          </div>
-
-          <div class="form-group" [class.has-error]="isInvalid('tujuan')">
-            <label for="tujuan">Tujuan</label>
-            <input type="text" id="tujuan" formControlName="tujuan" placeholder="Contoh: Kantor Camat Susut">
-            @if (isInvalid('tujuan')) {
-              <span class="error-msg">Kolom ini wajib diisi</span>
-            }
-          </div>
-
-          <div class="form-row">
-            <div class="form-group" [class.has-error]="isInvalid('rencanaMulai')">
-              <label for="rencanaMulai">Rencana Mulai</label>
-              <input type="date" id="rencanaMulai" formControlName="rencanaMulai">
-            </div>
-            <div class="form-group" [class.has-error]="isInvalid('rencanaSelesai')">
-              <label for="rencanaSelesai">Rencana Selesai</label>
-              <input type="date" id="rencanaSelesai" formControlName="rencanaSelesai">
-            </div>
-          </div>
-
-          <div class="form-actions">
-            <button type="button" class="btn-secondary" (click)="closeAjukanModal()">Batal</button>
-            <button type="submit" class="btn-primary" [disabled]="availableVehicles().length === 0">Ajukan</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  }
 </div>

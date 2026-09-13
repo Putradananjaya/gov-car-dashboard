@@ -8,6 +8,10 @@ import { VehicleOperationalModule } from './vehicle-operational/vehicle-operatio
 import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
 import { SeedModule } from './seed/seed.module';
+import { LoanModule } from './loan/loan.module';
+import { AuditModule } from './audit/audit.module';
+import { ServiceRecordModule } from './service-record/service-record.module';
+import { PhotoModule } from './photo/photo.module';
 
 @Module({
   imports: [
@@ -47,7 +51,11 @@ import { SeedModule } from './seed/seed.module';
     AuthModule,
     SeedModule,
     VehicleAssetModule,
-    VehicleOperationalModule
+    VehicleOperationalModule,
+    LoanModule,
+    AuditModule,
+    ServiceRecordModule,
+    PhotoModule
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }]
 })
