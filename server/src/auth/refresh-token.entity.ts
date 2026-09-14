@@ -1,8 +1,12 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, PrimaryColumn } from 'typeorm';
 
 @Entity('refresh_tokens')
 export class RefreshTokenEntity {
-  @PrimaryGeneratedColumn('uuid')
+  // ID dibuat di kode aplikasi (crypto.randomUUID()), bukan
+  // @PrimaryGeneratedColumn('uuid') — itu butuh fungsi uuid_generate_v4()
+  // dari ekstensi Postgres "uuid-ossp" yang belum tentu tersedia/boleh
+  // diaktifkan di hosting bersama (mis. Dewaweb cPanel PostgreSQL).
+  @PrimaryColumn({ type: 'uuid' })
   id!: string;
 
   @Column({ name: 'user_id', type: 'varchar' })

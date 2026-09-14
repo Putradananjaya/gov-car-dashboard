@@ -1,4 +1,4 @@
-import { randomBytes, createHash } from 'crypto';
+import { randomBytes, createHash, randomUUID } from 'crypto';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
@@ -110,6 +110,7 @@ export class AuthService {
     const expiresAt = new Date(Date.now() + refreshTtlDays * 24 * 60 * 60 * 1000);
 
     await this.refreshTokenRepository.save({
+      id: randomUUID(),
       userId: user.id,
       tokenHash: this.hashToken(rawRefreshToken),
       expiresAt,
