@@ -40,7 +40,12 @@ import { PhotoModule } from './photo/photo.module';
           // Sinkronisasi skema otomatis dari entity — hanya untuk pengembangan
           // lokal (dokumen v2 Fase 5a keputusan #2). Migrasi formal Postgres
           // ditunda ke putaran "pengerasan deployment".
-          synchronize: true
+          synchronize: true,
+          // Batasi jumlah koneksi Postgres sekaligus — penting di hosting
+          // dengan kuota memori/proses ketat (mis. shared hosting cPanel).
+          // Aplikasi kecil ini tidak butuh pool besar; tiap koneksi idle
+          // tetap makan memori di sisi Postgres & Node.
+          extra: { max: config.get<number>('DB_POOL_MAX', 3) }
         };
       }
     }),
