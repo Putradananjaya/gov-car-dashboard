@@ -1,27 +1,41 @@
 <div class="landing-container">
-  <!-- NAVIGATION -->
-  <nav class="landing-nav glass-panel" style="margin: 10px; border-radius: var(--md-shape-corner-large);">
-    <div class="brand" style="border: none; margin: 0; padding: 0;">
-      <div class="brand-logo">
-        <img src="assets/logo/pusaka-bangli-icon.png" alt="Pusaka Bangli">
-      </div>
-      <div class="brand-name" style="margin-left: 10px;">
-        <h2>PUSAKA</h2>
-        <span style="font-size: 0.6rem;">Kabupaten Bangli</span>
-      </div>
+  <!-- NAV + HERO SHARED BACKGROUND WRAPPER -->
+  <div class="landing-hero-section">
+    <!-- Rotating Background Images (spans behind nav + hero) -->
+    <div class="landing-hero-bg" aria-hidden="true">
+      @for (image of heroImages; track image; let i = $index) {
+        <div
+          class="landing-hero-bg-img"
+          [class.active]="i === activeHeroIndex()"
+          [style.background-image]="'url(' + image + ')'">
+        </div>
+      }
+      <div class="landing-hero-bg-overlay"></div>
     </div>
 
-    <div style="display: flex; align-items: center; gap: 14px;">
-      <button routerLink="/login" class="btn-secondary" style="padding: 8px 18px; font-size: 0.8rem; border-radius: var(--md-shape-corner-medium);">
-        Masuk Admin
-      </button>
-    </div>
-  </nav>
+    <!-- NAVIGATION -->
+    <nav class="landing-nav landing-nav-glass" style="margin: 10px; border-radius: var(--md-shape-corner-large);">
+      <div class="brand" style="border: none; margin: 0; padding: 0;">
+        <div class="brand-logo">
+          <img src="assets/logo/pusaka-bangli-icon.png" alt="Pusaka Bangli">
+        </div>
+        <div class="brand-name" style="margin-left: 10px;">
+          <h2>PUSAKA</h2>
+          <span style="font-size: 0.6rem;">Kabupaten Bangli</span>
+        </div>
+      </div>
 
-  <!-- HERO SECTION -->
-  <header class="landing-hero" role="banner">
-    <!-- Background Circle Deco -->
-    <div class="landing-deco-circle"></div>
+      <div style="display: flex; align-items: center; gap: 14px;">
+        <button routerLink="/login" class="btn-secondary" style="padding: 8px 18px; font-size: 0.8rem; border-radius: var(--md-shape-corner-medium);">
+          Masuk Admin
+        </button>
+      </div>
+    </nav>
+
+    <!-- HERO SECTION -->
+    <header class="landing-hero" role="banner">
+      <!-- Background Circle Deco -->
+      <div class="landing-deco-circle"></div>
 
     <div class="landing-hero-content">
       <div class="landing-badge">PORTAL LAYANAN PUBLIK</div>
@@ -43,29 +57,30 @@
       </div>
 
       <!-- Quick Metrics -->
-      <div style="display: flex; gap: 40px; margin-top: 30px; flex-wrap: wrap; justify-content: center;">
+      <div class="landing-hero-metrics" style="display: flex; gap: 40px; margin-top: 6px; flex-wrap: wrap; justify-content: center;">
         <div style="text-align: center;">
-          <span style="display: block; font-size: 2.2rem; font-weight: 900; color: var(--md-sys-color-primary);">256</span>
-          <span style="font-size: 0.72rem; color: var(--md-sys-color-on-surface-variant); font-weight: 700; text-transform: uppercase;">Total Kendaraan Dinas</span>
+          <span style="display: block; font-size: 1.7rem; font-weight: 900; color: var(--md-sys-color-primary);">256</span>
+          <span style="font-size: 0.7rem; color: var(--md-sys-color-on-surface-variant); font-weight: 700; text-transform: uppercase;">Total Kendaraan Dinas</span>
         </div>
         <div style="text-align: center;">
-          <span style="display: block; font-size: 2.2rem; font-weight: 900; color: #10b981;">128</span>
-          <span style="font-size: 0.72rem; color: var(--md-sys-color-on-surface-variant); font-weight: 700; text-transform: uppercase;">Armada Siap Pakai</span>
+          <span style="display: block; font-size: 1.7rem; font-weight: 900; color: #10b981;">128</span>
+          <span style="font-size: 0.7rem; color: var(--md-sys-color-on-surface-variant); font-weight: 700; text-transform: uppercase;">Armada Siap Pakai</span>
         </div>
         <div style="text-align: center;">
-          <span style="display: block; font-size: 2.2rem; font-weight: 900; color: var(--md-sys-color-secondary);">10</span>
-          <span style="font-size: 0.72rem; color: var(--md-sys-color-on-surface-variant); font-weight: 700; text-transform: uppercase;">OPD Pengelola Aset</span>
+          <span style="display: block; font-size: 1.7rem; font-weight: 900; color: var(--md-sys-color-secondary);">10</span>
+          <span style="font-size: 0.7rem; color: var(--md-sys-color-on-surface-variant); font-weight: 700; text-transform: uppercase;">OPD Pengelola Aset</span>
         </div>
       </div>
     </div>
 
-    <!-- Mountain Batur Outline Deco -->
-    <div class="landing-deco-batur">
-      <svg viewBox="0 0 1000 300" width="100%" fill="none" stroke="currentColor" stroke-width="1.5">
-        <path d="M 100 280 L 350 150 L 500 230 L 750 80 L 950 280 Z" stroke-dasharray="5,5" />
-      </svg>
-    </div>
-  </header>
+      <!-- Mountain Batur Outline Deco -->
+      <div class="landing-deco-batur">
+        <svg viewBox="0 0 1000 300" width="100%" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M 100 280 L 350 150 L 500 230 L 750 80 L 950 280 Z" stroke-dasharray="5,5" />
+        </svg>
+      </div>
+    </header>
+  </div>
 
   <!-- FEATURES GRID -->
   <section class="landing-features" aria-label="Layanan Utama Portal">
