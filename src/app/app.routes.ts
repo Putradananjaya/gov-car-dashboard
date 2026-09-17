@@ -20,6 +20,10 @@ export const routes: Routes = [
         loadComponent: () => import('./presentation/pages/dashboard/dashboard').then(m => m.DashboardComponent)
       },
       {
+        path: 'panduan',
+        loadComponent: () => import('./presentation/pages/panduan/panduan').then(m => m.PanduanComponent)
+      },
+      {
         path: 'aset',
         canActivate: [roleGuard],
         data: { peran: ['superadmin', 'admin'] },
@@ -76,7 +80,7 @@ export const routes: Routes = [
       {
         path: 'peminjaman/persetujuan',
         canActivate: [roleGuard],
-        data: { peran: ['superadmin', 'admin'] },
+        data: { peran: ['superadmin', 'admin', 'pejabat_penatausahaan'] },
         loadComponent: () => import('./presentation/pages/peminjaman/persetujuan/persetujuan').then(m => m.PersetujuanComponent)
       },
       {

@@ -38,11 +38,12 @@
               <td>
                 <span class="badge" [ngClass]="{
                   'badge-danger': user.peran === 'superadmin',
-                  'badge-info': user.peran === 'admin',
-                  'badge-success': user.peran === 'pegawai'
+                  'badge-info': user.peran === 'admin' || user.peran === 'pejabat_penatausahaan',
+                  'badge-success': user.peran === 'pegawai',
+                  'badge-warning': user.peran === 'pimpinan'
                 }">
                   <span class="badge-dot"></span>
-                  {{ user.peran }}
+                  {{ peranLabel(user.peran) }}
                 </span>
               </td>
               <td>
@@ -145,7 +146,7 @@
                 <label for="peran">Peran</label>
                 <select id="peran" formControlName="peran">
                   @for (p of peranOptions; track p) {
-                    <option [value]="p">{{ p }}</option>
+                    <option [value]="p">{{ peranLabel(p) }}</option>
                   }
                 </select>
               </div>

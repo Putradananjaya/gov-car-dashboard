@@ -41,14 +41,14 @@ export class LoanController {
 
   @Post(':id/serah-terima')
   @UseGuards(RolesGuard)
-  @Roles('superadmin', 'admin')
+  @Roles('superadmin', 'pejabat_penatausahaan')
   serahTerima(@Param('id') id: string, @Body() dto: SerahTerimaLoanDto, @Req() req: RequestWithUser) {
     return this.service.serahTerima(id, dto, req.user.sub);
   }
 
   @Post(':id/tolak')
   @UseGuards(RolesGuard)
-  @Roles('superadmin', 'admin')
+  @Roles('superadmin', 'admin', 'pejabat_penatausahaan')
   tolak(@Param('id') id: string, @Body() dto: TolakLoanDto) {
     return this.service.tolak(id, dto);
   }

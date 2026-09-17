@@ -11,7 +11,7 @@ export class UpdateUserDto {
   @IsString()
   unitKerja!: string;
 
-  @IsIn(['superadmin', 'admin', 'pegawai'])
+  @IsIn(['superadmin', 'admin', 'pegawai', 'pejabat_penatausahaan', 'pimpinan'])
   peran!: Peran;
 
   @IsBoolean()

@@ -1,6 +1,6 @@
 import { Column, Entity, PrimaryColumn } from 'typeorm';
 
-export type Peran = 'superadmin' | 'admin' | 'pegawai';
+export type Peran = 'superadmin' | 'admin' | 'pegawai' | 'pejabat_penatausahaan' | 'pimpinan';
 
 @Entity('users')
 export class UserEntity {

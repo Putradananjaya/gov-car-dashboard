@@ -26,6 +26,18 @@ export class PersetujuanComponent {
   private currentUser = this.authService.currentUser;
   private isAdmin = computed(() => this.authService.peran() === 'admin');
 
+  public canSetujuiTahap1 = computed(() => {
+    const peran = this.authService.peran();
+    return peran === 'superadmin' || peran === 'admin';
+  });
+
+  public canSerahTerima = computed(() => {
+    const peran = this.authService.peran();
+    return peran === 'superadmin' || peran === 'pejabat_penatausahaan';
+  });
+
+  public canTolak = computed(() => this.canSetujuiTahap1() || this.canSerahTerima());
+
   private loansTerfilter = computed<Loan[]>(() => {
     const all = this.loanRepository.loans();
     if (this.isAdmin()) {

@@ -5,37 +5,93 @@ import { hashSync } from 'bcryptjs';
 import { UserEntity } from '../user/user.entity';
 
 /**
- * Akun demo identik dengan src/app/data/db/seed.ts (Angular) — NIP/kata
- * sandi sengaja sama supaya login sungguhan (backend) berperilaku sama
- * seperti demo lokal sebelumnya.
+ * Akun sesuai struktur organisasi Badan Keuangan, Pendapatan dan Aset
+ * Daerah Kabupaten Bangli (per bidang) — kata sandi awal mengikuti pola
+ * "{Peran}#123" per peran, WAJIB diganti oleh masing-masing pengguna
+ * setelah login pertama kali (lihat fitur "Setel Ulang Kata Sandi" di
+ * Manajemen Pengguna).
  */
 const DEMO_ACCOUNTS = [
   {
-    id: 'user-superadmin-1',
-    nip: '196801011990031001',
-    nama: 'I Wayan Sudiarta',
-    jabatan: 'Kepala Badan',
-    unitKerja: 'Badan Keuangan, Pendapatan dan Aset Daerah',
+    id: 'user-pemohon-pdrl',
+    nip: '198307112010012027',
+    nama: 'Ni Made Pitriani',
+    jabatan: 'Staf Bidang PDRL',
+    unitKerja: 'Bidang PDRL',
+    peran: 'pegawai' as const,
+    password: 'Pegawai#123'
+  },
+  {
+    id: 'user-pemohon-anggaran',
+    nip: '197901012005011026',
+    nama: 'I Putu Mertayasa',
+    jabatan: 'Staf Bidang Anggaran',
+    unitKerja: 'Bidang Anggaran',
+    peran: 'pegawai' as const,
+    password: 'Pegawai#123'
+  },
+  {
+    id: 'user-kabid-aset',
+    nip: '198009182010011021',
+    nama: 'Sang Kompiang Gde Suyastawan',
+    jabatan: 'Kepala Bidang Aset',
+    unitKerja: 'Bidang Aset',
     peran: 'superadmin' as const,
     password: 'Superadmin#123'
   },
   {
-    id: 'user-admin-1',
-    nip: '198203152010012005',
-    nama: 'Ni Made Suryani',
+    id: 'user-pemohon-pembukuan',
+    nip: '198307162009022003',
+    nama: 'Ni Putu Tentamini',
+    jabatan: 'Staf Bidang Pembukuan',
+    unitKerja: 'Bidang Pembukuan',
+    peran: 'pegawai' as const,
+    password: 'Pegawai#123'
+  },
+  {
+    id: 'user-pemohon-perbendaharaan',
+    nip: '197106122000031004',
+    nama: 'I Made Anom Wiranata',
+    jabatan: 'Staf Bidang Perbendaharaan',
+    unitKerja: 'Bidang Perbendaharaan',
+    peran: 'pegawai' as const,
+    password: 'Pegawai#123'
+  },
+  {
+    id: 'user-pemohon-pbb',
+    nip: '198411302010011022',
+    nama: 'Edwin Kristinata',
+    jabatan: 'Staf Bidang PBB',
+    unitKerja: 'Bidang PBB',
+    peran: 'pegawai' as const,
+    password: 'Pegawai#123'
+  },
+  {
+    id: 'user-pengurus-barang',
+    nip: '198303232010011043',
+    nama: 'I Wayan Busmartana',
     jabatan: 'Pengurus Barang',
-    unitKerja: 'Dinas Pekerjaan Umum & Penataan Ruang',
+    unitKerja: 'Sekretariat Badan Keuangan, Pendapatan dan Aset Daerah',
     peran: 'admin' as const,
     password: 'Admin#123'
   },
   {
-    id: 'user-pegawai-1',
-    nip: '199005202015031002',
-    nama: 'I Ketut Ardika',
-    jabatan: 'Staf Pelaksana',
-    unitKerja: 'Dinas Kesehatan',
-    peran: 'pegawai' as const,
-    password: 'Pegawai#123'
+    id: 'user-pejabat-penatausahaan',
+    nip: '198301172010011019',
+    nama: 'I Nengah Witra Dana',
+    jabatan: 'Pejabat Penatausahaan Pengguna Barang',
+    unitKerja: 'Badan Keuangan, Pendapatan dan Aset Daerah',
+    peran: 'pejabat_penatausahaan' as const,
+    password: 'Penatausahaan#123'
+  },
+  {
+    id: 'user-pimpinan',
+    nip: '197612102009021003',
+    nama: 'Putu Agus Muliawan',
+    jabatan: 'Kepala Badan',
+    unitKerja: 'Badan Keuangan, Pendapatan dan Aset Daerah',
+    peran: 'pimpinan' as const,
+    password: 'Pimpinan#123'
   }
 ];
 

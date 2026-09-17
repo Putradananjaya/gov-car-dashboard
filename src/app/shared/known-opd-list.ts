@@ -10,5 +10,12 @@ export const KNOWN_OPD_LIST = [
   'Badan Pengelolaan Keuangan, Pendapatan & Aset Daerah',
   'Kecamatan Bangli',
   'INSPEKTORAT DAERAH',
-  'Badan Keuangan, Pendapatan dan Aset Daerah'
+  'Badan Keuangan, Pendapatan dan Aset Daerah',
+  'Bidang PDRL',
+  'Bidang Anggaran',
+  'Bidang Aset',
+  'Bidang Pembukuan',
+  'Bidang Perbendaharaan',
+  'Bidang PBB',
+  'Sekretariat Badan Keuangan, Pendapatan dan Aset Daerah'
 ];

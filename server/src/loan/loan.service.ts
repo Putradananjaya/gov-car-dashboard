@@ -141,7 +141,8 @@ export class LoanService {
       throw new BadRequestException(`Tidak dapat mengembalikan peminjaman berstatus "${loan.status}".`);
     }
     const isOwner = loan.pemohonId === requesterId;
-    const isApprover = requesterPeran === 'admin' || requesterPeran === 'superadmin';
+    const isApprover =
+      requesterPeran === 'admin' || requesterPeran === 'superadmin' || requesterPeran === 'pejabat_penatausahaan';
     if (!isOwner && !isApprover) {
       throw new ForbiddenException('Anda tidak berhak mengembalikan peminjaman ini.');
     }

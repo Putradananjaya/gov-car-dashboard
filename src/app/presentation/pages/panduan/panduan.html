@@ -1,0 +1,379 @@
+<div class="inventory-container">
+  <div class="inventory-header">
+    <div class="header-title">
+      <h1>Panduan Aplikasi</h1>
+      <p>Penjelasan setiap menu PUSAKA BANGLI — apa fungsinya, untuk siapa, dan cara memakainya.</p>
+    </div>
+  </div>
+
+  <main class="inventory-content">
+    <!-- MULAI CEPAT -->
+    <div class="glass-panel" style="padding: 20px; margin-bottom: 20px; border-left: 3px solid var(--md-sys-color-primary);">
+      <h3 style="color: var(--md-sys-color-primary); text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.05em; margin-bottom: 10px;">Mulai Cepat — Untuk Peran Anda</h3>
+      @switch (peran()) {
+        @case ('pegawai') {
+          <p style="font-size: 0.85rem; line-height: 1.6;">
+            Sebagai <strong>Pemohon</strong>, tugas utama Anda: buka menu <strong>Peminjaman</strong> → klik "Ajukan Peminjaman" → isi formulir (termasuk rute perjalanan &amp; surat tugas) → tunggu status berubah jadi <em>Disetujui</em> lalu <em>Berjalan</em>. Setelah selesai memakai kendaraan, kembali ke menu Peminjaman dan klik "Kembalikan".
+          </p>
+        }
+        @case ('admin') {
+          <p style="font-size: 0.85rem; line-height: 1.6;">
+            Sebagai <strong>Pengurus Barang</strong>, tugas utama Anda: cek antrean di menu <strong>Persetujuan Peminjaman</strong> → tab "Menunggu Persetujuan" → klik "Setujui" jika kendaraan tersedia (sistem otomatis cek bentrok jadwal), atau "Tolak" jika tidak. Anda juga mengelola <strong>Data Kendaraan</strong>, <strong>Pemeliharaan</strong>, dan <strong>Pajak &amp; STNK</strong>.
+          </p>
+        }
+        @case ('pejabat_penatausahaan') {
+          <p style="font-size: 0.85rem; line-height: 1.6;">
+            Sebagai <strong>Pejabat Penatausahaan Pengguna Barang</strong>, tugas utama Anda: buka menu <strong>Persetujuan Peminjaman</strong> → tab "Menunggu Serah Terima" → klik "Serah Terima", catat odometer/BBM/kondisi kendaraan saat diserahkan, centang konfirmasi kunci, lalu cetak BAST sebagai bukti serah terima fisik.
+          </p>
+        }
+        @case ('pimpinan') {
+          <p style="font-size: 0.85rem; line-height: 1.6;">
+            Sebagai <strong>Pimpinan</strong>, akun Anda bersifat <strong>lihat-saja (read-only)</strong> untuk keperluan pengawasan — buka <strong>Dashboard</strong> untuk ringkasan seluruh aset lintas bidang, dan menu <strong>Laporan</strong> untuk mencetak rekap resmi. Anda tidak memproses persetujuan peminjaman.
+          </p>
+        }
+        @case ('superadmin') {
+          <p style="font-size: 0.85rem; line-height: 1.6;">
+            Sebagai <strong>Superadmin</strong>, Anda punya akses penuh: kelola seluruh aset &amp; pengguna, pantau <strong>Jejak Audit</strong>, dan bisa menjalankan aksi apa pun yang biasanya dibagi ke role lain. Gunakan menu <strong>Manajemen Pengguna</strong> untuk mengatur akun &amp; peran staf lain.
+          </p>
+        }
+        @default {
+          <p style="font-size: 0.85rem; line-height: 1.6;">Masuk (login) untuk melihat rekomendasi langkah awal sesuai peran Anda.</p>
+        }
+      }
+    </div>
+
+    <!-- PENCARIAN & KONTROL -->
+    <div class="glass-panel" style="padding: 16px 20px; margin-bottom: 20px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+      <div class="search-box" style="flex: 1; min-width: 220px;">
+        <input
+          type="text"
+          placeholder="Cari menu (contoh: BAST, odometer, jadwal, laporan...)"
+          [value]="pencarian()"
+          (input)="pencarian.set($any($event.target).value)"
+          style="width: 100%; background: rgba(128,128,128,0.04); border: 1px solid var(--md-sys-color-outline); color: var(--md-sys-color-on-background); padding: 10px 14px; border-radius: var(--md-shape-corner-medium); font-size: 0.8rem;"
+        >
+      </div>
+      <button class="btn-secondary" style="padding: 8px 14px; font-size: 0.72rem;" (click)="bukaSemua()">Buka Semua</button>
+      <button class="btn-secondary" style="padding: 8px 14px; font-size: 0.72rem;" (click)="tutupSemua()">Tutup Semua</button>
+    </div>
+
+    <!-- KATEGORI: RINGKASAN -->
+    @if (adaYangCocok(['dashboard', 'jadwal'])) {
+      <h3 style="font-size: 0.8rem; font-weight: 700; color: var(--md-sys-color-primary); text-transform: uppercase; letter-spacing: 0.05em; margin: 20px 0 10px;">Ringkasan &amp; Jadwal</h3>
+    }
+
+    @if (cocokPencarian('dashboard')) {
+      <div class="glass-panel" style="padding: 0; margin-bottom: 12px; overflow: hidden;" [style.border-left]="isRelevan('dashboard') ? '3px solid var(--md-sys-color-primary)' : 'none'">
+        <button (click)="toggle('dashboard')" style="width: 100%; text-align: left; background: transparent; border: none; cursor: pointer; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+          <span style="display: flex; align-items: center; gap: 10px;">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--md-sys-color-primary)" stroke-width="2"><rect x="3" y="3" width="7" height="9" /><rect x="14" y="3" width="7" height="5" /><rect x="14" y="12" width="7" height="9" /><rect x="3" y="16" width="7" height="5" /></svg>
+            <strong style="font-size: 0.9rem;">Dashboard</strong>
+            @if (isRelevan('dashboard')) { <span class="badge badge-success" style="font-size: 0.6rem;">Relevan untuk Anda</span> }
+          </span>
+          <span style="color: var(--text-muted); font-size: 0.8rem;">{{ isTerbuka('dashboard') ? '▲' : '▼' }}</span>
+        </button>
+        @if (isTerbuka('dashboard')) {
+          <div style="padding: 0 20px 20px; font-size: 0.82rem; line-height: 1.6;">
+            <p><strong>Untuk siapa:</strong> semua peran (tampilan menyesuaikan otomatis — Superadmin &amp; Pimpinan melihat ringkasan lintas bidang, Admin/Pejabat Penatausahaan melihat data OPD-nya sendiri, Pegawai melihat status pengajuannya sendiri).</p>
+            <p><strong>Fungsinya:</strong> halaman pertama setelah login — ringkasan cepat jumlah aset, status operasional kendaraan (tersedia/dipinjam/servis), dan aktivitas terbaru, tanpa perlu buka menu lain satu per satu.</p>
+            <p><strong>Tips:</strong> gunakan Dashboard sebagai titik cek harian sebelum memutuskan perlu buka menu Peminjaman, Persetujuan, atau Pemeliharaan.</p>
+          </div>
+        }
+      </div>
+    }
+
+    @if (cocokPencarian('jadwal')) {
+      <div class="glass-panel" style="padding: 0; margin-bottom: 12px; overflow: hidden;" [style.border-left]="isRelevan('jadwal') ? '3px solid var(--md-sys-color-primary)' : 'none'">
+        <button (click)="toggle('jadwal')" style="width: 100%; text-align: left; background: transparent; border: none; cursor: pointer; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+          <span style="display: flex; align-items: center; gap: 10px;">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--md-sys-color-primary)" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>
+            <strong style="font-size: 0.9rem;">Jadwal</strong>
+            @if (isRelevan('jadwal')) { <span class="badge badge-success" style="font-size: 0.6rem;">Relevan untuk Anda</span> }
+          </span>
+          <span style="color: var(--text-muted); font-size: 0.8rem;">{{ isTerbuka('jadwal') ? '▲' : '▼' }}</span>
+        </button>
+        @if (isTerbuka('jadwal')) {
+          <div style="padding: 0 20px 20px; font-size: 0.82rem; line-height: 1.6;">
+            <p><strong>Untuk siapa:</strong> semua peran.</p>
+            <p><strong>Fungsinya:</strong> menampilkan daftar peminjaman yang sudah <em>diajukan</em>, <em>disetujui</em>, atau sedang <em>berjalan</em>, dikelompokkan per kendaraan. Berguna untuk mengecek apakah sebuah kendaraan sudah "dipesan" orang lain pada rentang tanggal tertentu sebelum mengajukan peminjaman baru.</p>
+            <p><strong>Tips:</strong> sistem sebenarnya sudah otomatis menolak pengajuan yang bentrok jadwal saat disetujui — tapi cek menu ini dulu supaya pengajuan Anda tidak perlu ditolak karena kendaraan sudah dipakai orang lain di tanggal yang sama.</p>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- KATEGORI: ASET -->
+    @if (adaYangCocok(['aset', 'pemeliharaan', 'pajak', 'tracking'])) {
+      <h3 style="font-size: 0.8rem; font-weight: 700; color: var(--md-sys-color-primary); text-transform: uppercase; letter-spacing: 0.05em; margin: 24px 0 10px;">Manajemen Aset Kendaraan</h3>
+    }
+
+    @if (cocokPencarian('aset')) {
+      <div class="glass-panel" style="padding: 0; margin-bottom: 12px; overflow: hidden;" [style.border-left]="isRelevan('aset') ? '3px solid var(--md-sys-color-primary)' : 'none'">
+        <button (click)="toggle('aset')" style="width: 100%; text-align: left; background: transparent; border: none; cursor: pointer; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+          <span style="display: flex; align-items: center; gap: 10px;">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--md-sys-color-primary)" stroke-width="2"><rect x="1" y="3" width="15" height="13" rx="2" ry="2" /><polygon points="16 8 20 8 23 11 23 16 16 16" /><circle cx="5.5" cy="18.5" r="2.5" /><circle cx="18.5" cy="18.5" r="2.5" /></svg>
+            <strong style="font-size: 0.9rem;">Data Kendaraan</strong>
+            @if (isRelevan('aset')) { <span class="badge badge-success" style="font-size: 0.6rem;">Relevan untuk Anda</span> }
+          </span>
+          <span style="color: var(--text-muted); font-size: 0.8rem;">{{ isTerbuka('aset') ? '▲' : '▼' }}</span>
+        </button>
+        @if (isTerbuka('aset')) {
+          <div style="padding: 0 20px 20px; font-size: 0.82rem; line-height: 1.6;">
+            <p><strong>Untuk siapa:</strong> Superadmin &amp; Admin (Pengurus Barang).</p>
+            <p><strong>Fungsinya:</strong> "buku induk" seluruh kendaraan dinas (BMD) — data pelat nomor, merek/tipe, NIBAR (Nomor Induk Barang), OPD/Bidang pemakai, kondisi, dan status operasional. Dari sini kendaraan didaftarkan sebelum bisa dipinjam lewat menu Peminjaman.</p>
+            <p><strong>Cara pakai:</strong></p>
+            <ul style="padding-left: 18px; margin: 4px 0;">
+              <li>Klik <strong>Tambah Aset</strong> untuk mendaftarkan kendaraan baru, atau <strong>Impor dari Excel</strong> untuk memasukkan banyak data sekaligus.</li>
+              <li>Gunakan kolom pencarian &amp; filter (kategori, tahun, kondisi, status pajak) untuk menemukan kendaraan tertentu dengan cepat.</li>
+              <li>Klik satu baris untuk membuka detail kendaraan — di sana juga terlihat riwayat peminjamannya.</li>
+            </ul>
+          </div>
+        }
+      </div>
+    }
+
+    @if (cocokPencarian('pemeliharaan')) {
+      <div class="glass-panel" style="padding: 0; margin-bottom: 12px; overflow: hidden;" [style.border-left]="isRelevan('pemeliharaan') ? '3px solid var(--md-sys-color-primary)' : 'none'">
+        <button (click)="toggle('pemeliharaan')" style="width: 100%; text-align: left; background: transparent; border: none; cursor: pointer; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+          <span style="display: flex; align-items: center; gap: 10px;">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--md-sys-color-primary)" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" /></svg>
+            <strong style="font-size: 0.9rem;">Pemeliharaan</strong>
+            @if (isRelevan('pemeliharaan')) { <span class="badge badge-success" style="font-size: 0.6rem;">Relevan untuk Anda</span> }
+          </span>
+          <span style="color: var(--text-muted); font-size: 0.8rem;">{{ isTerbuka('pemeliharaan') ? '▲' : '▼' }}</span>
+        </button>
+        @if (isTerbuka('pemeliharaan')) {
+          <div style="padding: 0 20px 20px; font-size: 0.82rem; line-height: 1.6;">
+            <p><strong>Untuk siapa:</strong> Superadmin &amp; Admin.</p>
+            <p><strong>Fungsinya:</strong> jalan pintas dari menu Data Kendaraan yang otomatis menyaring kendaraan berkondisi <em>"Rusak Berat"</em> — supaya kendaraan yang butuh servis mudah dipantau tanpa harus mencari manual satu per satu.</p>
+          </div>
+        }
+      </div>
+    }
+
+    @if (cocokPencarian('pajak')) {
+      <div class="glass-panel" style="padding: 0; margin-bottom: 12px; overflow: hidden;" [style.border-left]="isRelevan('pajak') ? '3px solid var(--md-sys-color-primary)' : 'none'">
+        <button (click)="toggle('pajak')" style="width: 100%; text-align: left; background: transparent; border: none; cursor: pointer; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+          <span style="display: flex; align-items: center; gap: 10px;">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--md-sys-color-primary)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+            <strong style="font-size: 0.9rem;">Pajak &amp; STNK</strong>
+            @if (isRelevan('pajak')) { <span class="badge badge-success" style="font-size: 0.6rem;">Relevan untuk Anda</span> }
+          </span>
+          <span style="color: var(--text-muted); font-size: 0.8rem;">{{ isTerbuka('pajak') ? '▲' : '▼' }}</span>
+        </button>
+        @if (isTerbuka('pajak')) {
+          <div style="padding: 0 20px 20px; font-size: 0.82rem; line-height: 1.6;">
+            <p><strong>Untuk siapa:</strong> Superadmin &amp; Admin.</p>
+            <p><strong>Fungsinya:</strong> jalan pintas serupa Pemeliharaan, tapi menyaring kendaraan yang status pajak/STNK-nya <em>"kadaluarsa"</em> — membantu mencegah kendaraan dinas telat perpanjangan pajak.</p>
+          </div>
+        }
+      </div>
+    }
+
+    @if (cocokPencarian('tracking')) {
+      <div class="glass-panel" style="padding: 0; margin-bottom: 12px; overflow: hidden;" [style.border-left]="isRelevan('tracking') ? '3px solid var(--md-sys-color-primary)' : 'none'">
+        <button (click)="toggle('tracking')" style="width: 100%; text-align: left; background: transparent; border: none; cursor: pointer; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+          <span style="display: flex; align-items: center; gap: 10px;">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--md-sys-color-primary)" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+            <strong style="font-size: 0.9rem;">Monitoring GPS</strong>
+            @if (isRelevan('tracking')) { <span class="badge badge-success" style="font-size: 0.6rem;">Relevan untuk Anda</span> }
+          </span>
+          <span style="color: var(--text-muted); font-size: 0.8rem;">{{ isTerbuka('tracking') ? '▲' : '▼' }}</span>
+        </button>
+        @if (isTerbuka('tracking')) {
+          <div style="padding: 0 20px 20px; font-size: 0.82rem; line-height: 1.6;">
+            <p><strong>Untuk siapa:</strong> Superadmin &amp; Admin.</p>
+            <p><strong>Fungsinya:</strong> peta yang menampilkan posisi kendaraan berstatus "Digunakan" secara real-time (simulasi lokasi, diperbarui tiap detik). Membantu memantau pergerakan kendaraan dinas yang sedang dipinjam.</p>
+            <p><strong>Tips:</strong> simulasi GPS bisa dimatikan/dinyalakan lewat menu Pengaturan bila tidak diperlukan.</p>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- KATEGORI: ALUR PEMINJAMAN (heading & diagram selalu tampil sebagai referensi inti alur kerja) -->
+    <h3 style="font-size: 0.8rem; font-weight: 700; color: var(--md-sys-color-primary); text-transform: uppercase; letter-spacing: 0.05em; margin: 24px 0 10px;">Alur Peminjaman Kendaraan</h3>
+
+    <!-- STEPPER VISUAL -->
+    <div class="glass-panel" style="padding: 20px; margin-bottom: 12px;">
+      <p style="font-size: 0.8rem; color: var(--md-sys-color-on-surface-variant); margin-bottom: 16px;">
+        Peminjaman kendaraan dinas melewati <strong>2 tahap persetujuan terpisah</strong> sesuai SOP resmi — bukan cuma satu klik "setuju". Berikut alurnya dari awal sampai kendaraan kembali:
+      </p>
+      <div style="display: flex; flex-direction: column; gap: 0;">
+        @for (langkah of [
+          { no: 1, judul: 'Ajukan', ket: 'Pemohon isi formulir di menu Peminjaman: tujuan, rute, tanggal, jenis kendaraan, unggah surat tugas (opsional).', peran: 'Pemohon' },
+          { no: 2, judul: 'Setujui (Tahap 1)', ket: 'Pengurus Barang cek ketersediaan kendaraan di menu Persetujuan Peminjaman. Sistem otomatis menolak jika jadwal bentrok dengan peminjaman lain.', peran: 'Pengurus Barang' },
+          { no: 3, judul: 'Serah Terima (Tahap 2)', ket: 'Pejabat Penatausahaan mencatat odometer, level BBM, kondisi kendaraan, dan konfirmasi serah kunci — lalu bisa mencetak BAST.', peran: 'Pejabat Penatausahaan' },
+          { no: 4, judul: 'Digunakan', ket: 'Kendaraan berstatus "Berjalan" — dipakai pemohon sesuai keperluan yang diajukan.', peran: 'Pemohon' },
+          { no: 5, judul: 'Kembalikan', ket: 'Pemohon (atau petugas) catat odometer/BBM/kondisi akhir + konfirmasi kunci dikembalikan, cetak BAST pengembalian.', peran: 'Pemohon / Petugas' }
+        ]; track langkah.no) {
+          <div style="display: flex; gap: 14px;">
+            <div style="display: flex; flex-direction: column; align-items: center;">
+              <div style="width: 28px; height: 28px; border-radius: 50%; background: var(--md-sys-color-primary); color: #1a1a1a; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.8rem; flex-shrink: 0;">{{ langkah.no }}</div>
+              @if (langkah.no < 5) {
+                <div style="width: 2px; flex: 1; background: var(--md-sys-color-outline); min-height: 24px;"></div>
+              }
+            </div>
+            <div style="padding-bottom: 20px;">
+              <p style="font-weight: 700; font-size: 0.85rem;">{{ langkah.judul }} <span style="font-weight: 400; color: var(--text-muted); font-size: 0.7rem;">— {{ langkah.peran }}</span></p>
+              <p style="font-size: 0.78rem; color: var(--md-sys-color-on-surface-variant); margin-top: 2px;">{{ langkah.ket }}</p>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+    @if (cocokPencarian('peminjaman')) {
+      <div class="glass-panel" style="padding: 0; margin-bottom: 12px; overflow: hidden;" [style.border-left]="isRelevan('peminjaman') ? '3px solid var(--md-sys-color-primary)' : 'none'">
+        <button (click)="toggle('peminjaman')" style="width: 100%; text-align: left; background: transparent; border: none; cursor: pointer; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+          <span style="display: flex; align-items: center; gap: 10px;">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--md-sys-color-primary)" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3"></path></svg>
+            <strong style="font-size: 0.9rem;">Peminjaman</strong>
+            @if (isRelevan('peminjaman')) { <span class="badge badge-success" style="font-size: 0.6rem;">Relevan untuk Anda</span> }
+          </span>
+          <span style="color: var(--text-muted); font-size: 0.8rem;">{{ isTerbuka('peminjaman') ? '▲' : '▼' }}</span>
+        </button>
+        @if (isTerbuka('peminjaman')) {
+          <div style="padding: 0 20px 20px; font-size: 0.82rem; line-height: 1.6;">
+            <p><strong>Untuk siapa:</strong> semua peran — setiap orang bisa mengajukan peminjaman untuk dirinya sendiri.</p>
+            <p><strong>Fungsinya:</strong> tempat mengajukan permintaan pinjam kendaraan dinas, melihat status semua pengajuan (Draft/Diajukan/Disetujui/Berjalan/Selesai/Ditolak), dan memproses pengembalian kendaraan yang sedang dipinjam.</p>
+            <p><strong>Cara pakai:</strong></p>
+            <ul style="padding-left: 18px; margin: 4px 0;">
+              <li>Klik <strong>Ajukan Peminjaman</strong>, isi maksud/keperluan, tujuan, <strong>rute perjalanan</strong>, tanggal berangkat-kembali, dan pilih kendaraan yang tersedia.</li>
+              <li>Cek dulu menu <strong>Jadwal</strong> supaya tanggal yang dipilih tidak bentrok dengan peminjaman lain untuk kendaraan yang sama.</li>
+              <li>Setelah status "Berjalan" dan kendaraan sudah dipakai, klik <strong>Kembalikan</strong> pada baris pengajuan tersebut, isi odometer/BBM/kondisi akhir kendaraan, centang konfirmasi kunci dikembalikan.</li>
+            </ul>
+          </div>
+        }
+      </div>
+    }
+
+    @if (cocokPencarian('persetujuan')) {
+      <div class="glass-panel" style="padding: 0; margin-bottom: 12px; overflow: hidden;" [style.border-left]="isRelevan('persetujuan') ? '3px solid var(--md-sys-color-primary)' : 'none'">
+        <button (click)="toggle('persetujuan')" style="width: 100%; text-align: left; background: transparent; border: none; cursor: pointer; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+          <span style="display: flex; align-items: center; gap: 10px;">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--md-sys-color-primary)" stroke-width="2"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+            <strong style="font-size: 0.9rem;">Persetujuan Peminjaman</strong>
+            @if (isRelevan('persetujuan')) { <span class="badge badge-success" style="font-size: 0.6rem;">Relevan untuk Anda</span> }
+          </span>
+          <span style="color: var(--text-muted); font-size: 0.8rem;">{{ isTerbuka('persetujuan') ? '▲' : '▼' }}</span>
+        </button>
+        @if (isTerbuka('persetujuan')) {
+          <div style="padding: 0 20px 20px; font-size: 0.82rem; line-height: 1.6;">
+            <p><strong>Untuk siapa:</strong> Superadmin, Admin (Pengurus Barang — tahap 1), dan Pejabat Penatausahaan Pengguna Barang (tahap 2). Tombol yang tampil otomatis menyesuaikan peran Anda.</p>
+            <p><strong>Fungsinya:</strong> memproses pengajuan peminjaman lewat 2 antrean terpisah:</p>
+            <ul style="padding-left: 18px; margin: 4px 0;">
+              <li><strong>Menunggu Persetujuan</strong> — Pengurus Barang mengecek ketersediaan kendaraan, klik "Setujui" (otomatis dicek bentrok jadwal) atau "Tolak" (wajib isi alasan).</li>
+              <li><strong>Menunggu Serah Terima</strong> — Pejabat Penatausahaan klik "Serah Terima", isi odometer, level BBM, kondisi kendaraan, centang konfirmasi kunci diserahkan — kendaraan otomatis berubah status jadi "Dipinjam". Setelah itu bisa cetak <strong>BAST</strong> (Berita Acara Serah Terima).</li>
+            </ul>
+            <p><strong>Tips:</strong> jika kendaraan ternyata tidak layak dipakai saat mau diserahkan, pengajuan masih bisa ditolak dari tahap ini juga.</p>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- KATEGORI: LAPORAN & PENGAWASAN -->
+    @if (adaYangCocok(['laporan', 'audit'])) {
+      <h3 style="font-size: 0.8rem; font-weight: 700; color: var(--md-sys-color-primary); text-transform: uppercase; letter-spacing: 0.05em; margin: 24px 0 10px;">Laporan &amp; Pengawasan</h3>
+    }
+
+    @if (cocokPencarian('laporan')) {
+      <div class="glass-panel" style="padding: 0; margin-bottom: 12px; overflow: hidden;" [style.border-left]="isRelevan('laporan') ? '3px solid var(--md-sys-color-primary)' : 'none'">
+        <button (click)="toggle('laporan')" style="width: 100%; text-align: left; background: transparent; border: none; cursor: pointer; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+          <span style="display: flex; align-items: center; gap: 10px;">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--md-sys-color-primary)" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" /></svg>
+            <strong style="font-size: 0.9rem;">Laporan</strong>
+            @if (isRelevan('laporan')) { <span class="badge badge-success" style="font-size: 0.6rem;">Relevan untuk Anda</span> }
+          </span>
+          <span style="color: var(--text-muted); font-size: 0.8rem;">{{ isTerbuka('laporan') ? '▲' : '▼' }}</span>
+        </button>
+        @if (isTerbuka('laporan')) {
+          <div style="padding: 0 20px 20px; font-size: 0.82rem; line-height: 1.6;">
+            <p><strong>Untuk siapa:</strong> Superadmin, Admin, dan Pimpinan.</p>
+            <p><strong>Fungsinya:</strong> menampilkan pratinjau laporan inventaris kendaraan dinas (total aset, status operasional per kategori) yang siap dicetak sebagai dokumen resmi.</p>
+          </div>
+        }
+      </div>
+    }
+
+    @if (cocokPencarian('audit')) {
+      <div class="glass-panel" style="padding: 0; margin-bottom: 12px; overflow: hidden;" [style.border-left]="isRelevan('audit') ? '3px solid var(--md-sys-color-primary)' : 'none'">
+        <button (click)="toggle('audit')" style="width: 100%; text-align: left; background: transparent; border: none; cursor: pointer; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+          <span style="display: flex; align-items: center; gap: 10px;">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--md-sys-color-primary)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="9" y1="15" x2="15" y2="15"></line><line x1="9" y1="11" x2="12" y2="11"></line></svg>
+            <strong style="font-size: 0.9rem;">Jejak Audit</strong>
+            @if (isRelevan('audit')) { <span class="badge badge-success" style="font-size: 0.6rem;">Relevan untuk Anda</span> }
+          </span>
+          <span style="color: var(--text-muted); font-size: 0.8rem;">{{ isTerbuka('audit') ? '▲' : '▼' }}</span>
+        </button>
+        @if (isTerbuka('audit')) {
+          <div style="padding: 0 20px 20px; font-size: 0.82rem; line-height: 1.6;">
+            <p><strong>Untuk siapa:</strong> Superadmin saja.</p>
+            <p><strong>Fungsinya:</strong> catatan lengkap "siapa melakukan apa dan kapan" di seluruh sistem — pengajuan, persetujuan, penolakan, perubahan data pengguna, dst. Dipakai untuk investigasi/pertanggungjawaban bila ada aktivitas mencurigakan atau perlu ditelusuri ulang.</p>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- KATEGORI: ADMINISTRASI SISTEM -->
+    @if (adaYangCocok(['pengguna', 'pengaturan'])) {
+      <h3 style="font-size: 0.8rem; font-weight: 700; color: var(--md-sys-color-primary); text-transform: uppercase; letter-spacing: 0.05em; margin: 24px 0 10px;">Administrasi Sistem</h3>
+    }
+
+    @if (cocokPencarian('pengguna')) {
+      <div class="glass-panel" style="padding: 0; margin-bottom: 12px; overflow: hidden;" [style.border-left]="isRelevan('pengguna') ? '3px solid var(--md-sys-color-primary)' : 'none'">
+        <button (click)="toggle('pengguna')" style="width: 100%; text-align: left; background: transparent; border: none; cursor: pointer; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+          <span style="display: flex; align-items: center; gap: 10px;">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--md-sys-color-primary)" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+            <strong style="font-size: 0.9rem;">Manajemen Pengguna</strong>
+            @if (isRelevan('pengguna')) { <span class="badge badge-success" style="font-size: 0.6rem;">Relevan untuk Anda</span> }
+          </span>
+          <span style="color: var(--text-muted); font-size: 0.8rem;">{{ isTerbuka('pengguna') ? '▲' : '▼' }}</span>
+        </button>
+        @if (isTerbuka('pengguna')) {
+          <div style="padding: 0 20px 20px; font-size: 0.82rem; line-height: 1.6;">
+            <p><strong>Untuk siapa:</strong> Superadmin saja.</p>
+            <p><strong>Fungsinya:</strong> mengelola seluruh akun pengguna sistem — tambah akun baru, ubah nama/jabatan/unit kerja/peran, nonaktifkan akun, dan setel ulang kata sandi.</p>
+            <p><strong>Cara pakai:</strong></p>
+            <ul style="padding-left: 18px; margin: 4px 0;">
+              <li>Klik <strong>Tambah Pengguna</strong>, isi NIP, nama, jabatan, unit kerja (Bidang/OPD), pilih peran yang sesuai, dan kata sandi awal.</li>
+              <li>Peran menentukan menu &amp; kewenangan apa yang bisa diakses akun tersebut (lihat penjelasan tiap menu di halaman ini untuk tahu peran apa yang cocok).</li>
+              <li>Gunakan <strong>Setel Ulang Kata Sandi</strong> jika pengguna lupa kata sandi.</li>
+            </ul>
+          </div>
+        }
+      </div>
+    }
+
+    @if (cocokPencarian('pengaturan')) {
+      <div class="glass-panel" style="padding: 0; margin-bottom: 12px; overflow: hidden;" [style.border-left]="isRelevan('pengaturan') ? '3px solid var(--md-sys-color-primary)' : 'none'">
+        <button (click)="toggle('pengaturan')" style="width: 100%; text-align: left; background: transparent; border: none; cursor: pointer; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+          <span style="display: flex; align-items: center; gap: 10px;">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--md-sys-color-primary)" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            <strong style="font-size: 0.9rem;">Pengaturan</strong>
+            @if (isRelevan('pengaturan')) { <span class="badge badge-success" style="font-size: 0.6rem;">Relevan untuk Anda</span> }
+          </span>
+          <span style="color: var(--text-muted); font-size: 0.8rem;">{{ isTerbuka('pengaturan') ? '▲' : '▼' }}</span>
+        </button>
+        @if (isTerbuka('pengaturan')) {
+          <div style="padding: 0 20px 20px; font-size: 0.82rem; line-height: 1.6;">
+            <p><strong>Untuk siapa:</strong> Superadmin saja.</p>
+            <p><strong>Fungsinya:</strong> setel ulang seluruh data ke kondisi bawaan (hati-hati, ini menghapus perubahan uji coba), dan nyalakan/matikan simulasi pergerakan GPS untuk menu Monitoring GPS.</p>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- ISTILAH -->
+    <h3 style="font-size: 0.8rem; font-weight: 700; color: var(--md-sys-color-primary); text-transform: uppercase; letter-spacing: 0.05em; margin: 24px 0 10px;">Istilah &amp; Singkatan</h3>
+    <div class="glass-panel" style="padding: 20px;">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px 24px;">
+        <div><strong style="font-size: 0.82rem;">NIBAR</strong><p style="font-size: 0.78rem; color: var(--md-sys-color-on-surface-variant); margin-top: 2px;">Nomor Induk Barang — kode unik identitas tiap unit kendaraan/aset dalam sistem BMD.</p></div>
+        <div><strong style="font-size: 0.82rem;">OPD / Bidang</strong><p style="font-size: 0.78rem; color: var(--md-sys-color-on-surface-variant); margin-top: 2px;">Organisasi Perangkat Daerah — unit kerja/dinas/bidang tempat pengguna bernaung.</p></div>
+        <div><strong style="font-size: 0.82rem;">BAST</strong><p style="font-size: 0.78rem; color: var(--md-sys-color-on-surface-variant); margin-top: 2px;">Berita Acara Serah Terima — dokumen cetak bukti serah/terima fisik kendaraan, dilengkapi kolom tanda tangan.</p></div>
+        <div><strong style="font-size: 0.82rem;">SOP</strong><p style="font-size: 0.78rem; color: var(--md-sys-color-on-surface-variant); margin-top: 2px;">Standar Operasional Prosedur — dasar resmi alur kerja peminjaman kendaraan dinas yang diikuti aplikasi ini.</p></div>
+        <div><strong style="font-size: 0.82rem;">Odometer</strong><p style="font-size: 0.78rem; color: var(--md-sys-color-on-surface-variant); margin-top: 2px;">Angka kilometer kendaraan — dicatat saat serah terima &amp; pengembalian untuk melacak jarak tempuh pemakaian.</p></div>
+        <div><strong style="font-size: 0.82rem;">BMD</strong><p style="font-size: 0.78rem; color: var(--md-sys-color-on-surface-variant); margin-top: 2px;">Barang Milik Daerah — istilah resmi untuk aset kendaraan dinas yang dikelola pemerintah daerah.</p></div>
+      </div>
+    </div>
+  </main>
+</div>

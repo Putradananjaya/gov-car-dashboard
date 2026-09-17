@@ -14,7 +14,9 @@ const GPS_SIMULATION_STORAGE_KEY = 'pusaka_bangli_simulasi_gps';
 const LABEL_PERAN: Record<string, string> = {
   superadmin: 'Superadmin',
   admin: 'Admin OPD',
-  pegawai: 'Pegawai'
+  pegawai: 'Pegawai',
+  pejabat_penatausahaan: 'Pejabat Penatausahaan',
+  pimpinan: 'Pimpinan'
 };
 
 @Component({

@@ -43,8 +43,12 @@
                   <td style="font-size: 0.75rem;">{{ loan.rencanaMulai }} s/d {{ loan.rencanaSelesai }}</td>
                   <td>
                     <div class="actions-col">
-                      <button class="btn-primary" style="padding: 6px 12px; font-size: 0.72rem;" (click)="setujuiTahap1(loan)">Setujui</button>
-                      <button class="btn-secondary" style="padding: 6px 12px; font-size: 0.72rem; border-color: rgba(239,68,68,0.3); color: #f87171;" (click)="bukaTolak(loan)">Tolak</button>
+                      @if (canSetujuiTahap1()) {
+                        <button class="btn-primary" style="padding: 6px 12px; font-size: 0.72rem;" (click)="setujuiTahap1(loan)">Setujui</button>
+                      }
+                      @if (canTolak()) {
+                        <button class="btn-secondary" style="padding: 6px 12px; font-size: 0.72rem; border-color: rgba(239,68,68,0.3); color: #f87171;" (click)="bukaTolak(loan)">Tolak</button>
+                      }
                     </div>
                   </td>
                 </tr>
@@ -91,8 +95,12 @@
                   <td style="font-size: 0.75rem;">{{ loan.rencanaMulai }} s/d {{ loan.rencanaSelesai }}</td>
                   <td>
                     <div class="actions-col">
-                      <button class="btn-primary" style="padding: 6px 12px; font-size: 0.72rem;" (click)="bukaSerahTerima(loan)">Serah Terima</button>
-                      <button class="btn-secondary" style="padding: 6px 12px; font-size: 0.72rem; border-color: rgba(239,68,68,0.3); color: #f87171;" (click)="bukaTolak(loan)">Tolak</button>
+                      @if (canSerahTerima()) {
+                        <button class="btn-primary" style="padding: 6px 12px; font-size: 0.72rem;" (click)="bukaSerahTerima(loan)">Serah Terima</button>
+                      }
+                      @if (canTolak()) {
+                        <button class="btn-secondary" style="padding: 6px 12px; font-size: 0.72rem; border-color: rgba(239,68,68,0.3); color: #f87171;" (click)="bukaTolak(loan)">Tolak</button>
+                      }
                     </div>
                   </td>
                 </tr>

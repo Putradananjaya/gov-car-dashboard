@@ -23,7 +23,19 @@ export class PenggunaListComponent {
   public users = computed(() => this.userRepository.users().slice().sort((a, b) => a.nama.localeCompare(b.nama)));
 
   public opdList = KNOWN_OPD_LIST;
-  public peranOptions: Peran[] = ['superadmin', 'admin', 'pegawai'];
+  public peranOptions: Peran[] = ['superadmin', 'admin', 'pegawai', 'pejabat_penatausahaan', 'pimpinan'];
+
+  private static readonly LABEL_PERAN: Record<Peran, string> = {
+    superadmin: 'Superadmin (Kabid Aset)',
+    admin: 'Admin (Pengurus Barang)',
+    pegawai: 'Pegawai (Pemohon)',
+    pejabat_penatausahaan: 'Pejabat Penatausahaan Pengguna Barang',
+    pimpinan: 'Pimpinan (Kepala Dinas/Badan)'
+  };
+
+  peranLabel(peran: Peran): string {
+    return PenggunaListComponent.LABEL_PERAN[peran];
+  }
 
   public showFormModal = signal(false);
   public editingId = signal<string | null>(null);

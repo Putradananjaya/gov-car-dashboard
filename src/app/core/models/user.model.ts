@@ -1,4 +1,4 @@
-export type Peran = 'superadmin' | 'admin' | 'pegawai';
+export type Peran = 'superadmin' | 'admin' | 'pegawai' | 'pejabat_penatausahaan' | 'pimpinan';
 
 export interface User {
   id: string;
