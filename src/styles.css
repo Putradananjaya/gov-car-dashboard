@@ -728,23 +728,43 @@ body {
 /* ========================================== */
 .tracking-layout { display: grid; grid-template-columns: 1fr 320px; gap: 16px; height: calc(100vh - var(--header-height) - 30px); }
 .map-container { height: 100%; display: flex; flex-direction: column; position: relative; overflow: hidden; padding: 20px; }
-.map-overlay-header { position: absolute; top: 20px; left: 20px; right: 20px; display: flex; align-items: center; justify-content: space-between; z-index: 50; pointer-events: none; }
+.map-overlay-header { position: absolute; top: 20px; left: 20px; right: 20px; display: flex; align-items: center; justify-content: space-between; z-index: 1000; pointer-events: none; }
 .map-overlay-header .title-group { background: var(--md-sys-color-surface); padding: 8px 14px; border-radius: var(--md-shape-corner-medium); border: 1px solid var(--md-sys-color-outline); pointer-events: auto; }
 .map-overlay-header h2 { font-size: 0.95rem; font-weight: 700; color: var(--md-sys-color-on-background); }
 .map-overlay-header span { font-size: 0.65rem; color: var(--md-sys-color-on-surface-variant); }
 .tracking-focus-badge { background: var(--md-sys-color-primary); border: 1px solid rgba(255, 255, 255, 0.2); color: var(--md-sys-color-on-primary); padding: 6px 12px; border-radius: var(--md-shape-corner-medium); display: flex; align-items: center; gap: 6px; font-size: 0.75rem; font-weight: 700; pointer-events: auto; }
 .clear-focus-btn { background: transparent; border: none; color: inherit; font-size: 1.1rem; font-weight: bold; cursor: pointer; margin-left: 2px; }
 
-.svg-map-wrapper { flex-grow: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; margin-top: 25px; }
-.svg-map { width: 100%; max-height: 100%; background-color: #05080e; border-radius: var(--md-shape-corner-large); border: 1px solid var(--md-sys-color-outline); }
-.vehicle-marker { cursor: pointer; transition: transform 0.2s ease; }
-.vehicle-marker:hover { transform: scale(1.18); }
-.vehicle-tooltip { opacity: 0; pointer-events: none; transition: opacity 0.2s, transform 0.2s; transform: translateY(4px); }
-.vehicle-marker:hover .vehicle-tooltip, .vehicle-marker.active-tracking .vehicle-tooltip { opacity: 1; transform: translateY(0); }
+.svg-map-wrapper { flex-grow: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; margin-top: 25px; position: relative; border-radius: var(--md-shape-corner-large); border: 1px solid var(--md-sys-color-outline); }
+.leaflet-map-el { width: 100%; height: 100%; background-color: #1a1d23; border-radius: var(--md-shape-corner-large); }
 
-.map-legend { display: flex; gap: 12px; margin-top: auto; padding-top: 12px; border-top: 1px solid var(--md-sys-color-outline); justify-content: center; flex-wrap: wrap; }
+/* Peta dasar (Leaflet + OpenStreetMap) diberi filter gelap agar konsisten dengan tema aplikasi. */
+.leaflet-map-el .leaflet-tile-pane { filter: brightness(0.62) saturate(1.15) hue-rotate(-4deg) contrast(1.05); }
+.leaflet-map-el .leaflet-control-attribution { background: rgba(10, 12, 16, 0.7) !important; color: var(--text-muted) !important; font-size: 0.6rem !important; }
+.leaflet-map-el .leaflet-control-attribution a { color: var(--md-sys-color-on-surface-variant) !important; }
+.leaflet-map-el .leaflet-control-zoom a { background: var(--md-sys-color-surface) !important; color: var(--md-sys-color-on-background) !important; border-color: var(--md-sys-color-outline) !important; }
+
+.tracking-landmark-pin { display: flex; flex-direction: column; align-items: center; transform: translateY(-6px); pointer-events: none; }
+.tracking-landmark-pin .pin-dot { width: 10px; height: 10px; border-radius: 50% 50% 50% 0; transform: rotate(45deg); border: 1.5px solid rgba(255,255,255,0.7); box-shadow: 0 1px 4px rgba(0,0,0,0.5); }
+.tracking-landmark-pin .pin-label { margin-top: 3px; background: var(--md-sys-color-surface); border: 1px solid var(--md-sys-color-outline); border-radius: var(--md-shape-corner-small); padding: 2px 7px; font-size: 0.62rem; font-weight: 600; color: var(--text-primary); white-space: nowrap; box-shadow: var(--md-elevation-1); }
+
+.tracking-vehicle-marker { cursor: pointer; }
+.tracking-vehicle-marker .marker-dot-wrapper { position: relative; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; }
+.tracking-vehicle-marker .marker-dot { width: 13px; height: 13px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 1px 5px rgba(0,0,0,0.6); transition: transform 0.15s ease; }
+.tracking-vehicle-marker:hover .marker-dot { transform: scale(1.25); }
+.tracking-vehicle-marker.is-focused .marker-dot { transform: scale(1.35); box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.35), 0 1px 5px rgba(0,0,0,0.6); }
+.tracking-vehicle-marker .marker-pulse { position: absolute; width: 22px; height: 22px; border-radius: 50%; opacity: 0.55; animation: trackingPulse 1.6s ease-out infinite; }
+.tracking-vehicle-marker .marker-plate-label { position: absolute; top: -22px; left: 50%; transform: translateX(-50%); background: var(--md-sys-color-surface); border: 1px solid var(--md-sys-color-outline); border-radius: var(--md-shape-corner-small); padding: 2px 6px; font-size: 0.62rem; font-weight: 700; color: var(--text-primary); white-space: nowrap; box-shadow: var(--md-elevation-1); opacity: 0; pointer-events: none; transition: opacity 0.15s ease; }
+.tracking-vehicle-marker:hover .marker-plate-label, .tracking-vehicle-marker.is-focused .marker-plate-label { opacity: 1; }
+@keyframes trackingPulse { 0% { transform: scale(0.6); opacity: 0.55; } 100% { transform: scale(1.9); opacity: 0; } }
+
+.map-legend { display: flex; gap: 12px; margin-top: auto; padding-top: 12px; border-top: 1px solid var(--md-sys-color-outline); justify-content: center; flex-wrap: wrap; position: relative; z-index: 1000; }
 .map-legend .legend-item { display: flex; align-items: center; gap: 5px; font-size: 0.7rem; color: var(--md-sys-color-on-surface-variant); }
-.map-legend .legend-dot { width: 7px; height: 7px; border-radius: 50%; }
+.map-legend .legend-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.map-legend .legend-dot.bg-success { background: var(--color-success); }
+.map-legend .legend-dot.bg-info { background: #38bdf8; }
+.map-legend .legend-dot.bg-warning { background: #f59e0b; }
+.map-legend .legend-dot.bg-danger { background: var(--color-danger); }
 
 .control-panel { height: 100%; display: flex; flex-direction: column; padding: 20px; overflow: hidden; }
 .control-panel .panel-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-shrink: 0; }
@@ -760,22 +780,60 @@ body {
 .sidebar-car-item .plate { font-size: 0.75rem; font-weight: 700; color: var(--md-sys-color-on-background); }
 .sidebar-car-item .model { font-size: 0.75rem; color: var(--md-sys-color-on-background); font-weight: 600; margin-top: 1px; }
 
+.telemetry-panel { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+.sidebar-list { flex-grow: 1; min-height: 0; }
 .telemetry-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; flex-shrink: 0; }
 .back-btn { background: transparent; border: none; color: var(--md-sys-color-on-surface-variant); cursor: pointer; display: inline-flex; align-items: center; gap: 4px; font-size: 0.75rem; font-weight: 600; }
 .back-btn:hover { color: var(--md-sys-color-on-surface); }
 
 .plate-num { font-size: 1.35rem; font-weight: 800; color: var(--md-sys-color-on-background); background: rgba(128, 128, 128, 0.05); padding: 4px 12px; border-radius: 6px; width: fit-content; border: 1px solid var(--md-sys-color-outline); }
+.identity-section { display: flex; flex-direction: column; gap: 2px; }
 .identity-section .car-desc { font-size: 0.85rem; font-weight: 700; color: var(--md-sys-color-on-background); margin-top: 2px; }
+.agency-tag { font-size: 0.68rem; font-weight: 600; color: var(--md-sys-color-on-surface-variant); background: rgba(128, 128, 128, 0.06); border: 1px solid var(--md-sys-color-outline); border-radius: var(--md-shape-corner-small); padding: 3px 9px; width: fit-content; margin-top: 6px; }
+
+.scrollable { overflow-y: auto; scrollbar-width: thin; }
+.scrollable::-webkit-scrollbar { width: 6px; }
+.scrollable::-webkit-scrollbar-thumb { background: var(--md-sys-color-outline); border-radius: 4px; }
+
+.telemetry-content { display: flex; flex-direction: column; flex-grow: 1; min-height: 0; }
+.panel-divider { height: 1px; background: var(--md-sys-color-outline); margin: 16px 0; flex-shrink: 0; }
+
 .telemetry-gauges h4, .driver-section h4, .quick-status-section h4 { font-size: 0.75rem; font-weight: 700; color: var(--md-sys-color-primary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
 
 .gauge-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .gauge-card { background: rgba(128, 128, 128, 0.02); border: 1px solid var(--md-sys-color-outline); border-radius: var(--md-shape-corner-medium); padding: 12px; display: flex; flex-direction: column; justify-content: space-between; }
+.gauge-title { font-size: 0.68rem; font-weight: 600; color: var(--md-sys-color-on-surface-variant); text-transform: uppercase; letter-spacing: 0.03em; }
 .gauge-value { font-size: 1.2rem; font-weight: 800; margin: 4px 0; color: var(--md-sys-color-on-background); }
+.gauge-value .unit { font-size: 0.68rem; font-weight: 600; color: var(--text-muted); margin-left: 2px; }
+.gauge-value.text-cyan { color: #38bdf8; }
+.gauge-value.text-green { color: var(--color-success); }
+.gauge-sub { font-size: 0.64rem; color: var(--text-muted); }
+
+.telemetry-fuel-bar { width: 100%; height: 6px; border-radius: 4px; background: rgba(128, 128, 128, 0.14); overflow: hidden; margin-top: 6px; }
+.telemetry-fuel-fill { height: 100%; border-radius: 4px; transition: width 0.3s ease; }
+.telemetry-fuel-fill.low { background: var(--color-danger); }
+.telemetry-fuel-fill.mid { background: #f59e0b; }
+.telemetry-fuel-fill.high { background: var(--color-success); }
 
 .driver-box { display: flex; align-items: center; gap: 10px; background: rgba(128, 128, 128, 0.02); border: 1px solid var(--md-sys-color-outline); border-radius: var(--md-shape-corner-medium); padding: 12px; margin-bottom: 10px; }
+.driver-box-empty { color: var(--md-sys-color-on-surface-variant); font-size: 0.76rem; line-height: 1.5; justify-content: center; text-align: center; }
 .driver-avatar { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, var(--md-sys-color-primary) 0%, #d97706 100%); color: var(--md-sys-color-on-primary); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.75rem; flex-shrink: 0; }
+.driver-details { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.driver-details .name { font-size: 0.83rem; font-weight: 700; color: var(--md-sys-color-on-background); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.driver-details .phone { font-size: 0.7rem; color: var(--md-sys-color-on-surface-variant); }
+.call-btn { width: 100%; justify-content: center; }
+.call-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
 .quick-status-section select { width: 100%; background: rgba(128, 128, 128, 0.04); border: 1px solid var(--md-sys-color-outline); color: var(--md-sys-color-on-background); padding: 8px 12px; border-radius: var(--md-shape-corner-medium); font-size: 0.75rem; cursor: pointer; }
-.dates-section { display: flex; flex-direction: column; gap: 6px; }
+
+.dates-section { display: flex; flex-direction: column; }
+.date-item { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px dashed var(--md-sys-color-outline); }
+.date-item:last-child { border-bottom: none; }
+.date-item .label { font-size: 0.75rem; color: var(--md-sys-color-on-surface-variant); flex-shrink: 0; }
+.date-item .val { font-size: 0.78rem; font-weight: 700; color: var(--md-sys-color-on-background); text-align: right; }
+.date-item .val.text-green { color: var(--color-success); }
+.date-item .val.text-red { color: var(--color-danger); }
+.date-item .val.font-mono { font-family: 'SFMono-Regular', Consolas, monospace; font-size: 0.72rem; font-weight: 600; }
 
 @media (max-width: 992px) {
   .tracking-layout { grid-template-columns: 1fr; height: auto; }

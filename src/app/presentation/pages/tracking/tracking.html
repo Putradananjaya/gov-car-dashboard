@@ -16,75 +16,9 @@
       }
     </div>
 
-    <!-- SVG VECTOR MAP -->
+    <!-- PETA NYATA (Leaflet + OpenStreetMap, gratis tanpa API key) -->
     <div class="svg-map-wrapper">
-      <svg viewBox="0 0 800 500" class="svg-map">
-        <!-- Grid Background -->
-        <defs>
-          <pattern id="mapGrid" width="40" height="40" patternUnits="userSpaceOnUse">
-            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255, 255, 255, 0.02)" stroke-width="1" />
-          </pattern>
-        </defs>
-        <rect width="100%" height="100%" fill="url(#mapGrid)" />
-
-        <!-- Green Parks (Taman Kota) -->
-        <rect x="350" y="180" width="100" height="100" rx="10" fill="rgba(16, 185, 129, 0.04)" stroke="rgba(16, 185, 129, 0.08)" stroke-width="1" />
-        <rect x="50" y="40" width="120" height="80" rx="6" fill="rgba(16, 185, 129, 0.03)" stroke="rgba(16, 185, 129, 0.05)" stroke-width="1" />
-        
-        <!-- Blue Lake (Danau Batur) -->
-        <circle cx="400" cy="230" r="50" fill="rgba(6, 182, 212, 0.05)" stroke="rgba(6, 182, 212, 0.1)" stroke-width="1" />
-
-        <!-- Underlay Roads / Jalan Raya (Asphalt effect) -->
-        @for (road of roadPaths; track road) {
-          <!-- Asphalt Road Background -->
-          <path [attr.d]="road" fill="none" stroke="var(--md-sys-color-surface-container)" stroke-width="20" stroke-linecap="round" stroke-linejoin="round" />
-          <!-- Road Center Dashed Line -->
-          <path [attr.d]="road" fill="none" stroke="var(--md-sys-color-primary)" stroke-opacity="0.3" stroke-width="1" stroke-dasharray="8,8" stroke-linecap="round" stroke-linejoin="round" />
-        }
-
-        <!-- Landmark / Building Pins -->
-        @for (landmark of landmarks; track landmark.name) {
-          <g class="landmark-group" [attr.transform]="'translate(' + landmark.x + ',' + landmark.y + ')'">
-            <!-- Pin Pointer -->
-            <circle cx="0" cy="-6" r="5" [attr.fill]="landmark.color" />
-            <path d="M-5,-6 L0,4 L5,-6 Z" [attr.fill]="landmark.color" />
-            <!-- Building Label Background -->
-            <rect [attr.x]="-60" y="-28" width="120" height="18" rx="4" fill="var(--md-sys-color-surface)" stroke="var(--md-sys-color-outline)" stroke-width="0.5" />
-            <!-- Building Label Text -->
-            <text x="0" y="-16" text-anchor="middle" fill="var(--text-primary)" font-size="7" font-weight="600">{{ landmark.name }}</text>
-          </g>
-        }
-
-        <!-- VEHICLE MARKERS -->
-        @for (car of cars(); track car.id) {
-          <g class="vehicle-marker" 
-             [attr.transform]="'translate(' + car.x + ',' + car.y + ')'"
-             [class.active-tracking]="selectedCarId() === car.id"
-             (click)="selectCar(car.id)">
-            
-            <!-- Pulsing Ring for In-Use vehicles -->
-            @if (car.status === 'Digunakan') {
-              <circle cx="0" cy="0" r="14" fill="none" stroke="var(--color-info)" stroke-width="1.5" class="pulse-animation" />
-            } @else if (car.status === 'Rusak') {
-              <circle cx="0" cy="0" r="14" fill="none" stroke="var(--color-danger)" stroke-width="1.5" class="pulse-red-animation" />
-            }
-
-            <!-- Vehicle Pin Dot -->
-            <circle cx="0" cy="0" r="8" [ngClass]="{
-              'dot-active': car.status === 'Aktif',
-              'dot-moving': car.status === 'Digunakan',
-              'dot-service': car.status === 'Service',
-              'dot-broken': car.status === 'Rusak'
-            }" stroke="var(--md-sys-color-surface)" stroke-width="1.5" />
-
-            <!-- Tooltip Plate Overlay -->
-            <g class="vehicle-tooltip">
-              <rect x="-35" y="-28" width="70" height="18" rx="4" fill="var(--md-sys-color-surface)" stroke="var(--md-sys-color-outline)" stroke-width="1" />
-              <text x="0" y="-16" text-anchor="middle" fill="var(--text-primary)" font-size="8" font-weight="700">{{ car.plateNumber }}</text>
-            </g>
-          </g>
-        }
-      </svg>
+      <div #mapEl class="leaflet-map-el"></div>
     </div>
 
     <!-- Map Legend -->
@@ -214,21 +148,27 @@
           <!-- Driver Info -->
           <div class="driver-section">
             <h4>Informasi Pengemudi</h4>
-            <div class="driver-box">
-              <div class="driver-avatar">
-                {{ selectedCar()?.driverName?.substring(0,2)?.toUpperCase() }}
+            @if (selectedCar()?.driverName) {
+              <div class="driver-box">
+                <div class="driver-avatar">
+                  {{ selectedCar()?.driverName?.substring(0,2)?.toUpperCase() }}
+                </div>
+                <div class="driver-details">
+                  <p class="name">{{ selectedCar()?.driverName }}</p>
+                  <p class="phone">{{ selectedCar()?.driverPhone || 'Nomor telepon belum tercatat' }}</p>
+                </div>
               </div>
-              <div class="driver-details">
-                <p class="name">{{ selectedCar()?.driverName }}</p>
-                <p class="phone">{{ selectedCar()?.driverPhone }}</p>
+              <button class="btn-primary call-btn" [disabled]="!selectedCar()?.driverPhone" (click)="callDriver(selectedCar()?.driverPhone || '', selectedCar()?.driverName || '')">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                </svg>
+                Hubungi Driver
+              </button>
+            } @else {
+              <div class="driver-box driver-box-empty">
+                <span>Belum ada pengemudi yang ditugaskan untuk kendaraan ini.</span>
               </div>
-            </div>
-            <button class="btn-primary call-btn" (click)="callDriver(selectedCar()?.driverPhone || '', selectedCar()?.driverName || '')">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
-              </svg>
-              Hubungi Driver
-            </button>
+            }
           </div>
 
           <div class="panel-divider"></div>
@@ -249,34 +189,30 @@
           <!-- Maintenance Log Dates -->
           <div class="dates-section">
             <div class="date-item">
-              <span class="label">Tahun Perolehan:</span>
+              <span class="label">Tahun Perolehan</span>
               <span class="val">{{ selectedCar()?.acquisitionYear }}</span>
             </div>
             <div class="date-item">
-              <span class="label">Status Pajak/STNK:</span>
+              <span class="label">Status Pajak/STNK</span>
               <span class="val" [ngClass]="selectedCar()?.stnkActive ? 'text-green' : 'text-red'">
                 {{ selectedCar()?.stnkActive ? 'Aktif' : 'Jatuh Tempo' }}
               </span>
             </div>
             <div class="date-item">
-              <span class="label">Servis Terakhir:</span>
-              <span class="val">{{ selectedCar()?.lastServiceDate }}</span>
+              <span class="label">Servis Terakhir</span>
+              <span class="val">{{ (selectedCar()?.lastServiceDate | date: 'dd MMM yyyy') || '—' }}</span>
             </div>
             <div class="date-item">
-              <span class="label">Jadwal Servis:</span>
-              <span class="val">{{ selectedCar()?.nextServiceDate }}</span>
+              <span class="label">Jadwal Servis</span>
+              <span class="val">{{ (selectedCar()?.nextServiceDate | date: 'dd MMM yyyy') || '—' }}</span>
             </div>
             <div class="date-item">
-              <span class="label">Kategori Mobil:</span>
+              <span class="label">Kategori Mobil</span>
               <span class="val">{{ selectedCar()?.type }}</span>
-            </div>
-            <div class="date-item">
-              <span class="label">Koordinat GPS:</span>
-              <span class="val font-mono">X:{{ selectedCar()?.x }}, Y:{{ selectedCar()?.y }}</span>
             </div>
             @if (selectedCar()?.price) {
               <div class="date-item">
-                <span class="label">Harga Aset:</span>
+                <span class="label">Harga Aset</span>
                 <span class="val">Rp {{ selectedCar()?.price?.toLocaleString('id-ID') }}</span>
               </div>
             }
