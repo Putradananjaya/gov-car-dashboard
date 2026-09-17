@@ -1,12 +1,12 @@
 # Ringkasan Proyek: PUSAKA BANGLI (gov-car-dashboard)
 
-> Dokumen ini dibuat untuk memindahkan pemahaman arsitektur, alur bisnis, database, dan infrastruktur proyek ke pihak/AI lain yang belum familiar dengan codebase ini. Ditulis berdasarkan kondisi kode & deployment per **2026-09-17**.
+> Dokumen ini dibuat untuk memindahkan pemahaman arsitektur, alur bisnis, database, dan infrastruktur proyek ke pihak/AI lain yang belum familiar dengan codebase ini. Ditulis berdasarkan kondisi kode & deployment per **2026-09-17** (diperbarui setelah putaran pengerjaan SOP peminjaman, peran baru, peta GPS asli, dan publish ke Dewaweb pada tanggal yang sama).
 
 ---
 
 ## 1. Apa Proyek Ini
 
-**PUSAKA BANGLI** ("Pusat Administrasi Kendaraan Aset Bangli") adalah sistem administrasi kendaraan dinas milik Pemerintah Kabupaten Bangli, Bali. Fungsinya: mencatat inventaris kendaraan dinas (aset BMD/Barang Milik Daerah), memantau status operasional & lokasi, mengelola peminjaman/penggunaan kendaraan antar-OPD, mencatat riwayat servis & pajak STNK, dan menyimpan jejak audit — semua dengan kontrol akses berbasis peran (superadmin/admin/pegawai).
+**PUSAKA BANGLI** ("Pusat Administrasi Kendaraan Aset Bangli") adalah sistem administrasi kendaraan dinas milik Pemerintah Kabupaten Bangli, Bali. Fungsinya: mencatat inventaris kendaraan dinas (aset BMD/Barang Milik Daerah), memantau status operasional & lokasi, mengelola peminjaman/penggunaan kendaraan antar-OPD, mencatat riwayat servis & pajak STNK, dan menyimpan jejak audit — semua dengan kontrol akses berbasis peran (superadmin/admin/pegawai/pejabat_penatausahaan/pimpinan — lihat bagian 5).
 
 Ini bukan proyek greenfield murni — ada sejarah evolusi arsitektur yang penting dipahami:
 
@@ -14,6 +14,7 @@ Ini bukan proyek greenfield murni — ada sejarah evolusi arsitektur yang pentin
 - **Fase 2**: domain model "Car" (monolitik) dipecah jadi `VehicleAsset` (data BMD statis) + `VehicleOperational` (kondisi/status dinamis), dengan `CarCompatRepository` sebagai adapter supaya kode lama (dashboard/inventory/tracking) tidak perlu ditulis ulang.
 - **Fase 5a–5c**: dibangun **backend NestJS + PostgreSQL** sungguhan, autentikasi dipindah ke server (JWT + refresh token), lalu **semua repository data dipindah dari IndexedDB ke HTTP** satu per satu (`UserRepository`, `VehicleAssetRepository`, `VehicleOperationalRepository`, `LoanRepository`, `ServiceRepository`, `AuditRepository`, `PhotoRepository`, `LoanDocumentRepository`). Hanya `ImportBatchRepository` yang masih IndexedDB (riwayat impor Excel, dianggap boleh lokal-per-browser).
 - **Deploy production**: awalnya backend di Railway, sekarang backend **dan** frontend keduanya di **Dewaweb** (hosting cPanel Indonesia).
+- **Fase 6** (putaran kerja terbaru): implementasi alur peminjaman sesuai SOP resmi Bangli (2 tahap persetujuan terpisah + serah terima dengan odometer/BBM/kondisi/kunci + BAST cetak + cek bentrok jadwal otomatis), ekspansi role dari 3 ke 5 (`pejabat_penatausahaan`, `pimpinan`), halaman **Panduan Aplikasi** in-app, penggantian peta simulasi SVG di Monitoring GPS dengan peta nyata (Leaflet + OpenStreetMap), dan statistik landing page yang sebelumnya hardcode diganti data agregat sungguhan dari database lewat endpoint publik baru.
 
 Banyak komentar kode secara eksplisit merujuk ke "dokumen v2" (spesifikasi/keputusan desain) dan nomor fase — dokumen itu **tidak ada di repo**, hanya jejaknya di komentar. Jangan kaget kalau ada referensi ke keputusan yang sumbernya tidak ketemu di kode.
 
@@ -27,6 +28,7 @@ Banyak komentar kode secara eksplisit merujuk ke "dokumen v2" (spesifikasi/keput
 - Testing: **Vitest** (bukan Jasmine/Karma default Angular) via `@angular/build:unit-test`
 - `idb` (wrapper IndexedDB) — sisa legacy, masih dipakai `ImportBatchRepository`
 - `xlsx` (SheetJS, dari CDN, bukan npm registry biasa) + `jszip` — untuk impor/parsing file Excel e-BMD
+- `leaflet` (+ `@types/leaflet`) — peta nyata di halaman Monitoring GPS, tile dari OpenStreetMap (gratis, tanpa API key). Terdaftar di `allowedCommonJsDependencies` (angular.json) karena bukan paket ESM murni; `leaflet.css` di-load lewat array `styles` di `angular.json`, bukan di-import dari `styles.css`.
 - `angular-cli-ghpages` — dipakai untuk **deploy frontend** (build → push ke branch git terpisah)
 - Tidak pakai UI framework (Material/Tailwind) — semua styling manual di **satu file** `src/styles.css` (2000+ baris), custom design system bernama **MD3** (Material Design 3-inspired, tapi buatan sendiri, bukan `@angular/material`)
 
@@ -103,10 +105,14 @@ Implikasi penting untuk siapa pun yang mengubah data layer: **jangan ubah kompon
 - **Timing-attack mitigation**: kalau NIP tidak ditemukan, tetap jalankan `compareSync` terhadap `DUMMY_HASH` supaya waktu respons tidak membocorkan apakah NIP terdaftar.
 
 ### Role & permission
-- 3 peran: `superadmin`, `admin`, `pegawai` (tipe `Peran`, didefinisikan **identik** di backend `user.entity.ts` dan frontend `user.model.ts` — kalau ubah salah satu, harus ubah dua tempat, tidak ada shared package).
-- **Backend**: `RolesGuard` + `@Roles(...)` decorator, hanya dipasang di endpoint tertentu (lihat tabel endpoint bagian 7). Guard ini generik, **tapi granularitasnya jauh lebih kasar dari frontend** — banyak endpoint hanya cek "sudah login" tanpa cek role sama sekali.
-- **Frontend**: `PermissionService` (`core/auth/permission.service.ts`) — **matriks 15 kemampuan** (`Kemampuan` type) → daftar peran yang boleh, single source of truth di sisi UI (tombol/menu disembunyikan via `HasPermissionDirective` di `presentation/components/has-permission/`). **PERINGATAN eksplisit dari README backend**: matriks 15-kemampuan ini di sisi Angular **belum sepenuhnya direplikasi** di backend — backend adalah pertahanan yang lebih lemah dari yang terlihat di UI.
+- **5 peran** (sejak Fase 6, sebelumnya 3): `superadmin`, `admin`, `pegawai`, `pejabat_penatausahaan`, `pimpinan` (tipe `Peran`, didefinisikan **identik** di backend `user.entity.ts` dan frontend `user.model.ts` — kalau ubah salah satu, harus ubah dua tempat, tidak ada shared package).
+  - `admin` = "Pengurus Barang" (tahap 1 persetujuan peminjaman: cek ketersediaan).
+  - `pejabat_penatausahaan` (baru) = "Pejabat Penatausahaan Pengguna Barang" (tahap 2: serah terima/persetujuan final). Role sistem terpisah dari `admin` — dua orang berbeda secara nyata di struktur organisasi Bangli.
+  - `pimpinan` (baru) = read-only untuk oversight (Kepala Dinas/Badan) — cuma dapat izin `laporan.cetak` + lihat dashboard agregat, tidak ikut proses persetujuan.
+- **Backend**: `RolesGuard` + `@Roles(...)` decorator, hanya dipasang di endpoint tertentu (lihat tabel endpoint bagian 7). Guard ini generik, **tapi granularitasnya jauh lebih kasar dari frontend** — banyak endpoint hanya cek "sudah login" tanpa cek role sama sekali. **Perkecualian yang sudah diperbaiki di Fase 6**: endpoint aksi peminjaman (`setujui-tahap1`, `serah-terima`, `tolak`, `kembalikan`) sekarang punya `@Roles()` yang benar per tahap — sebelumnya endpoint `PUT /loans/:id` generik bisa dipakai siapa saja yang login untuk mengubah status ke apa pun.
+- **Frontend**: `PermissionService` (`core/auth/permission.service.ts`) — **matriks kemampuan** (`Kemampuan` type) → daftar peran yang boleh, single source of truth di sisi UI (tombol/menu disembunyikan via `HasPermissionDirective` di `presentation/components/has-permission/`). **PERINGATAN eksplisit dari README backend**: matriks kemampuan ini di sisi Angular **belum sepenuhnya direplikasi** di backend untuk endpoint di luar `loans` — backend adalah pertahanan yang lebih lemah dari yang terlihat di UI untuk endpoint tersebut.
 - Route guard: `authGuard` (harus login) dan `roleGuard` (baca `route.data['peran']`) di `app.routes.ts`.
+- Halaman **Manajemen Pengguna** (`pengguna-list`) sudah punya dropdown 5 peran dengan label human-readable (`peranLabel()`), dan daftar OPD/Bidang (`known-opd-list.ts`) sudah ditambah 7 Bidang di bawah Badan Keuangan, Pendapatan dan Aset Daerah (PDRL, Anggaran, Aset, Pembukuan, Perbendaharaan, PBB, Sekretariat) supaya bisa dipilih saat membuat akun.
 
 ---
 
@@ -116,12 +122,12 @@ Semua entity pakai `@PrimaryColumn` string manual (bukan auto-increment/serial),
 
 | Tabel | PK | Kolom kunci | Catatan |
 |---|---|---|---|
-| `users` | `id` (varchar) | `nip` (unique), `nama`, `jabatan`, `unitKerja`, `peran`, `aktif`, `passwordHash` (bcrypt), `terakhirMasuk` | Peran: superadmin/admin/pegawai |
+| `users` | `id` (varchar) | `nip` (unique), `nama`, `jabatan`, `unitKerja`, `peran`, `aktif`, `passwordHash` (bcrypt), `terakhirMasuk` | Peran: superadmin/admin/pegawai/pejabat_penatausahaan/pimpinan (5 sejak Fase 6). Kolom `peran` tetap `varchar` biasa (bukan Postgres ENUM), jadi menambah nilai baru tidak perlu perubahan skema |
 | `refresh_tokens` | `id` (uuid, **dibuat di app code** via `crypto.randomUUID()`, bukan `uuid_generate_v4()` Postgres — sengaja, karena ekstensi `uuid-ossp` belum tentu boleh diaktifkan di shared hosting) | `userId`, `tokenHash` (unique, SHA-256), `expiresAt`, `revokedAt` | |
 | `login_attempts` | `nip` | `attempts`, `lockedUntil` | |
 | `vehicle_assets` | `nibar` (varchar 45) | ~35 kolom: kode barang berjenjang (`kodeBarangAkun/Kelompok/Jenis/Objek/RincianObjek/SubRincian/SubSub/Full` — struktur kode BMD Indonesia), `nomorPolisi`, `nomorRangka`, `nomorBpkb`, `hargaSatuanPerolehan`, `nilaiPerolehan`, `masaBerlakuPajak`, `masaBerlakuStnk`, `dihapusPada` (soft delete timestamp, nullable) | **NIBAR = primary key sistem ini**, dipakai sebagai foreign key implisit di hampir semua tabel lain |
 | `vehicle_operational` | `nibar` | `kondisi` ('Baik'/'Rusak Ringan'/'Rusak Berat'), `status` ('Tersedia'/'Dipinjam'/'Servis'/'Tidak Layak'), `telemetri` (jsonb: lat/lng/kecepatan/levelBbm/sumber/waktu), `catatan` | 1:1 dengan `vehicle_assets` lewat `nibar` |
-| `loans` | `id` | `nibar`, `pemohonId`, `pemohon` (jsonb snapshot: nama/nip/jabatan/unitKerja/noHp — **disalin**, bukan join, supaya histori tidak berubah kalau data user berubah), `statusPermohonan`, `jenisPermohonan`, `status` (workflow: Draft→Diajukan→Disetujui/Ditolak→Berjalan→Selesai), `tingkatUrgensi`, `odometerKeluar/Masuk` | Form peminjaman kendaraan, field-nya mengikuti form resmi "FRM-01" (disebut di komentar) |
+| `loans` | `id` | `nibar`, `pemohonId`, `pemohon` (jsonb snapshot: nama/nip/jabatan/unitKerja/noHp — **disalin**, bukan join, supaya histori tidak berubah kalau data user berubah), `statusPermohonan`, `jenisPermohonan`, `rute` (baru, Fase 6), `status` (workflow **2 tahap**: Draft→Diajukan→**Disetujui** (tahap 1, cek ketersediaan)→**Berjalan** (tahap 2, serah terima)→Selesai, atau Ditolak dari Diajukan/Disetujui), `tingkatUrgensi`, `odometerKeluar/Masuk`, `bbmKeluar/Masuk` (baru), `kondisiKeluar/Masuk` + `catatanKondisiKeluar/Masuk` (baru, enum sama seperti `KondisiAset` di `vehicle_operational`, diduplikasi bukan di-reference), `kunciDiserahkanPada/Dikembalikan Pada` (baru, timestamp ISO, wajib dicentang di modal serah-terima/kembalikan sebelum submit) | Form peminjaman kendaraan, field-nya mengikuti form resmi "FRM-01" (disebut di komentar). Field baru Fase 6 semuanya nullable — aman ditambah lewat `synchronize: true` tanpa migration manual. |
 | `loan_documents` | `id` | `loanId`, `kind` ('utama'/'lain'), `fileName`, `mimeType`, `size`, **`blob` (bytea)** | Dokumen surat tugas dkk disimpan **langsung di Postgres sebagai binary**, bukan filesystem/S3 |
 | `service_records` | `id` | `nibar`, `tahun`, `uraian`, `odometerKm`, `biaya`, `sumber` ('impor'/'input-manual') | Riwayat servis & histori pajak |
 | `vehicle_photos` | `nibar` | `mimeType`, **`blob` (bytea)** | Foto kendaraan, juga disimpan sebagai binary di Postgres |
@@ -148,12 +154,17 @@ Base URL production: `https://api.pusaka-bangli.my.id`. Semua butuh `Authorizati
 | `DELETE /vehicle-assets/:nibar` | `@Roles('superadmin')` | Hapus permanen |
 | `POST /vehicle-assets/:nibar/soft-delete` | login saja | Isi `dihapusPada` |
 | `GET, GET/:nibar, PUT/:nibar, DELETE/:nibar /vehicle-operational` | login saja (semua, termasuk DELETE — tidak ada role check) | |
-| `GET, GET/:id, PUT/:id, DELETE/:id /loans` | login saja | |
+| `GET, GET/:id, PUT/:id, DELETE/:id /loans` | login saja (lihat baris khusus di bawah untuk transisi status) | `PUT/:id` generik **ditolak** (400) kalau `status` di body termasuk `Disetujui/Berjalan/Ditolak/Selesai` — dipaksa lewat endpoint aksi khusus |
+| `POST /loans/:id/setujui-tahap1` | `@Roles('superadmin','admin')` | Diajukan→Disetujui. Cek bentrok jadwal (`assertNoScheduleConflict`) terhadap peminjaman lain (status Diajukan/Disetujui/Berjalan) untuk `nibar` yang sama |
+| `POST /loans/:id/serah-terima` | `@Roles('superadmin','pejabat_penatausahaan')` | Disetujui→Berjalan. Body: odometerKeluar, bbmKeluar, kondisiKeluar, kunciDiserahkan (wajib true). Set status kendaraan `vehicle_operational` jadi `Dipinjam` |
+| `POST /loans/:id/tolak` | `@Roles('superadmin','admin','pejabat_penatausahaan')` | Boleh dari status Diajukan **atau** Disetujui |
+| `POST /loans/:id/kembalikan` | login saja, tapi **service** cek: pemohon asli ATAU role admin/superadmin/pejabat_penatausahaan | Berjalan→Selesai. Set status kendaraan balik `Tersedia` |
 | `GET, PUT/:nibar, DELETE/:nibar /photos` | login saja | |
 | `GET, PUT/:id /service-records` | PUT: `@Roles('superadmin','admin')` | `DELETE/:id`: login saja |
 | `GET, POST /audit` | GET: `@Roles('superadmin')` | POST (append log): login saja — siapa pun yang login bisa menulis audit log |
+| `GET /public-stats` | **publik, tanpa `JwtAuthGuard` sama sekali** (Fase 6) | Statistik agregat untuk landing page (total kendaraan aktif, armada siap pakai, jumlah OPD unik, jumlah aset pajak kadaluarsa) — sengaja tanpa data per-unit/sensitif, aman diakses sebelum login |
 
-Banyak operasi tulis/hapus data sensitif **tidak punya role check di backend**, hanya "sudah login". Kalau ada tugas "perketat keamanan API", ini daftar prioritasnya.
+Banyak operasi tulis/hapus data sensitif **tidak punya role check di backend**, hanya "sudah login". Kalau ada tugas "perketat keamanan API", ini daftar prioritasnya (endpoint `loans` sudah dibereskan di Fase 6 — sisanya belum: `vehicle-assets` PUT, `vehicle-operational` PUT/DELETE, `photos` PUT/DELETE, `service-records` DELETE, `audit` POST).
 
 CORS: `app.enableCors({ origin: process.env.FRONTEND_ORIGIN ?? 'http://localhost:4300', credentials: true })` — **hanya SATU origin** yang diizinkan (bukan array/wildcard). Di production, `FRONTEND_ORIGIN` di `.env` server **harus** di-set ke domain frontend asli persis — kalau lupa/salah, semua request dari frontend akan gagal CORS.
 
@@ -168,9 +179,11 @@ CORS: `app.enableCors({ origin: process.env.FRONTEND_ORIGIN ?? 'http://localhost
   /app/beranda              → dashboard (role-aware: render dashboard-superadmin/admin/pegawai berbeda)
   /app/aset, /aset/baru, /aset/impor, /aset/:nibar   → roleGuard: superadmin/admin
   /app/inventory            → roleGuard: superadmin/admin
-  /app/tracking, /tracking/:id                        → roleGuard: superadmin/admin (peta simulasi GPS)
+  /app/tracking, /tracking/:id                        → roleGuard: superadmin/admin (peta nyata Leaflet+OSM, posisi kendaraan tetap simulasi)
   /app/peminjaman, /peminjaman/buat(/:id)             → tanpa roleGuard (semua peran login, termasuk pegawai)
-  /app/peminjaman/persetujuan                          → roleGuard: superadmin/admin
+  /app/peminjaman/persetujuan                          → roleGuard: superadmin/admin/pejabat_penatausahaan (Fase 6, sebelumnya cuma superadmin/admin)
+  /app/jadwal                                          → tanpa roleGuard (semua peran login) — BARU Fase 6, daftar peminjaman terjadwal per kendaraan
+  /app/panduan                                         → tanpa roleGuard (semua peran login) — BARU Fase 6, halaman dokumentasi in-app
   /app/pengguna                                        → roleGuard: superadmin saja
   /app/audit                                           → roleGuard: superadmin saja
 # redirect kompatibilitas: /login→/masuk, /dashboard→/app/beranda, dst. /** → /
@@ -182,18 +195,20 @@ Semua page di-*lazy load* (`loadComponent`), semua standalone components (bukan 
 
 ## 9. Halaman-Halaman Utama (fungsi bisnis tiap page)
 
-- **`landing`** — halaman publik, ada slideshow background foto (ganti tiap 5 detik, crossfade).
+- **`landing`** — halaman publik, ada slideshow background foto (ganti tiap 5 detik, crossfade). **Fase 6**: 3 angka statistik hero ("Total Kendaraan Dinas", "Armada Siap Pakai", "OPD Pengelola Aset") dan angka "aset pajak kadaluarsa" di kartu fitur **tidak lagi hardcode** — diambil dari `GET /public-stats` saat halaman dimuat (gagal fetch → tampil "—", tidak crash).
 - **`login`** — form NIP + password.
-- **`dashboard`** (+ 3 sub-komponen `dashboard-superadmin/admin/pegawai`) — tampilan beranda berbeda per peran.
+- **`dashboard`** (+ sub-komponen `dashboard-superadmin/admin/pegawai`) — tampilan beranda berbeda per peran. Role baru `pejabat_penatausahaan` dipetakan ke `dashboard-admin`, `pimpinan` ke `dashboard-superadmin` (lihat `dashboard.html` `@switch`).
 - **`aset-list`, `aset-baru`, `aset-detail`** — CRUD inventaris kendaraan (VehicleAsset).
 - **`aset-impor`** — **impor massal dari file Excel e-BMD** (`ebmd-parser.ts` parse workbook via `xlsx`), plus ekstraksi foto dari drawing anchor di file Excel (`photo-extractor.worker.ts` — jalan di **Web Worker**, ada `drawing-anchor-parser.ts` untuk baca posisi gambar tertanam di sheet Excel).
 - **`inventory`** — tampilan agregat/list gabungan aset+operasional.
-- **`tracking`** (+ `/:id`) — peta lokasi kendaraan, **posisi disimulasikan** (`TelemetrySimulatorService`), bukan GPS asli.
-- **`peminjaman`, `peminjaman-form`, `persetujuan`** — workflow pengajuan & approval peminjaman kendaraan (form FRM-01), termasuk upload dokumen (PDF/JPG/PNG maks 5MB, divalidasi client `MAX_UKURAN_BERKAS`/`TIPE_BERKAS_DIIZINKAN`).
-- **`pengguna-list`** — manajemen user (superadmin only).
+- **`tracking`** (+ `/:id`) — **Fase 6: peta nyata** (Leaflet + tile OpenStreetMap, gratis tanpa API key) menggantikan mockup SVG jalan/landmark buatan tangan. Posisi kendaraan (`Car.x/y`, skala kanvas 0-800×0-500 dari `TelemetrySimulatorService`) **tetap simulasi**, tapi sekarang dipetakan (`xyKeLatLng`) ke koordinat GPS asli wilayah Bangli untuk ditampilkan di atas peta sungguhan. 5 landmark (Kintamani, Susut, Tembuku, Kawasan Besakih, Pusat Kota Bangli) pakai koordinat real, bukan hasil transform. Panel telemetri sidebar juga dirombak total di fase ini — banyak class CSS (`date-item`, `driver-details`, `gauge-title`, `telemetry-fuel-bar`, dst.) yang dipakai di template ternyata **tidak pernah punya definisi CSS** sejak awal (bug lama, bukan regresi), sudah dilengkapi.
+- **`peminjaman`, `peminjaman-form`, `persetujuan`** — workflow pengajuan & approval peminjaman kendaraan (form FRM-01), termasuk upload dokumen (PDF/JPG/PNG maks 5MB, divalidasi client `MAX_UKURAN_BERKAS`/`TIPE_BERKAS_DIIZINKAN`). **Fase 6, dirombak sesuai SOP resmi**: form tambah field "Rute Perjalanan"; `persetujuan` sekarang 2 antrean terpisah ("Menunggu Persetujuan" tahap 1 oleh admin, "Menunggu Serah Terima" tahap 2 oleh pejabat_penatausahaan) dengan tombol yang otomatis menyesuaikan role login; semua `prompt()`/`alert()` browser diganti modal terstruktur (`TolakModalComponent`, `SerahTerimaModalComponent`, `KembalikanModalComponent` — catat odometer/BBM/kondisi/konfirmasi kunci); setelah serah-terima atau kembalikan bisa cetak **BAST** (`BastPrintComponent`, reuse pola `.report-overlay`/`.report-modal`/`@media print` yang sudah ada, bukan komponen baru dari nol).
+- **`jadwal`** — **BARU Fase 6**. Daftar peminjaman berstatus Diajukan/Disetujui/Berjalan, dikelompokkan per kendaraan, urut tanggal — murni computed di client dari `LoanRepository.loans()` yang sudah ada, tidak ada endpoint backend baru. Menggantikan tombol sidebar "Jadwal" yang sebelumnya cuma `scrollToSchedule()` (scroll ke anchor di dashboard, bukan halaman sungguhan).
+- **`panduan`** — **BARU Fase 6**. Halaman dokumentasi aplikasi in-app (bukan dokumen eksternal) — pencarian, accordion per menu (progressive disclosure), badge "Relevan untuk Anda" yang auto-expand berdasar role yang login, diagram alur kerja peminjaman 5 langkah, dan daftar istilah (NIBAR/OPD/BAST/SOP/dst). Data section didefinisikan di `DAFTAR_SEKSI` (`panduan.ts`), body tiap section ditulis langsung di template (bukan data-driven penuh, sesuai konvensi codebase ini yang jarang generate UI dari array).
+- **`pengguna-list`** — manajemen user (superadmin only). **Fase 6**: dropdown peran sekarang 5 opsi dengan label human-readable (`peranLabel()`), daftar Unit Kerja/OPD ditambah 7 Bidang di bawah Badan Keuangan, Pendapatan dan Aset Daerah.
 - **`audit-list`** — lihat jejak audit (superadmin only).
 
-Komponen shared: `has-permission` (directive struktural, sembunyikan elemen berdasar `Kemampuan`), `asset-form`, `car-form`.
+Komponen shared: `has-permission` (directive struktural, sembunyikan elemen berdasar `Kemampuan`), `asset-form`, `car-form`, dan (Fase 6) `tolak-modal`, `serah-terima-modal`, `kembalikan-modal`, `bast-print` di `presentation/components/`.
 
 ---
 
@@ -253,6 +268,13 @@ Komponen shared: `has-permission` (directive struktural, sembunyikan elemen berd
 - `git clone -b dist-frontend ... .` gagal kalau dijalankan di folder yang **sudah ada isinya** ("not an empty directory") — clone ke folder temp kosong dulu, baru copy.
 - Command berantai tanpa `&&` bisa membuat langkah `rm -rf` di akhir **tetap jalan** meski langkah sebelumnya gagal — folder hasil clone bisa terhapus sebelum sempat dipakai. **Selalu rantai command penting dengan `&&`** saat ada langkah destruktif di akhir.
 - Salah folder: `~/pusaka-repo/server` (backend) bukan tempat untuk menaruh build frontend.
+- **`npm`/`node` tidak ada di PATH default cPanel Terminal** — harus aktifkan virtual environment Node.js Selector dulu, baru `npm install`/`npm run build` bisa jalan. Kalau langsung coba `npm ...` tanpa aktivasi: `bash: npm: command not found`.
+- **Path virtual environment TIDAK sama dengan angka versi yang ditampilkan di UI "Setup Node.js App"**. UI menampilkan `started (v20.20.2)`, tapi folder venv sesungguhnya di disk cuma pakai **angka versi major saja, tanpa "v"**:
+  ```bash
+  source /home/pusakaba/nodevenv/pusaka-repo/server/20/bin/activate && cd ~/pusaka-repo/server
+  ```
+  (`pusaka-repo/server` di tengah path itu = App Root Directory relatif dari `/home/pusakaba/`, lihat kolom "App Root Directory" di halaman Setup Node.js App). **Jangan tebak** — kalau ragu, jalankan `find /home/pusakaba/nodevenv -name "activate"` untuk dapat path persis, atau buka halaman edit aplikasi di "Setup Node.js App" (klik ikon pensil) yang menampilkan command aktivasi siap-copy secara eksplisit.
+- Setelah `npm run build` di server, aplikasi Node.js yang **sedang berjalan tidak otomatis reload** — proses lama masih pakai build lama di memori sampai di-**restart manual** lewat menu "Setup Node.js App" (ikon restart/panah melingkar). Ini langkah yang paling sering lupa dilakukan.
 
 ---
 
@@ -267,8 +289,8 @@ Tidak ada file `.env` di sisi frontend Angular — konfigurasi environment-nya p
 
 ## 13. Utang Teknis & Hal yang Perlu Diwaspadai
 
-1. **Role check tidak konsisten di backend** (bagian 7) — UI menyembunyikan tombol lewat `PermissionService`, tapi API di baliknya sering hanya cek "sudah login", bukan role spesifik. Serangan langsung ke API (skip UI) bisa melewati banyak batasan yang user lihat di frontend.
-2. **`synchronize: true`** — tidak ada migration history, perubahan skema production bergantung penuh pada urutan deploy & TypeORM auto-sync saat boot.
+1. **Role check tidak konsisten di backend** (bagian 7) — UI menyembunyikan tombol lewat `PermissionService`, tapi API di baliknya sering hanya cek "sudah login", bukan role spesifik. Serangan langsung ke API (skip UI) bisa melewati banyak batasan yang user lihat di frontend. **Sudah diperbaiki untuk `loans`** di Fase 6 (endpoint aksi khusus + `@Roles()` per tahap); endpoint lain (`vehicle-assets`, `vehicle-operational`, `photos`, dst.) masih longgar.
+2. **`synchronize: true`** — tidak ada migration history, perubahan skema production bergantung penuh pada urutan deploy & TypeORM auto-sync saat boot. Field baru Loan (Fase 6) sudah lewat siklus ini di production tanpa masalah (semua nullable).
 3. **`CarCompatRepository`** adalah lapisan adapter yang mengaburkan bahwa `dashboard`/`inventory`/`tracking` sebenarnya bicara ke dua repository terpisah (`VehicleAsset` + `VehicleOperational`) yang digabung ulang jadi bentuk "Car" lama. Tidak ada tabel/endpoint "Car" langsung — nama tabelnya `vehicle_assets`/`vehicle_operational`.
 4. **Tracking GPS itu simulasi**, bukan device asli — `TelemetrySimulatorService` menghasilkan posisi bergerak sepanjang rute hardcoded.
 5. **`bcryptjs` di frontend** (`data/db/seed.ts`) adalah sisa Fase 1 (hash password di client) — kemungkinan besar dead code sekarang karena auth sudah backend-only, belum dihapus.
@@ -277,6 +299,9 @@ Tidak ada file `.env` di sisi frontend Angular — konfigurasi environment-nya p
 8. **Tidak ada CI/CD otomatis** — semua deploy manual lewat command di terminal lokal + cPanel Terminal.
 9. `server/railway.json` masih ada di repo tapi **sudah tidak relevan** (backend sudah pindah dari Railway ke Dewaweb).
 10. Route `/app/peminjaman*` **tidak** dijaga `roleGuard` (sengaja, karena `pegawai` juga boleh ajukan peminjaman) — jangan tambahkan roleGuard di situ tanpa cek matriks kemampuan dulu.
+11. **`GET /public-stats` sengaja publik tanpa `JwtAuthGuard`** (Fase 6) — by design (statistik agregat untuk landing page, tidak ada data per-unit/sensitif), tapi perlu diingat kalau ada audit keamanan supaya tidak dikira celah yang belum sengaja.
+12. **Seed akun (`server/src/seed/seed.service.ts`) sekarang mengecek per-NIP setiap boot** (bukan cuma "kalau tabel users kosong") — supaya 9 akun organisasi asli (Fase 6) otomatis ter-provisioning di production yang sudah punya akun lain, tanpa perlu input manual. Efek sampingnya: akun demo lama (`I Wayan Sudiarta`/`Ni Made Suryani`/`I Ketut Ardika`, NIP beda dari 9 akun baru) **tetap ada** di database production, tidak dihapus otomatis — kalau mau dibersihkan, harus manual lewat Manajemen Pengguna atau langsung ke DB.
+13. Database dev lokal per 2026-09-17 juga punya 2 akun uji coba tersisa (NIP `200001012020011001` "Test User" dan `199912312099001001` "UI Created User") dari sesi testing sebelumnya — aman diabaikan/dihapus, bukan bagian dari data resmi.
 
 ---
 
@@ -288,10 +313,13 @@ cd server && docker compose up -d
 
 # 2. Backend
 cd server && npm install && npm run start:dev   # → http://localhost:3000
-# akun demo auto-seed saat tabel users kosong:
-#   superadmin: NIP 196801011990031001 / Superadmin#123
-#   admin:      NIP 198203152010012005 / Admin#123
-#   pegawai:    NIP 199005202015031002 / Pegawai#123
+# akun organisasi asli auto-seed per-NIP setiap boot (Fase 6 — lihat AKUN_BAKU
+# di seed.service.ts untuk daftar & NIP lengkap), kata sandi awal pola "{Peran}#123":
+#   superadmin (Kabid Aset):            NIP 198009182010011021 / Superadmin#123
+#   admin (Pengurus Barang):             NIP 198303232010011043 / Admin#123
+#   pejabat_penatausahaan:                NIP 198301172010011019 / Penatausahaan#123
+#   pimpinan (Kepala Badan):              NIP 197612102009021003 / Pimpinan#123
+#   pegawai (6 akun Pemohon per Bidang): Pegawai#123 — lihat AKUN_BAKU untuk NIP masing-masing
 
 # 3. Frontend (WAJIB port 4300, match CORS)
 npm install && npm start -- --port 4300         # → http://localhost:4300
