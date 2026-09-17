@@ -10,8 +10,13 @@ import { UserEntity } from '../user/user.entity';
  * "{Peran}#123" per peran, WAJIB diganti oleh masing-masing pengguna
  * setelah login pertama kali (lihat fitur "Setel Ulang Kata Sandi" di
  * Manajemen Pengguna).
+ *
+ * Dicek per-NIP setiap boot (bukan cuma saat tabel kosong) — supaya akun
+ * baru di daftar ini otomatis ter-provisioning di environment mana pun
+ * (termasuk production yang sudah punya akun lain) tanpa menyentuh akun
+ * yang sudah ada atau perlu input manual lewat Manajemen Pengguna.
  */
-const DEMO_ACCOUNTS = [
+const AKUN_BAKU = [
   {
     id: 'user-pemohon-pdrl',
     nip: '198307112010012027',
@@ -102,10 +107,12 @@ export class SeedService implements OnModuleInit {
   constructor(@InjectRepository(UserEntity) private readonly userRepository: Repository<UserEntity>) {}
 
   async onModuleInit(): Promise<void> {
-    const existingCount = await this.userRepository.count();
-    if (existingCount > 0) return;
+    let dibuat = 0;
 
-    for (const account of DEMO_ACCOUNTS) {
+    for (const account of AKUN_BAKU) {
+      const sudahAda = await this.userRepository.findOneBy({ nip: account.nip });
+      if (sudahAda) continue;
+
       await this.userRepository.save({
         id: account.id,
         nip: account.nip,
@@ -117,7 +124,12 @@ export class SeedService implements OnModuleInit {
         passwordHash: hashSync(account.password, 10),
         terakhirMasuk: null
       });
+      dibuat++;
+      this.logger.log(`Akun baru dibuat dari seed: ${account.nama} (NIP ${account.nip}, peran ${account.peran})`);
     }
-    this.logger.log(`Seed ${DEMO_ACCOUNTS.length} akun demo selesai.`);
+
+    if (dibuat > 0) {
+      this.logger.log(`Seed selesai — ${dibuat} akun baru dibuat.`);
+    }
   }
 }
