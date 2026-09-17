@@ -57,4 +57,8 @@ export class HttpVehicleOperationalRepository implements VehicleOperationalRepos
     await firstValueFrom(this.http.delete<void>(`${API_BASE_URL}/vehicle-operational/${nibar}`));
     await this.reload();
   }
+
+  public async refresh(): Promise<void> {
+    await this.reload();
+  }
 }

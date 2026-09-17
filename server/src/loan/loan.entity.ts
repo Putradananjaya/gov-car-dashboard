@@ -5,6 +5,7 @@ export type StatusPermohonan = 'Baru' | 'Perubahan' | 'Darurat';
 export type JenisPermohonan = 'Penggunaan' | 'Peminjaman';
 export type TingkatUrgensi = 'Biasa' | 'Penting' | 'Mendesak/Darurat';
 export type JenisKendaraan = 'Roda 2' | 'Roda 4' | 'Lainnya';
+export type KondisiAset = 'Baik' | 'Rusak Ringan' | 'Rusak Berat';
 
 export interface LoanApplicantSnapshot {
   nama: string;
@@ -45,6 +46,9 @@ export class LoanEntity {
 
   @Column({ type: 'text' })
   tujuan!: string;
+
+  @Column({ type: 'text', nullable: true })
+  rute!: string | null;
 
   @Column({ name: 'rencana_mulai', type: 'varchar' })
   rencanaMulai!: string;
@@ -91,4 +95,28 @@ export class LoanEntity {
 
   @Column({ name: 'odometer_masuk', type: 'int', nullable: true })
   odometerMasuk!: number | null;
+
+  @Column({ name: 'bbm_keluar', type: 'int', nullable: true })
+  bbmKeluar!: number | null;
+
+  @Column({ name: 'bbm_masuk', type: 'int', nullable: true })
+  bbmMasuk!: number | null;
+
+  @Column({ name: 'kondisi_keluar', type: 'varchar', nullable: true })
+  kondisiKeluar!: KondisiAset | null;
+
+  @Column({ name: 'kondisi_masuk', type: 'varchar', nullable: true })
+  kondisiMasuk!: KondisiAset | null;
+
+  @Column({ name: 'catatan_kondisi_keluar', type: 'text', nullable: true })
+  catatanKondisiKeluar!: string | null;
+
+  @Column({ name: 'catatan_kondisi_masuk', type: 'text', nullable: true })
+  catatanKondisiMasuk!: string | null;
+
+  @Column({ name: 'kunci_diserahkan_pada', type: 'varchar', nullable: true })
+  kunciDiserahkanPada!: string | null;
+
+  @Column({ name: 'kunci_dikembalikan_pada', type: 'varchar', nullable: true })
+  kunciDikembalikanPada!: string | null;
 }

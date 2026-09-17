@@ -98,6 +98,7 @@ export class PeminjamanFormComponent implements OnInit {
       nibar: ['', Validators.required],
       keperluan: ['', Validators.required],
       tujuan: ['', Validators.required],
+      rute: ['', Validators.required],
       rencanaMulai: ['', Validators.required],
       rencanaSelesai: ['', Validators.required],
       nomorSurat: [''],
@@ -130,6 +131,7 @@ export class PeminjamanFormComponent implements OnInit {
       nibar: loan.nibar,
       keperluan: loan.keperluan,
       tujuan: loan.tujuan,
+      rute: loan.rute ?? '',
       rencanaMulai: loan.rencanaMulai,
       rencanaSelesai: loan.rencanaSelesai,
       nomorSurat: loan.nomorSurat ?? '',
@@ -268,6 +270,7 @@ export class PeminjamanFormComponent implements OnInit {
       namaPengemudi: values.namaPengemudi?.trim() || null,
       keperluan: values.keperluan,
       tujuan: values.tujuan,
+      rute: values.rute?.trim() || null,
       rencanaMulai: values.rencanaMulai,
       rencanaSelesai: values.rencanaSelesai,
       nomorSurat: values.nomorSurat?.trim() || null,
@@ -282,7 +285,15 @@ export class PeminjamanFormComponent implements OnInit {
       disetujuiOleh: this.existingLoan?.disetujuiOleh ?? null,
       catatanPenolakan: this.existingLoan?.catatanPenolakan ?? null,
       odometerKeluar: this.existingLoan?.odometerKeluar ?? null,
-      odometerMasuk: this.existingLoan?.odometerMasuk ?? null
+      odometerMasuk: this.existingLoan?.odometerMasuk ?? null,
+      bbmKeluar: this.existingLoan?.bbmKeluar ?? null,
+      bbmMasuk: this.existingLoan?.bbmMasuk ?? null,
+      kondisiKeluar: this.existingLoan?.kondisiKeluar ?? null,
+      kondisiMasuk: this.existingLoan?.kondisiMasuk ?? null,
+      catatanKondisiKeluar: this.existingLoan?.catatanKondisiKeluar ?? null,
+      catatanKondisiMasuk: this.existingLoan?.catatanKondisiMasuk ?? null,
+      kunciDiserahkanPada: this.existingLoan?.kunciDiserahkanPada ?? null,
+      kunciDikembalikanPada: this.existingLoan?.kunciDikembalikanPada ?? null
     };
   }
 

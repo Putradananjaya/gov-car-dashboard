@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsIn, IsInt, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsIn, IsInt, IsOptional, IsString, Max, Min, ValidateNested } from 'class-validator';
 import { LoanApplicantSnapshotDto } from './loan-applicant-snapshot.dto';
 
 export class UpsertLoanDto {
@@ -28,6 +28,10 @@ export class UpsertLoanDto {
 
   @IsString()
   tujuan!: string;
+
+  @IsOptional()
+  @IsString()
+  rute!: string | null;
 
   @IsString()
   rencanaMulai!: string;
@@ -83,4 +87,40 @@ export class UpsertLoanDto {
   @IsOptional()
   @IsInt()
   odometerMasuk!: number | null;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(100)
+  bbmKeluar!: number | null;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(100)
+  bbmMasuk!: number | null;
+
+  @IsOptional()
+  @IsIn(['Baik', 'Rusak Ringan', 'Rusak Berat'])
+  kondisiKeluar!: 'Baik' | 'Rusak Ringan' | 'Rusak Berat' | null;
+
+  @IsOptional()
+  @IsIn(['Baik', 'Rusak Ringan', 'Rusak Berat'])
+  kondisiMasuk!: 'Baik' | 'Rusak Ringan' | 'Rusak Berat' | null;
+
+  @IsOptional()
+  @IsString()
+  catatanKondisiKeluar!: string | null;
+
+  @IsOptional()
+  @IsString()
+  catatanKondisiMasuk!: string | null;
+
+  @IsOptional()
+  @IsString()
+  kunciDiserahkanPada!: string | null;
+
+  @IsOptional()
+  @IsString()
+  kunciDikembalikanPada!: string | null;
 }

@@ -1,0 +1,37 @@
+<div class="form-overlay" (click)="onCancel()">
+  <div class="form-modal glass-panel" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Tolak Peminjaman</h2>
+      <button class="close-btn" (click)="onCancel()" aria-label="Tutup">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="modal-body">
+      <div class="form-grid">
+        <div class="form-section full-width">
+          <div class="form-group" [class.has-error]="isInvalid('catatanPenolakan')">
+            <label for="catatanPenolakan">Alasan Penolakan *</label>
+            <textarea id="catatanPenolakan" formControlName="catatanPenolakan" rows="3" placeholder="Jelaskan alasan penolakan peminjaman ini"></textarea>
+            @if (isInvalid('catatanPenolakan')) {
+              <span class="error-msg">Alasan penolakan wajib diisi</span>
+            }
+          </div>
+          @if (saveError()) {
+            <span class="error-msg">{{ saveError() }}</span>
+          }
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn-secondary" (click)="onCancel()">Batal</button>
+        <button type="submit" class="btn-primary" [disabled]="isSaving()">
+          {{ isSaving() ? 'Menyimpan...' : 'Tolak Peminjaman' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

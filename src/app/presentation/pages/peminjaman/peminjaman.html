@@ -53,7 +53,7 @@
                 <td>
                   <span class="badge" [ngClass]="{
                     'badge-muted': loan.status === 'Draft',
-                    'badge-info': loan.status === 'Diajukan',
+                    'badge-info': loan.status === 'Diajukan' || loan.status === 'Disetujui',
                     'badge-warning': loan.status === 'Berjalan',
                     'badge-success': loan.status === 'Selesai',
                     'badge-danger': loan.status === 'Ditolak'
@@ -72,7 +72,7 @@
                     </a>
                   }
                   @if (canKembalikan(loan)) {
-                    <button class="btn-secondary" style="padding: 6px 12px; font-size: 0.72rem;" (click)="kembalikan(loan)">
+                    <button class="btn-secondary" style="padding: 6px 12px; font-size: 0.72rem;" (click)="bukaKembalikan(loan)">
                       Kembalikan
                     </button>
                   }
@@ -85,3 +85,11 @@
     }
   </main>
 </div>
+
+@if (kembalikanTarget(); as loan) {
+  <app-kembalikan-modal [loan]="loan" (closed)="tutupKembalikan()" (completed)="onKembalikanSelesai($event)"></app-kembalikan-modal>
+}
+
+@if (bastTampil(); as data) {
+  <app-bast-print [loan]="data.loan" [mode]="data.mode" (closed)="tutupBast()"></app-bast-print>
+}

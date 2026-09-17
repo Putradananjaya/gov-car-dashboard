@@ -1,22 +1,23 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { VehicleAssetRepository } from '../../../../core/repositories/vehicle-asset.repository';
-import { VehicleOperationalRepository } from '../../../../core/repositories/vehicle-operational.repository';
 import { LoanRepository } from '../../../../core/repositories/loan.repository';
 import { AuditRepository } from '../../../../core/repositories/audit.repository';
 import { UserRepository } from '../../../../core/repositories/user.repository';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { Loan } from '../../../../core/models/loan.model';
+import { TolakModalComponent } from '../../../components/tolak-modal/tolak-modal';
+import { SerahTerimaModalComponent } from '../../../components/serah-terima-modal/serah-terima-modal';
+import { BastPrintComponent, BastMode } from '../../../components/bast-print/bast-print';
 
 @Component({
   selector: 'app-persetujuan',
-  imports: [CommonModule],
+  imports: [CommonModule, TolakModalComponent, SerahTerimaModalComponent, BastPrintComponent],
   templateUrl: './persetujuan.html',
   standalone: true
 })
 export class PersetujuanComponent {
   private assetRepository = inject(VehicleAssetRepository);
-  private operationalRepository = inject(VehicleOperationalRepository);
   private loanRepository = inject(LoanRepository);
   private auditRepository = inject(AuditRepository);
   private userRepository = inject(UserRepository);
@@ -25,14 +26,21 @@ export class PersetujuanComponent {
   private currentUser = this.authService.currentUser;
   private isAdmin = computed(() => this.authService.peran() === 'admin');
 
-  public antrean = computed<Loan[]>(() => {
-    const pending = this.loanRepository.loans().filter(l => l.status === 'Diajukan');
+  private loansTerfilter = computed<Loan[]>(() => {
+    const all = this.loanRepository.loans();
     if (this.isAdmin()) {
       const unitKerja = this.currentUser()?.unitKerja;
-      return pending.filter(l => this.assetRepository.findByNibar(l.nibar)?.statusPenggunaan === unitKerja);
+      return all.filter(l => this.assetRepository.findByNibar(l.nibar)?.statusPenggunaan === unitKerja);
     }
-    return pending;
+    return all;
   });
+
+  public menungguPersetujuan = computed<Loan[]>(() => this.loansTerfilter().filter(l => l.status === 'Diajukan'));
+  public menungguSerahTerima = computed<Loan[]>(() => this.loansTerfilter().filter(l => l.status === 'Disetujui'));
+
+  public tolakTarget = signal<Loan | null>(null);
+  public serahTerimaTarget = signal<Loan | null>(null);
+  public bastTampil = signal<{ loan: Loan; mode: BastMode } | null>(null);
 
   vehicleLabel(nibar: string): string {
     const asset = this.assetRepository.findByNibar(nibar);
@@ -43,62 +51,69 @@ export class PersetujuanComponent {
     return this.userRepository.findById(pemohonId)?.nama ?? pemohonId;
   }
 
-  private actorLabel(): string {
-    return this.currentUser()?.nama ?? 'sistem';
-  }
-
   private actorId(): string {
     return this.currentUser()?.id ?? '';
   }
 
-  async setujui(loan: Loan): Promise<void> {
-    const input = prompt('Odometer kendaraan saat diserahkan (km):');
-    if (input === null) return;
-    const odometerKeluar = Number(input);
-    if (!Number.isFinite(odometerKeluar) || odometerKeluar < 0) {
-      alert('Odometer tidak valid.');
-      return;
-    }
+  private actorLabel(): string {
+    return this.currentUser()?.nama ?? 'sistem';
+  }
 
-    const updated: Loan = { ...loan, status: 'Berjalan', disetujuiOleh: this.actorLabel(), odometerKeluar };
-
+  async setujuiTahap1(loan: Loan): Promise<void> {
     try {
-      await this.loanRepository.upsert(updated);
-
-      const operational = this.operationalRepository.findByNibar(loan.nibar);
-      if (operational) {
-        await this.operationalRepository.upsert({ ...operational, status: 'Dipinjam', diperbaruiPada: new Date().toISOString(), diperbaruiOleh: this.actorLabel() });
-      }
-
+      await this.loanRepository.setujuiTahap1(loan.id);
       await this.auditRepository.append({
         pelakuId: this.actorId(),
         pelakuNama: this.actorLabel(),
-        aksi: 'setujui-peminjaman',
+        aksi: 'setujui-tahap1-peminjaman',
         entitas: 'Loan',
         entitasId: loan.id,
         nilaiLama: 'Diajukan',
-        nilaiBaru: 'Berjalan'
+        nilaiBaru: 'Disetujui'
       });
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Gagal menyetujui peminjaman:', error);
-      alert('Gagal menyetujui peminjaman. Periksa koneksi Anda dan coba lagi.');
+      const pesan = this.pesanKesalahan(error) ?? 'Gagal menyetujui peminjaman. Periksa koneksi Anda dan coba lagi.';
+      alert(pesan);
     }
   }
 
-  async tolak(loan: Loan): Promise<void> {
-    const catatan = prompt('Alasan penolakan (wajib diisi):');
-    if (!catatan) return;
+  private pesanKesalahan(error: unknown): string | null {
+    if (error && typeof error === 'object' && 'error' in error) {
+      const body = (error as { error?: { message?: string | string[] } }).error;
+      if (body?.message) {
+        return Array.isArray(body.message) ? body.message.join(', ') : body.message;
+      }
+    }
+    return null;
+  }
 
-    const updated: Loan = { ...loan, status: 'Ditolak', catatanPenolakan: catatan };
-    await this.loanRepository.upsert(updated);
-    await this.auditRepository.append({
-      pelakuId: this.actorId(),
-      pelakuNama: this.actorLabel(),
-      aksi: 'tolak-peminjaman',
-      entitas: 'Loan',
-      entitasId: loan.id,
-      nilaiLama: 'Diajukan',
-      nilaiBaru: `Ditolak: ${catatan}`
-    });
+  bukaTolak(loan: Loan): void {
+    this.tolakTarget.set(loan);
+  }
+
+  tutupTolak(): void {
+    this.tolakTarget.set(null);
+  }
+
+  onDitolak(): void {
+    this.tolakTarget.set(null);
+  }
+
+  bukaSerahTerima(loan: Loan): void {
+    this.serahTerimaTarget.set(loan);
+  }
+
+  tutupSerahTerima(): void {
+    this.serahTerimaTarget.set(null);
+  }
+
+  onSerahTerimaSelesai(loan: Loan): void {
+    this.serahTerimaTarget.set(null);
+    this.bastTampil.set({ loan, mode: 'serah' });
+  }
+
+  tutupBast(): void {
+    this.bastTampil.set(null);
   }
 }

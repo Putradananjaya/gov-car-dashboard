@@ -94,6 +94,14 @@
             }
           </div>
 
+          <div class="form-group" [class.has-error]="isInvalid('rute')">
+            <label for="rute">Rute Perjalanan *</label>
+            <input type="text" id="rute" formControlName="rute" placeholder="Contoh: Bangli - Denpasar via Gianyar">
+            @if (isInvalid('rute')) {
+              <span class="error-msg">Kolom ini wajib diisi</span>
+            }
+          </div>
+
           <div class="form-row">
             <div class="form-group" [class.has-error]="isInvalid('rencanaMulai')">
               <label for="rencanaMulai">Hari/Tanggal Berangkat *</label>

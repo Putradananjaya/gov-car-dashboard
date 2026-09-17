@@ -8,4 +8,7 @@ export abstract class VehicleOperationalRepository {
   public abstract findByNibar(nibar: string): VehicleOperational | undefined;
   public abstract upsert(operational: VehicleOperational): Promise<void>;
   public abstract remove(nibar: string): Promise<void>;
+
+  /** Muat ulang dari server — dipakai setelah aksi lain (mis. serah-terima/kembalikan peminjaman) mengubah status kendaraan di backend tanpa lewat `upsert()` di repository ini. */
+  public abstract refresh(): Promise<void>;
 }

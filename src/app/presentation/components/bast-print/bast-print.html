@@ -1,0 +1,108 @@
+<div class="report-overlay" (click)="onClose()">
+  <div class="report-modal glass-panel" (click)="$event.stopPropagation()">
+    <div class="report-body">
+      <div class="report-header-print">
+        <h1>Berita Acara Serah Terima Kendaraan Dinas</h1>
+        <p>{{ mode === 'serah' ? 'Serah Terima Kendaraan' : 'Pengembalian Kendaraan' }} — PUSAKA BANGLI</p>
+      </div>
+
+      <table class="report-table-print">
+        <tbody>
+          <tr>
+            <th style="width: 220px;">Kendaraan</th>
+            <td>{{ vehicleLabel(loan.nibar) }}</td>
+          </tr>
+          <tr>
+            <th>Pemohon</th>
+            <td>{{ loan.pemohon.nama }} ({{ loan.pemohon.nip }}) — {{ loan.pemohon.jabatan }}, {{ loan.pemohon.unitKerja }}</td>
+          </tr>
+          <tr>
+            <th>Keperluan / Tujuan</th>
+            <td>{{ loan.keperluan }} — {{ loan.tujuan }}</td>
+          </tr>
+          @if (loan.rute) {
+            <tr>
+              <th>Rute Perjalanan</th>
+              <td>{{ loan.rute }}</td>
+            </tr>
+          }
+          <tr>
+            <th>Rencana Penggunaan</th>
+            <td>{{ loan.rencanaMulai }} s/d {{ loan.rencanaSelesai }}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <table class="report-table-print" style="margin-top: 20px;">
+        <thead>
+          <tr>
+            <th></th>
+            <th>Saat Diserahkan</th>
+            @if (mode === 'kembali') {
+              <th>Saat Dikembalikan</th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th>Odometer (km)</th>
+            <td>{{ loan.odometerKeluar ?? '—' }}</td>
+            @if (mode === 'kembali') {
+              <td>{{ loan.odometerMasuk ?? '—' }}</td>
+            }
+          </tr>
+          <tr>
+            <th>Level BBM (%)</th>
+            <td>{{ loan.bbmKeluar ?? '—' }}</td>
+            @if (mode === 'kembali') {
+              <td>{{ loan.bbmMasuk ?? '—' }}</td>
+            }
+          </tr>
+          <tr>
+            <th>Kondisi Kendaraan</th>
+            <td>{{ loan.kondisiKeluar ?? '—' }}</td>
+            @if (mode === 'kembali') {
+              <td>{{ loan.kondisiMasuk ?? '—' }}</td>
+            }
+          </tr>
+          <tr>
+            <th>Catatan Kondisi</th>
+            <td>{{ loan.catatanKondisiKeluar || '—' }}</td>
+            @if (mode === 'kembali') {
+              <td>{{ loan.catatanKondisiMasuk || '—' }}</td>
+            }
+          </tr>
+          <tr>
+            <th>Waktu Serah/Terima Kunci</th>
+            <td>{{ loan.kunciDiserahkanPada ? (loan.kunciDiserahkanPada | date: 'medium') : '—' }}</td>
+            @if (mode === 'kembali') {
+              <td>{{ loan.kunciDikembalikanPada ? (loan.kunciDikembalikanPada | date: 'medium') : '—' }}</td>
+            }
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="form-row" style="margin-top: 48px;">
+        <div style="text-align: center;">
+          <p>Yang Menyerahkan,</p>
+          <div style="height: 64px;"></div>
+          <p style="border-top: 1px solid var(--md-sys-color-outline); padding-top: 4px; display: inline-block; min-width: 220px;">
+            (....................................)
+          </p>
+        </div>
+        <div style="text-align: center;">
+          <p>Yang Menerima,</p>
+          <div style="height: 64px;"></div>
+          <p style="border-top: 1px solid var(--md-sys-color-outline); padding-top: 4px; display: inline-block; min-width: 220px;">
+            (....................................)
+          </p>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn-secondary" (click)="onClose()">Tutup</button>
+        <button type="button" class="btn-primary" (click)="onPrint()">Cetak</button>
+      </div>
+    </div>
+  </div>
+</div>

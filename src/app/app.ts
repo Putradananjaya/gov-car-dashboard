@@ -158,16 +158,4 @@ export class App implements OnInit {
     }
   }
 
-  // Smooth scroll helper for Schedule Card
-  scrollToSchedule(event: Event) {
-    event.preventDefault();
-    this.router.navigate(['/app/beranda'], { queryParams: { section: 'schedule' } });
-    
-    setTimeout(() => {
-      const schedulePanel = document.querySelector('.bottom-section');
-      if (schedulePanel) {
-        schedulePanel.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-    }, 150);
-  }
 }

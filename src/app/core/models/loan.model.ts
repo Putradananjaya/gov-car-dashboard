@@ -9,6 +9,8 @@ export type TingkatUrgensi = 'Biasa' | 'Penting' | 'Mendesak/Darurat';
 
 export type JenisKendaraan = 'Roda 2' | 'Roda 4' | 'Lainnya';
 
+export type KondisiAset = 'Baik' | 'Rusak Ringan' | 'Rusak Berat';
+
 /**
  * Salinan data identitas pemohon pada saat pengajuan dibuat — disengaja
  * disalin (bukan hanya lookup lewat pemohonId) supaya riwayat permohonan
@@ -43,6 +45,7 @@ export interface Loan {
   // B. Rencana Penggunaan
   keperluan: string; // Maksud/Keperluan
   tujuan: string; // Tujuan/Lokasi
+  rute: string | null; // Rute Perjalanan
   rencanaMulai: string; // Hari/Tanggal Berangkat, ISO 8601 (YYYY-MM-DD)
   rencanaSelesai: string; // Hari/Tanggal Kembali, ISO 8601 (YYYY-MM-DD)
   nomorSurat: string | null; // Surat Tugas/Dasar Kegiatan — Nomor
@@ -61,4 +64,12 @@ export interface Loan {
   catatanPenolakan: string | null;
   odometerKeluar: number | null;
   odometerMasuk: number | null;
+  bbmKeluar: number | null;
+  bbmMasuk: number | null;
+  kondisiKeluar: KondisiAset | null;
+  kondisiMasuk: KondisiAset | null;
+  catatanKondisiKeluar: string | null;
+  catatanKondisiMasuk: string | null;
+  kunciDiserahkanPada: string | null;
+  kunciDikembalikanPada: string | null;
 }

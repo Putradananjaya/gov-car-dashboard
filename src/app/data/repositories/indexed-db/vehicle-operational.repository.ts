@@ -21,4 +21,9 @@ export class IndexedDbVehicleOperationalRepository implements VehicleOperational
   public remove(nibar: string): Promise<void> {
     return this.store.delete(nibar);
   }
+
+  public refresh(): Promise<void> {
+    // Store IndexedDB sudah reaktif secara lokal — tidak ada round-trip server untuk diulang.
+    return Promise.resolve();
+  }
 }

@@ -80,6 +80,10 @@ export const routes: Routes = [
         loadComponent: () => import('./presentation/pages/peminjaman/persetujuan/persetujuan').then(m => m.PersetujuanComponent)
       },
       {
+        path: 'jadwal',
+        loadComponent: () => import('./presentation/pages/jadwal/jadwal').then(m => m.JadwalComponent)
+      },
+      {
         path: 'pengguna',
         canActivate: [roleGuard],
         data: { peran: ['superadmin'] },

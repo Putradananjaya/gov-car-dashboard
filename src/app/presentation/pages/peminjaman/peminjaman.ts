@@ -1,27 +1,25 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { VehicleAssetRepository } from '../../../core/repositories/vehicle-asset.repository';
-import { VehicleOperationalRepository } from '../../../core/repositories/vehicle-operational.repository';
 import { LoanRepository } from '../../../core/repositories/loan.repository';
-import { AuditRepository } from '../../../core/repositories/audit.repository';
 import { UserRepository } from '../../../core/repositories/user.repository';
 import { AuthService } from '../../../core/auth/auth.service';
 import { PermissionService } from '../../../core/auth/permission.service';
 import { HasPermissionDirective } from '../../components/has-permission/has-permission.directive';
+import { KembalikanModalComponent } from '../../components/kembalikan-modal/kembalikan-modal';
+import { BastPrintComponent, BastMode } from '../../components/bast-print/bast-print';
 import { Loan } from '../../../core/models/loan.model';
 
 @Component({
   selector: 'app-peminjaman',
-  imports: [CommonModule, RouterLink, HasPermissionDirective],
+  imports: [CommonModule, RouterLink, HasPermissionDirective, KembalikanModalComponent, BastPrintComponent],
   templateUrl: './peminjaman.html',
   standalone: true
 })
 export class PeminjamanComponent {
   private assetRepository = inject(VehicleAssetRepository);
-  private operationalRepository = inject(VehicleOperationalRepository);
   private loanRepository = inject(LoanRepository);
-  private auditRepository = inject(AuditRepository);
   private userRepository = inject(UserRepository);
   private authService = inject(AuthService);
   public permissionService = inject(PermissionService);
@@ -43,6 +41,9 @@ export class PeminjamanComponent {
     return all;
   });
 
+  public kembalikanTarget = signal<Loan | null>(null);
+  public bastTampil = signal<{ loan: Loan; mode: BastMode } | null>(null);
+
   vehicleLabel(nibar: string): string {
     const asset = this.assetRepository.findByNibar(nibar);
     return asset ? `${asset.merek} ${asset.tipe} — ${asset.nomorPolisi}` : nibar;
@@ -50,14 +51,6 @@ export class PeminjamanComponent {
 
   pemohonNama(pemohonId: string): string {
     return this.userRepository.findById(pemohonId)?.nama ?? pemohonId;
-  }
-
-  private actorLabel(): string {
-    return this.currentUser()?.nama ?? 'sistem';
-  }
-
-  private actorId(): string {
-    return this.currentUser()?.id ?? '';
   }
 
   isDraftMilikSendiri(loan: Loan): boolean {
@@ -69,37 +62,20 @@ export class PeminjamanComponent {
     return loan.pemohonId === this.currentUser()?.id || this.permissionService.can('peminjaman.setujui');
   }
 
-  async kembalikan(loan: Loan): Promise<void> {
-    const input = prompt('Odometer saat kendaraan dikembalikan (km):');
-    if (input === null) return;
-    const odometerMasuk = Number(input);
-    if (!Number.isFinite(odometerMasuk) || odometerMasuk < 0) {
-      alert('Odometer tidak valid.');
-      return;
-    }
+  bukaKembalikan(loan: Loan): void {
+    this.kembalikanTarget.set(loan);
+  }
 
-    const updated: Loan = { ...loan, status: 'Selesai', realisasiKembali: new Date().toISOString().slice(0, 10), odometerMasuk };
+  tutupKembalikan(): void {
+    this.kembalikanTarget.set(null);
+  }
 
-    try {
-      await this.loanRepository.upsert(updated);
+  onKembalikanSelesai(loan: Loan): void {
+    this.kembalikanTarget.set(null);
+    this.bastTampil.set({ loan, mode: 'kembali' });
+  }
 
-      const operational = this.operationalRepository.findByNibar(loan.nibar);
-      if (operational) {
-        await this.operationalRepository.upsert({ ...operational, status: 'Tersedia', diperbaruiPada: new Date().toISOString(), diperbaruiOleh: this.actorLabel() });
-      }
-
-      await this.auditRepository.append({
-        pelakuId: this.actorId(),
-        pelakuNama: this.actorLabel(),
-        aksi: 'kembalikan-peminjaman',
-        entitas: 'Loan',
-        entitasId: loan.id,
-        nilaiLama: loan.status,
-        nilaiBaru: 'Selesai'
-      });
-    } catch (error) {
-      console.error('Gagal memproses pengembalian:', error);
-      alert('Gagal memproses pengembalian. Periksa koneksi Anda dan coba lagi.');
-    }
+  tutupBast(): void {
+    this.bastTampil.set(null);
   }
 }
