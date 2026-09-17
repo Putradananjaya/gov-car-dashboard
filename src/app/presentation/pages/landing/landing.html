@@ -59,15 +59,15 @@
       <!-- Quick Metrics -->
       <div class="landing-hero-metrics" style="display: flex; gap: 40px; margin-top: 6px; flex-wrap: wrap; justify-content: center;">
         <div style="text-align: center;">
-          <span style="display: block; font-size: 1.7rem; font-weight: 900; color: var(--md-sys-color-primary);">256</span>
+          <span style="display: block; font-size: 1.7rem; font-weight: 900; color: var(--md-sys-color-primary);">{{ stats()?.totalKendaraan ?? '—' }}</span>
           <span style="font-size: 0.7rem; color: var(--md-sys-color-on-surface-variant); font-weight: 700; text-transform: uppercase;">Total Kendaraan Dinas</span>
         </div>
         <div style="text-align: center;">
-          <span style="display: block; font-size: 1.7rem; font-weight: 900; color: #10b981;">128</span>
+          <span style="display: block; font-size: 1.7rem; font-weight: 900; color: #10b981;">{{ stats()?.armadaSiapPakai ?? '—' }}</span>
           <span style="font-size: 0.7rem; color: var(--md-sys-color-on-surface-variant); font-weight: 700; text-transform: uppercase;">Armada Siap Pakai</span>
         </div>
         <div style="text-align: center;">
-          <span style="display: block; font-size: 1.7rem; font-weight: 900; color: var(--md-sys-color-secondary);">10</span>
+          <span style="display: block; font-size: 1.7rem; font-weight: 900; color: var(--md-sys-color-secondary);">{{ stats()?.jumlahOpd ?? '—' }}</span>
           <span style="font-size: 0.7rem; color: var(--md-sys-color-on-surface-variant); font-weight: 700; text-transform: uppercase;">OPD Pengelola Aset</span>
         </div>
       </div>
@@ -127,7 +127,7 @@
           </svg>
         </div>
         <h3>Pengawasan Pajak & STNK</h3>
-        <p>Sistem alarm dini otomatis untuk memisahkan 23 aset kendaraan dinas yang telah jatuh tempo pajak tahunan agar segera dilakukan pemrosesan bayar.</p>
+        <p>Sistem alarm dini otomatis untuk memisahkan {{ stats()?.asetPajakKadaluarsa ?? 0 }} aset kendaraan dinas yang telah jatuh tempo pajak tahunan agar segera dilakukan pemrosesan bayar.</p>
       </div>
     </div>
   </section>

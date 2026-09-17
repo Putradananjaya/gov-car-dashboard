@@ -12,6 +12,7 @@ import { LoanModule } from './loan/loan.module';
 import { AuditModule } from './audit/audit.module';
 import { ServiceRecordModule } from './service-record/service-record.module';
 import { PhotoModule } from './photo/photo.module';
+import { PublicStatsModule } from './public-stats/public-stats.module';
 
 @Module({
   imports: [
@@ -60,7 +61,8 @@ import { PhotoModule } from './photo/photo.module';
     LoanModule,
     AuditModule,
     ServiceRecordModule,
-    PhotoModule
+    PhotoModule,
+    PublicStatsModule
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }]
 })

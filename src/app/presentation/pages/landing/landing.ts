@@ -1,8 +1,18 @@
 import { Component, OnInit, OnDestroy, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
+import { API_BASE_URL } from '../../../core/config/api.config';
 
 const HERO_SLIDE_INTERVAL_MS = 5000;
+
+interface PublicStats {
+  totalKendaraan: number;
+  armadaSiapPakai: number;
+  jumlahOpd: number;
+  asetPajakKadaluarsa: number;
+}
 
 @Component({
   selector: 'app-landing',
@@ -11,7 +21,10 @@ const HERO_SLIDE_INTERVAL_MS = 5000;
   standalone: true
 })
 export class LandingComponent implements OnInit, OnDestroy {
+  private http = inject(HttpClient);
+
   isDarkTheme = signal<boolean>(false);
+  stats = signal<PublicStats | null>(null);
 
   // Ganti/tambah nama file di sini sesuai gambar yang ditaruh di public/assets/hero/
   heroImages: string[] = [
@@ -30,6 +43,16 @@ export class LandingComponent implements OnInit, OnDestroy {
     this.isDarkTheme.set(false);
 
     this.startHeroSlideshow();
+    this.loadStats();
+  }
+
+  private async loadStats(): Promise<void> {
+    try {
+      const stats = await firstValueFrom(this.http.get<PublicStats>(`${API_BASE_URL}/public-stats`));
+      this.stats.set(stats);
+    } catch {
+      // Portal publik tetap harus tampil walau statistik gagal dimuat (mis. backend belum siap).
+    }
   }
 
   ngOnDestroy() {
