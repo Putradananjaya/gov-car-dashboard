@@ -60,7 +60,10 @@ export class PeminjamanComponent {
 
   canKembalikan(loan: Loan): boolean {
     if (loan.status !== 'Berjalan') return false;
-    return loan.pemohonId === this.currentUser()?.id || this.permissionService.can('peminjaman.setujui');
+    return (
+      loan.pemohonId === this.currentUser()?.id ||
+      this.permissionService.canAny('peminjaman.setujuiTahap1', 'peminjaman.serahTerima')
+    );
   }
 
   bukaKembalikan(loan: Loan): void {

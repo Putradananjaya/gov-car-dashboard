@@ -642,6 +642,34 @@ html {
 .panel-table tr:last-child td { border-bottom: none; }
 .car-plate-tag { font-size: 0.68rem; font-weight: 700; background: rgba(128, 128, 128, 0.08); border: 1px solid var(--md-sys-color-outline); color: var(--md-sys-color-on-background); padding: 2px 6px; border-radius: 4px; }
 
+/* ===== Pengaturan Hak Akses Peran (Manajemen Pengguna) ===== */
+.page-tabs { display: flex; gap: 4px; background: rgba(128, 128, 128, 0.06); padding: 4px; border-radius: var(--md-shape-corner-medium); }
+.page-tabs button { background: transparent; border: none; color: var(--md-sys-color-on-surface-variant); font-size: 0.78rem; font-weight: 700; padding: 8px 16px; border-radius: var(--md-shape-corner-small); cursor: pointer; white-space: nowrap; }
+.page-tabs button:hover { color: var(--md-sys-color-on-surface); }
+.page-tabs button.active { background: var(--md-sys-color-surface); color: var(--md-sys-color-primary); box-shadow: var(--md-elevation-1); }
+
+.akses-panel { padding: 20px; border-radius: var(--md-shape-corner-large); }
+.akses-catatan { font-size: 0.75rem; line-height: 1.6; color: var(--md-sys-color-on-surface-variant); margin-bottom: 16px; }
+.akses-sukses { font-size: 0.75rem; font-weight: 600; color: #047857; background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: var(--md-shape-corner-small); padding: 10px 12px; margin-bottom: 12px; }
+
+.akses-table th.akses-kolom-peran { text-align: center; white-space: nowrap; }
+.akses-table td.akses-sel { text-align: center; }
+/* Baris pemisah kelompok — bukan data, jadi dibedakan dari baris kemampuan. */
+.akses-table tr.akses-grup td { font-size: 0.68rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--md-sys-color-primary); background: rgba(128, 128, 128, 0.04); padding-top: 14px; }
+.akses-label { display: block; font-size: 0.78rem; font-weight: 700; color: var(--md-sys-color-on-background); }
+.akses-ket { display: block; font-size: 0.68rem; color: var(--md-sys-color-on-surface-variant); margin-top: 2px; }
+.akses-sel input[type="checkbox"] { width: 17px; height: 17px; accent-color: var(--md-sys-color-primary); cursor: pointer; }
+.akses-sel input[type="checkbox"]:disabled { cursor: not-allowed; opacity: 0.45; }
+
+.akses-aksi { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--md-sys-color-outline); }
+.akses-aksi button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+@media (max-width: 768px) {
+  .page-tabs { width: 100%; }
+  .page-tabs button { flex: 1; padding: 8px 6px; font-size: 0.72rem; }
+  .akses-ket { display: none; }
+}
+
 .tab-selectors { display: flex; background: rgba(128,128,128,0.05); padding: 2px; border-radius: var(--md-shape-corner-small); }
 .tab-selectors button { background: transparent; border: none; color: var(--md-sys-color-on-surface-variant); font-size: 0.68rem; font-weight: 600; padding: 4px 8px; border-radius: var(--md-shape-corner-small); cursor: pointer; }
 .tab-selectors button.active { background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); box-shadow: var(--md-elevation-1); }

@@ -1,53 +1,41 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, computed, inject } from '@angular/core';
 import { AuthService } from './auth.service';
-import { Peran } from '../models/user.model';
+import { RolePermissionRepository } from '../repositories/role-permission.repository';
+import { Kemampuan, MATRIKS_BAWAAN } from './kemampuan';
+
+export type { Kemampuan } from './kemampuan';
 
 /**
- * Satu sumber kebenaran matriks hak akses (dokumen v2, bagian 2.2).
- * Nama kemampuan mengikuti baris matriks apa adanya.
+ * Pembaca matriks hak akses. Matriksnya sendiri bukan lagi konstanta di kode,
+ * melainkan data yang disunting superadmin lewat Manajemen Pengguna dan
+ * disimpan di server (lihat RolePermissionRepository).
+ *
+ * Yang di sini hanya menentukan menu & tombol mana yang tampil. Penegakan
+ * sesungguhnya ada di IzinGuard sisi server — menyembunyikan tombol saja tidak
+ * menghentikan siapa pun yang memanggil API langsung.
  */
-export type Kemampuan =
-  | 'aset.lihat' // Lihat daftar aset (superadmin: seluruh OPD, admin: OPD sendiri)
-  | 'aset.ubah' // Tambah / ubah data BMD
-  | 'aset.hapus' // Hapus aset (soft delete)
-  | 'aset.hapusPermanen' // Hapus permanen
-  | 'aset.impor' // Impor berkas Excel e-BMD
-  | 'aset.ubahStatusOperasional' // Ubah kondisi & status operasional
-  | 'peminjaman.ajukan' // Ajukan peminjaman
-  | 'peminjaman.setujui' // Setujui / tolak peminjaman
-  | 'servis.input' // Input riwayat servis & pajak
-  | 'kerusakan.lapor' // Lapor kerusakan
-  | 'aset.lihatDataSensitif' // Lihat nomor rangka & BPKB
-  | 'laporan.cetak' // Cetak laporan resmi
-  | 'pengguna.kelola' // Kelola pengguna & peran
-  | 'audit.lihat' // Lihat jejak audit
-  | 'sistem.resetBasisData'; // Setel ulang basis data
-
-const MATRIKS_HAK_AKSES: Record<Kemampuan, Peran[]> = {
-  'aset.lihat': ['superadmin', 'admin'],
-  'aset.ubah': ['superadmin', 'admin'],
-  'aset.hapus': ['superadmin', 'admin'],
-  'aset.hapusPermanen': ['superadmin'],
-  'aset.impor': ['superadmin', 'admin'],
-  'aset.ubahStatusOperasional': ['superadmin', 'admin'],
-  'peminjaman.ajukan': ['superadmin', 'admin', 'pegawai', 'pejabat_penatausahaan', 'pimpinan'],
-  'peminjaman.setujui': ['superadmin', 'admin', 'pejabat_penatausahaan'],
-  'servis.input': ['superadmin', 'admin'],
-  'kerusakan.lapor': ['superadmin', 'admin', 'pegawai'],
-  'aset.lihatDataSensitif': ['superadmin', 'admin'],
-  'laporan.cetak': ['superadmin', 'admin', 'pimpinan'],
-  'pengguna.kelola': ['superadmin'],
-  'audit.lihat': ['superadmin'],
-  'sistem.resetBasisData': ['superadmin']
-};
-
 @Injectable({ providedIn: 'root' })
 export class PermissionService {
   private authService = inject(AuthService);
+  private repository = inject(RolePermissionRepository);
+
+  public readonly matriks = computed(() => this.repository.matriks());
 
   public can(kemampuan: Kemampuan): boolean {
     const peran = this.authService.peran();
     if (!peran) return false;
-    return MATRIKS_HAK_AKSES[kemampuan].includes(peran);
+
+    // Superadmin dikunci penuh: tidak bisa mencabut haknya sendiri lalu
+    // terkunci dari halaman pengaturannya sendiri. Server menerapkan aturan
+    // yang sama.
+    if (peran === 'superadmin') return true;
+
+    const diizinkan = this.matriks()[kemampuan] ?? MATRIKS_BAWAAN[kemampuan];
+    return diizinkan.includes(peran);
+  }
+
+  /** Cukup salah satu — dipakai menu yang membuka beberapa aksi sekaligus. */
+  public canAny(...kemampuan: Kemampuan[]): boolean {
+    return kemampuan.some(k => this.can(k));
   }
 }

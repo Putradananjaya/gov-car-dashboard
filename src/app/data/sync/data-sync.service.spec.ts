@@ -10,6 +10,7 @@ import { LoanRepository } from '../../core/repositories/loan.repository';
 import { UserRepository } from '../../core/repositories/user.repository';
 import { ServiceRepository } from '../../core/repositories/service.repository';
 import { AuditRepository } from '../../core/repositories/audit.repository';
+import { RolePermissionRepository } from '../../core/repositories/role-permission.repository';
 
 /** Repository palsu yang hanya mencatat berapa kali refresh() dipanggil. */
 function buatRepositoryPalsu() {
@@ -33,6 +34,7 @@ describe('DataSyncService', () => {
   let pengguna: ReturnType<typeof buatRepositoryPalsu>;
   let servis: ReturnType<typeof buatRepositoryPalsu>;
   let audit: ReturnType<typeof buatRepositoryPalsu>;
+  let hakAkses: ReturnType<typeof buatRepositoryPalsu>;
 
   beforeEach(() => {
     isLoggedIn = signal(true);
@@ -42,6 +44,7 @@ describe('DataSyncService', () => {
     pengguna = buatRepositoryPalsu();
     servis = buatRepositoryPalsu();
     audit = buatRepositoryPalsu();
+    hakAkses = buatRepositoryPalsu();
 
     TestBed.configureTestingModule({
       providers: [
@@ -52,7 +55,8 @@ describe('DataSyncService', () => {
         { provide: LoanRepository, useValue: peminjaman },
         { provide: UserRepository, useValue: pengguna },
         { provide: ServiceRepository, useValue: servis },
-        { provide: AuditRepository, useValue: audit }
+        { provide: AuditRepository, useValue: audit },
+        { provide: RolePermissionRepository, useValue: hakAkses }
       ]
     });
 
@@ -73,6 +77,8 @@ describe('DataSyncService', () => {
     expect(aset.state.hitung).toBe(1);
     expect(operasional.state.hitung).toBe(1);
     expect(peminjaman.state.hitung).toBe(1);
+    // Matriks hak akses ikut putaran cepat supaya perubahan izin lekas terasa.
+    expect(hakAkses.state.hitung).toBe(1);
     expect(service.terakhirSinkron()).not.toBeNull();
   });
 

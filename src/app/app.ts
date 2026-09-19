@@ -116,7 +116,7 @@ export class App implements OnInit, OnDestroy {
     this.isDarkTheme.set(false);
 
     // Track routing transitions for active link highlighting.
-    // Auth/route protection itself is handled by authGuard/roleGuard on app.routes.ts.
+    // Auth/route protection itself is handled by authGuard/izinGuard on app.routes.ts.
     this.currentUrl.set(this.router.url);
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd)

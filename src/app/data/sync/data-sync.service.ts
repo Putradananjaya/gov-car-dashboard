@@ -8,6 +8,7 @@ import { LoanRepository } from '../../core/repositories/loan.repository';
 import { UserRepository } from '../../core/repositories/user.repository';
 import { ServiceRepository } from '../../core/repositories/service.repository';
 import { AuditRepository } from '../../core/repositories/audit.repository';
+import { RolePermissionRepository } from '../../core/repositories/role-permission.repository';
 
 /** Jeda antar-putaran muat ulang data inti. */
 const JEDA_SINKRON_MS = 20_000;
@@ -48,6 +49,7 @@ export class DataSyncService {
   private userRepository = inject(UserRepository);
   private serviceRepository = inject(ServiceRepository);
   private auditRepository = inject(AuditRepository);
+  private rolePermissionRepository = inject(RolePermissionRepository);
 
   private timer: ReturnType<typeof setInterval> | null = null;
   private pembersih: (() => void)[] = [];
@@ -122,7 +124,11 @@ export class DataSyncService {
       const tugas: Promise<void>[] = [
         this.assetRepository.refresh(),
         this.operationalRepository.refresh(),
-        this.loanRepository.refresh()
+        this.loanRepository.refresh(),
+        // Muatannya hanya 16 baris kecil, tapi perubahannya perlu cepat
+        // terasa: begitu superadmin mengubah hak akses, menu & tombol di sesi
+        // pengguna lain ikut menyesuaikan tanpa mereka perlu masuk ulang.
+        this.rolePermissionRepository.refresh()
       ];
       if (penuh) {
         tugas.push(

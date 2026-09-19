@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/auth/auth.guard';
-import { roleGuard } from './core/auth/role.guard';
+import { izinGuard } from './core/auth/izin.guard';
 
 export const routes: Routes = [
   {
@@ -25,44 +25,44 @@ export const routes: Routes = [
       },
       {
         path: 'aset',
-        canActivate: [roleGuard],
-        data: { peran: ['superadmin', 'admin'] },
+        canActivate: [izinGuard],
+        data: { kemampuan: 'aset.lihat' },
         loadComponent: () => import('./presentation/pages/aset/aset-list/aset-list').then(m => m.AsetListComponent)
       },
       {
         path: 'aset/baru',
-        canActivate: [roleGuard],
-        data: { peran: ['superadmin', 'admin'] },
+        canActivate: [izinGuard],
+        data: { kemampuan: 'aset.ubah' },
         loadComponent: () => import('./presentation/pages/aset/aset-baru/aset-baru').then(m => m.AsetBaruComponent)
       },
       {
         path: 'aset/impor',
-        canActivate: [roleGuard],
-        data: { peran: ['superadmin', 'admin'] },
+        canActivate: [izinGuard],
+        data: { kemampuan: 'aset.impor' },
         loadComponent: () => import('./presentation/pages/aset/aset-impor/aset-impor').then(m => m.AsetImporComponent)
       },
       {
         path: 'aset/:nibar',
-        canActivate: [roleGuard],
-        data: { peran: ['superadmin', 'admin'] },
+        canActivate: [izinGuard],
+        data: { kemampuan: 'aset.lihat' },
         loadComponent: () => import('./presentation/pages/aset/aset-detail/aset-detail').then(m => m.AsetDetailComponent)
       },
       {
         path: 'inventory',
-        canActivate: [roleGuard],
-        data: { peran: ['superadmin', 'admin'] },
+        canActivate: [izinGuard],
+        data: { kemampuan: 'aset.lihat' },
         loadComponent: () => import('./presentation/pages/inventory/inventory').then(m => m.InventoryComponent)
       },
       {
         path: 'tracking',
-        canActivate: [roleGuard],
-        data: { peran: ['superadmin', 'admin'] },
+        canActivate: [izinGuard],
+        data: { kemampuan: 'aset.lihat' },
         loadComponent: () => import('./presentation/pages/tracking/tracking').then(m => m.TrackingComponent)
       },
       {
         path: 'tracking/:id',
-        canActivate: [roleGuard],
-        data: { peran: ['superadmin', 'admin'] },
+        canActivate: [izinGuard],
+        data: { kemampuan: 'aset.lihat' },
         loadComponent: () => import('./presentation/pages/tracking/tracking').then(m => m.TrackingComponent)
       },
       {
@@ -79,8 +79,8 @@ export const routes: Routes = [
       },
       {
         path: 'peminjaman/persetujuan',
-        canActivate: [roleGuard],
-        data: { peran: ['superadmin', 'admin', 'pejabat_penatausahaan'] },
+        canActivate: [izinGuard],
+        data: { kemampuan: ['peminjaman.setujuiTahap1', 'peminjaman.serahTerima'] },
         loadComponent: () => import('./presentation/pages/peminjaman/persetujuan/persetujuan').then(m => m.PersetujuanComponent)
       },
       {
@@ -89,14 +89,14 @@ export const routes: Routes = [
       },
       {
         path: 'pengguna',
-        canActivate: [roleGuard],
-        data: { peran: ['superadmin'] },
+        canActivate: [izinGuard],
+        data: { kemampuan: 'pengguna.kelola' },
         loadComponent: () => import('./presentation/pages/pengguna/pengguna-list/pengguna-list').then(m => m.PenggunaListComponent)
       },
       {
         path: 'audit',
-        canActivate: [roleGuard],
-        data: { peran: ['superadmin'] },
+        canActivate: [izinGuard],
+        data: { kemampuan: 'audit.lihat' },
         loadComponent: () => import('./presentation/pages/audit/audit-list/audit-list').then(m => m.AuditListComponent)
       },
       {

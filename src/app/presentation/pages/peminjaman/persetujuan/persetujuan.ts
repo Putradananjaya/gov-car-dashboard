@@ -5,6 +5,7 @@ import { LoanRepository } from '../../../../core/repositories/loan.repository';
 import { AuditRepository } from '../../../../core/repositories/audit.repository';
 import { UserRepository } from '../../../../core/repositories/user.repository';
 import { AuthService } from '../../../../core/auth/auth.service';
+import { PermissionService } from '../../../../core/auth/permission.service';
 import { Loan } from '../../../../core/models/loan.model';
 import { TolakModalComponent } from '../../../components/tolak-modal/tolak-modal';
 import { SerahTerimaModalComponent } from '../../../components/serah-terima-modal/serah-terima-modal';
@@ -23,19 +24,16 @@ export class PersetujuanComponent {
   private auditRepository = inject(AuditRepository);
   private userRepository = inject(UserRepository);
   private authService = inject(AuthService);
+  private permissionService = inject(PermissionService);
 
   private currentUser = this.authService.currentUser;
   private isAdmin = computed(() => this.authService.peran() === 'admin');
 
-  public canSetujuiTahap1 = computed(() => {
-    const peran = this.authService.peran();
-    return peran === 'superadmin' || peran === 'admin';
-  });
+  // Dulu memeriksa peran secara langsung sehingga lepas dari matriks hak
+  // akses — sekarang keduanya ikut pengaturan superadmin.
+  public canSetujuiTahap1 = computed(() => this.permissionService.can('peminjaman.setujuiTahap1'));
 
-  public canSerahTerima = computed(() => {
-    const peran = this.authService.peran();
-    return peran === 'superadmin' || peran === 'pejabat_penatausahaan';
-  });
+  public canSerahTerima = computed(() => this.permissionService.can('peminjaman.serahTerima'));
 
   public canTolak = computed(() => this.canSetujuiTahap1() || this.canSerahTerima());
 

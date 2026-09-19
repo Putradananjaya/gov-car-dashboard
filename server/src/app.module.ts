@@ -13,6 +13,7 @@ import { AuditModule } from './audit/audit.module';
 import { ServiceRecordModule } from './service-record/service-record.module';
 import { PhotoModule } from './photo/photo.module';
 import { PublicStatsModule } from './public-stats/public-stats.module';
+import { RolePermissionModule } from './role-permission/role-permission.module';
 
 @Module({
   imports: [
@@ -53,6 +54,7 @@ import { PublicStatsModule } from './public-stats/public-stats.module';
     // Lapis pembatasan laju generik per-IP (dokumen v2 bag. 5, "pembatasan
     // laju") — di atas lockout per-NIP yang lebih spesifik di AuthService.
     ThrottlerModule.forRoot([{ ttl: 60000, limit: 100 }]),
+    RolePermissionModule,
     UserModule,
     AuthModule,
     SeedModule,

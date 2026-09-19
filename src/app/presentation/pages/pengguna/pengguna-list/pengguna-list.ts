@@ -8,7 +8,27 @@ import { Peran, User } from '../../../../core/models/user.model';
 import { KNOWN_OPD_LIST } from '../../../../shared/known-opd-list';
 import { generateTemporaryPassword } from '../../../../shared/password-generator';
 import { pesanGalat } from '../../../../shared/pesan-galat';
+import { RolePermissionRepository } from '../../../../core/repositories/role-permission.repository';
+import {
+  DAFTAR_KEMAMPUAN,
+  InfoKemampuan,
+  Kemampuan,
+  LABEL_PERAN,
+  MatriksHakAkses,
+  SEMUA_PERAN
+} from '../../../../core/auth/kemampuan';
 import { TanggalIdPipe } from '../../../../shared/pipes/tanggal-id.pipe';
+
+/** Kemampuan dikelompokkan sekali di sini — isinya statis, tidak perlu computed. */
+const KELOMPOK_KEMAMPUAN: { kelompok: string; isi: InfoKemampuan[] }[] = (() => {
+  const peta = new Map<string, InfoKemampuan[]>();
+  for (const info of DAFTAR_KEMAMPUAN) {
+    const isi = peta.get(info.kelompok) ?? [];
+    isi.push(info);
+    peta.set(info.kelompok, isi);
+  }
+  return [...peta.entries()].map(([kelompok, isi]) => ({ kelompok, isi }));
+})();
 
 @Component({
   selector: 'app-pengguna-list',
@@ -21,6 +41,7 @@ export class PenggunaListComponent {
   private userRepository = inject(UserRepository);
   private auditRepository = inject(AuditRepository);
   private authService = inject(AuthService);
+  private rolePermissionRepository = inject(RolePermissionRepository);
 
   public users = computed(() => this.userRepository.users().slice().sort((a, b) => a.nama.localeCompare(b.nama)));
 
@@ -219,6 +240,80 @@ export class PenggunaListComponent {
 
   closeTempPasswordModal(): void {
     this.tempPasswordModal.set(null);
+  }
+
+  // ---------- Tab "Hak Akses Peran" ----------
+
+  public tab = signal<'pengguna' | 'akses'>('pengguna');
+  public kelompokKemampuan = KELOMPOK_KEMAMPUAN;
+  public peranKolom = SEMUA_PERAN;
+  public labelPeranSingkat = LABEL_PERAN;
+
+  /** Suntingan yang belum disimpan; null berarti mengikuti matriks dari server. */
+  private draf = signal<MatriksHakAkses | null>(null);
+  public isSavingAkses = signal(false);
+  public aksesError = signal<string | null>(null);
+  public aksesTersimpan = signal(false);
+
+  public matriksTampil = computed(() => this.draf() ?? this.rolePermissionRepository.matriks());
+  public adaPerubahan = computed(() => {
+    const draf = this.draf();
+    if (!draf) return false;
+    return JSON.stringify(draf) !== JSON.stringify(this.rolePermissionRepository.matriks());
+  });
+
+  public dicentang(kemampuan: Kemampuan, peran: Peran): boolean {
+    return this.matriksTampil()[kemampuan].includes(peran);
+  }
+
+  public ubahIzin(kemampuan: Kemampuan, peran: Peran): void {
+    const sekarang = this.matriksTampil();
+    const daftar = sekarang[kemampuan];
+    const baru = daftar.includes(peran) ? daftar.filter(p => p !== peran) : [...daftar, peran];
+
+    this.draf.set({ ...sekarang, [kemampuan]: baru });
+    this.aksesTersimpan.set(false);
+    this.aksesError.set(null);
+  }
+
+  public batalkanAkses(): void {
+    this.draf.set(null);
+    this.aksesError.set(null);
+    this.aksesTersimpan.set(false);
+  }
+
+  public async simpanAkses(): Promise<void> {
+    const draf = this.draf();
+    if (!draf || !this.adaPerubahan()) return;
+
+    const sebelum = this.rolePermissionRepository.matriks();
+    const berubah = DAFTAR_KEMAMPUAN.map(info => info.kemampuan).filter(
+      k => JSON.stringify(sebelum[k]) !== JSON.stringify(draf[k])
+    );
+
+    this.isSavingAkses.set(true);
+    this.aksesError.set(null);
+
+    try {
+      await this.rolePermissionRepository.simpan(draf);
+      await this.auditRepository.append({
+        pelakuId: this.actorId(),
+        pelakuNama: this.actorLabel(),
+        aksi: 'ubah-hak-akses',
+        entitas: 'HakAkses',
+        entitasId: berubah.join(', '),
+        // Cukup kemampuan yang benar-benar berubah — mencatat seluruh matriks
+        // membuat jejak audit sulit dibaca.
+        nilaiLama: Object.fromEntries(berubah.map(k => [k, sebelum[k]])),
+        nilaiBaru: Object.fromEntries(berubah.map(k => [k, draf[k]]))
+      });
+      this.draf.set(null);
+      this.aksesTersimpan.set(true);
+    } catch (error) {
+      this.aksesError.set(pesanGalat(error, 'Gagal menyimpan hak akses. Coba lagi.'));
+    } finally {
+      this.isSavingAkses.set(false);
+    }
   }
 
   isInvalid(controlName: string): boolean {

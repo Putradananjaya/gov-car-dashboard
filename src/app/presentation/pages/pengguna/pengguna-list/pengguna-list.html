@@ -2,8 +2,17 @@
   <div class="inventory-header">
     <div class="header-title">
       <h1>Manajemen Pengguna</h1>
-      <p>Total: {{ users().length }} akun terdaftar</p>
+      @if (tab() === 'pengguna') {
+        <p>Total: {{ users().length }} akun terdaftar</p>
+      } @else {
+        <p>Atur kemampuan tiap peran — menu dan tombolnya ikut menyesuaikan</p>
+      }
     </div>
+    <div class="page-tabs">
+      <button type="button" [class.active]="tab() === 'pengguna'" (click)="tab.set('pengguna')">Daftar Pengguna</button>
+      <button type="button" [class.active]="tab() === 'akses'" (click)="tab.set('akses')">Hak Akses Peran</button>
+    </div>
+    @if (tab() === 'pengguna') {
     <button class="btn-primary" (click)="openAddModal()">
       <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -11,9 +20,11 @@
       </svg>
       Tambah Pengguna
     </button>
+    }
   </div>
 
   <main class="inventory-content">
+    @if (tab() === 'pengguna') {
     <div class="table-responsive glass-panel">
       <table class="inventory-table">
         <thead>
@@ -88,6 +99,74 @@
         </tbody>
       </table>
     </div>
+    }
+
+    @if (tab() === 'akses') {
+      <div class="akses-panel glass-panel">
+        <p class="akses-catatan">
+          Centang berarti peran itu boleh melakukannya. Pengaturan ini menentukan menu yang muncul,
+          tombol yang bisa ditekan, sekaligus ditegakkan di sisi server — bukan sekadar menyembunyikan tampilan.
+          Kolom <strong>Superadmin</strong> sengaja dikunci agar tidak ada yang bisa mencabut haknya sendiri lalu terkunci.
+        </p>
+
+        @if (aksesError()) {
+          <div class="login-error-alert" style="margin-bottom: 12px;">{{ aksesError() }}</div>
+        }
+        @if (aksesTersimpan()) {
+          <div class="akses-sukses">Hak akses tersimpan. Sesi pengguna lain menyesuaikan dalam beberapa puluh detik.</div>
+        }
+
+        <div class="table-responsive">
+          <table class="inventory-table akses-table">
+            <thead>
+              <tr>
+                <th>Kemampuan</th>
+                @for (peran of peranKolom; track peran) {
+                  <th class="akses-kolom-peran">{{ labelPeranSingkat[peran] }}</th>
+                }
+              </tr>
+            </thead>
+            <tbody>
+              @for (grup of kelompokKemampuan; track grup.kelompok) {
+                <tr class="akses-grup">
+                  <td [attr.colspan]="peranKolom.length + 1">{{ grup.kelompok }}</td>
+                </tr>
+                @for (info of grup.isi; track info.kemampuan) {
+                  <tr>
+                    <td>
+                      <span class="akses-label">{{ info.label }}</span>
+                      <span class="akses-ket">{{ info.keterangan }}</span>
+                    </td>
+                    @for (peran of peranKolom; track peran) {
+                      <td class="akses-sel">
+                        @if (peran === 'superadmin') {
+                          <input type="checkbox" checked disabled
+                                 title="Superadmin selalu memiliki seluruh kemampuan">
+                        } @else {
+                          <input type="checkbox"
+                                 [checked]="dicentang(info.kemampuan, peran)"
+                                 (change)="ubahIzin(info.kemampuan, peran)"
+                                 [attr.aria-label]="info.label + ' untuk ' + labelPeranSingkat[peran]">
+                        }
+                      </td>
+                    }
+                  </tr>
+                }
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <div class="akses-aksi">
+          <button type="button" class="btn-secondary" (click)="batalkanAkses()" [disabled]="!adaPerubahan() || isSavingAkses()">
+            Batalkan Perubahan
+          </button>
+          <button type="button" class="btn-primary" (click)="simpanAkses()" [disabled]="!adaPerubahan() || isSavingAkses()">
+            {{ isSavingAkses() ? 'Menyimpan...' : 'Simpan Hak Akses' }}
+          </button>
+        </div>
+      </div>
+    }
   </main>
 
   <!-- FORM MODAL: TAMBAH / EDIT -->

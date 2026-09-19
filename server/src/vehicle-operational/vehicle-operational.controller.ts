@@ -2,6 +2,8 @@ import { Body, Controller, Delete, Get, Param, Put, UseGuards } from '@nestjs/co
 import { VehicleOperationalService } from './vehicle-operational.service';
 import { UpsertVehicleOperationalDto } from './dto/upsert-vehicle-operational.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { IzinGuard } from '../auth/izin.guard';
+import { ButuhIzin } from '../auth/izin.decorator';
 
 @Controller('vehicle-operational')
 @UseGuards(JwtAuthGuard)
@@ -19,11 +21,15 @@ export class VehicleOperationalController {
   }
 
   @Put(':nibar')
+  @UseGuards(IzinGuard)
+  @ButuhIzin('aset.ubah', 'aset.ubahStatusOperasional', 'aset.impor')
   upsert(@Param('nibar') nibar: string, @Body() dto: UpsertVehicleOperationalDto) {
     return this.service.upsert(nibar, dto);
   }
 
   @Delete(':nibar')
+  @UseGuards(IzinGuard)
+  @ButuhIzin('aset.hapusPermanen', 'aset.impor')
   remove(@Param('nibar') nibar: string) {
     return this.service.remove(nibar);
   }

@@ -2,8 +2,8 @@ import { Body, Controller, Delete, Get, Param, Put, UseGuards } from '@nestjs/co
 import { ServiceRecordService } from './service-record.service';
 import { UpsertServiceRecordDto } from './dto/upsert-service-record.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { RolesGuard } from '../auth/roles.guard';
-import { Roles } from '../auth/roles.decorator';
+import { IzinGuard } from '../auth/izin.guard';
+import { ButuhIzin } from '../auth/izin.decorator';
 
 @Controller('service-records')
 @UseGuards(JwtAuthGuard)
@@ -16,13 +16,15 @@ export class ServiceRecordController {
   }
 
   @Put(':id')
-  @UseGuards(RolesGuard)
-  @Roles('superadmin', 'admin')
+  @UseGuards(IzinGuard)
+  @ButuhIzin('servis.input')
   upsert(@Param('id') id: string, @Body() dto: UpsertServiceRecordDto) {
     return this.service.upsert(id, dto);
   }
 
   @Delete(':id')
+  @UseGuards(IzinGuard)
+  @ButuhIzin('servis.input')
   remove(@Param('id') id: string) {
     return this.service.remove(id);
   }

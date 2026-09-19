@@ -1,5 +1,6 @@
 import { Directive, Input, TemplateRef, ViewContainerRef, inject, effect, signal } from '@angular/core';
-import { PermissionService, Kemampuan } from '../../../core/auth/permission.service';
+import { PermissionService } from '../../../core/auth/permission.service';
+import { Kemampuan } from '../../../core/auth/kemampuan';
 
 @Directive({
   selector: '[hasPermission]',

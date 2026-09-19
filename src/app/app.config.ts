@@ -26,6 +26,8 @@ import { IndexedDbImportBatchRepository } from './data/repositories/indexed-db/i
 import { PhotoRepository } from './core/repositories/photo.repository';
 import { HttpPhotoRepository } from './data/repositories/http/photo.repository';
 import { LoanDocumentRepository } from './core/repositories/loan-document.repository';
+import { RolePermissionRepository } from './core/repositories/role-permission.repository';
+import { HttpRolePermissionRepository } from './data/repositories/http/role-permission.repository';
 import { HttpLoanDocumentRepository } from './data/repositories/http/loan-document.repository';
 import { migrateOrSeedDatabase } from './data/db/migration';
 import { DataSyncService } from './data/sync/data-sync.service';
@@ -55,10 +57,11 @@ export const appConfig: ApplicationConfig = {
     { provide: ImportBatchRepository, useClass: IndexedDbImportBatchRepository },
     { provide: PhotoRepository, useClass: HttpPhotoRepository },
     { provide: LoanDocumentRepository, useClass: HttpLoanDocumentRepository },
+    { provide: RolePermissionRepository, useClass: HttpRolePermissionRepository },
     // Pastikan skema/migrasi/seed IndexedDB & semua repository selesai memuat
     // SEBELUM navigasi/guard pertama jalan — plus pulihkan sesi login (kalau
     // ada cookie refresh token valid) lewat AuthService.refresh(), supaya
-    // authGuard/roleGuard tidak salah menganggap pengguna belum masuk saat
+    // authGuard/izinGuard tidak salah menganggap pengguna belum masuk saat
     // halaman baru saja di-reload (Fase 5b — auth sekarang backend-only,
     // AuthService tidak lagi bergantung UserRepository).
     //
@@ -81,7 +84,8 @@ export const appConfig: ApplicationConfig = {
             inject(AuditRepository),
             inject(ImportBatchRepository),
             inject(PhotoRepository),
-            inject(LoanDocumentRepository)
+            inject(LoanDocumentRepository),
+            inject(RolePermissionRepository)
           ];
           const authService = inject(AuthService);
           const dataSync = inject(DataSyncService);
