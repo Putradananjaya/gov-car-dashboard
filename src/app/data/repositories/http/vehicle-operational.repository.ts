@@ -5,12 +5,14 @@ import { VehicleOperationalRepository } from '../../../core/repositories/vehicle
 import { VehicleOperational } from '../../../core/models/vehicle-operational.model';
 import { API_BASE_URL } from '../../../core/config/api.config';
 import { AuthService } from '../../../core/auth/auth.service';
+import { MuatanSignal } from './muatan-signal';
 
 @Injectable({ providedIn: 'root' })
 export class HttpVehicleOperationalRepository implements VehicleOperationalRepository {
   private http = inject(HttpClient);
   private authService = inject(AuthService);
   private itemsSignal = signal<VehicleOperational[]>([]);
+  private muatan = new MuatanSignal(this.itemsSignal);
 
   public readonly operational = this.itemsSignal.asReadonly();
   public readonly ready: Promise<void>;
@@ -33,7 +35,7 @@ export class HttpVehicleOperationalRepository implements VehicleOperationalRepos
       const items = await firstValueFrom(
         this.http.get<VehicleOperational[]>(`${API_BASE_URL}/vehicle-operational`)
       );
-      this.itemsSignal.set(items);
+      this.muatan.set(items);
     } catch {
       // Belum login / sesi belum pulih — bukan galat fatal untuk `ready`.
     }

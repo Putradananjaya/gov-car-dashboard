@@ -68,7 +68,7 @@
           <tbody>
             @for (entry of filteredEntries(); track entry.id) {
               <tr>
-                <td style="font-size: 0.72rem; white-space: nowrap;">{{ entry.waktu | date: 'dd MMM yyyy HH:mm' }}</td>
+                <td style="font-size: 0.72rem; white-space: nowrap;">{{ entry.waktu | tanggalId }}</td>
                 <td>{{ entry.pelakuNama }}</td>
                 <td><span class="type-badge">{{ entry.aksi }}</span></td>
                 <td>{{ entry.entitas }}</td>

@@ -93,20 +93,34 @@ body {
   transition: background-color var(--transition-speed), color var(--transition-speed);
 }
 
-/* Custom Scrollbar */
+/* Custom Scrollbar (diperbesar agar lebih mudah di-drag) */
+html {
+  scrollbar-color: rgba(100, 116, 139, 0.45) transparent;
+}
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 12px;
+  height: 12px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(128, 128, 128, 0.25);
-  border-radius: 4px;
+  background: rgba(100, 116, 139, 0.35);
+  border-radius: 999px;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+  min-height: 48px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(128, 128, 128, 0.45);
+  background: rgba(100, 116, 139, 0.6);
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:active {
+  background: var(--md-sys-color-primary);
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-corner {
+  background: transparent;
 }
 
 /* MD3 UI Components (Outlined Fields, Cards, and Buttons) */
@@ -500,9 +514,36 @@ body {
 
 .page-content {
   flex-grow: 1;
-  padding: 16px 20px 20px 20px;
+  padding: 16px 6px 20px 20px;
   overflow-y: auto;
   height: calc(100vh - var(--header-height) - 20px);
+  scrollbar-width: auto;
+  scrollbar-color: rgba(100, 116, 139, 0.55) rgba(128, 128, 128, 0.08);
+  scrollbar-gutter: stable;
+}
+/* Scrollbar utama dashboard: lebih lebar dan kontras supaya gampang ditarik */
+.page-content::-webkit-scrollbar {
+  width: 16px;
+}
+.page-content::-webkit-scrollbar-track {
+  background: rgba(128, 128, 128, 0.08);
+  border-radius: 999px;
+  margin: 6px 0;
+}
+.page-content::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.5);
+  border-radius: 999px;
+  border: 4px solid transparent;
+  background-clip: padding-box;
+  min-height: 60px;
+}
+.page-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.72);
+  background-clip: padding-box;
+}
+.page-content::-webkit-scrollbar-thumb:active {
+  background: var(--md-sys-color-primary);
+  background-clip: padding-box;
 }
 
 @media (max-width: 768px) {
@@ -519,7 +560,9 @@ body {
   .header-status .sub-title { display: none !important; }
   .date-display { padding: 4px 8px; font-size: 0.7rem; }
   .top-header { padding: 0 10px; }
-  .page-content { padding: 10px !important; }
+  .page-content { padding: 10px !important; scrollbar-gutter: auto; }
+  .page-content::-webkit-scrollbar { width: 8px; }
+  .page-content::-webkit-scrollbar-thumb { border-width: 2px; min-height: 40px; }
 }
 
 
@@ -618,9 +661,12 @@ body {
 .notif-item.urgent { background: rgba(239, 68, 68, 0.03); border-color: rgba(239, 68, 68, 0.15); }
 .notif-icon-bg { width: 18px; height: 18px; border-radius: 50%; margin-top: 1px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .notif-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+.notif-desc { flex: 1; min-width: 0; }
 .notif-desc .title { font-size: 0.68rem; font-weight: 700; color: var(--md-sys-color-on-background); }
 .notif-desc .desc { font-size: 0.62rem; color: var(--md-sys-color-on-surface-variant); margin-top: 1px; }
-.notif-time { font-size: 0.62rem; color: var(--text-muted); }
+/* Tanggal memakai format panjang baku aplikasi, jadi kolom waktu dijaga
+   tidak terpotong di tengah teks dan tidak mendesak judul aktivitas. */
+.notif-time { font-size: 0.62rem; color: var(--text-muted); white-space: nowrap; flex-shrink: 0; text-align: right; }
 
 .panel-footer-link { border-top: 1px solid var(--md-sys-color-outline); padding-top: 10px; margin-top: auto; text-align: center; }
 .btn-link { font-size: 0.72rem; color: var(--md-sys-color-primary); text-decoration: none; font-weight: 700; }
@@ -791,9 +837,10 @@ body {
 .identity-section .car-desc { font-size: 0.85rem; font-weight: 700; color: var(--md-sys-color-on-background); margin-top: 2px; }
 .agency-tag { font-size: 0.68rem; font-weight: 600; color: var(--md-sys-color-on-surface-variant); background: rgba(128, 128, 128, 0.06); border: 1px solid var(--md-sys-color-outline); border-radius: var(--md-shape-corner-small); padding: 3px 9px; width: fit-content; margin-top: 6px; }
 
-.scrollable { overflow-y: auto; scrollbar-width: thin; }
-.scrollable::-webkit-scrollbar { width: 6px; }
-.scrollable::-webkit-scrollbar-thumb { background: var(--md-sys-color-outline); border-radius: 4px; }
+.scrollable { overflow-y: auto; scrollbar-width: auto; scrollbar-color: rgba(100, 116, 139, 0.45) transparent; }
+.scrollable::-webkit-scrollbar { width: 12px; }
+.scrollable::-webkit-scrollbar-thumb { background: rgba(100, 116, 139, 0.35); border-radius: 999px; border: 3px solid transparent; background-clip: padding-box; min-height: 40px; }
+.scrollable::-webkit-scrollbar-thumb:hover { background: rgba(100, 116, 139, 0.6); background-clip: padding-box; }
 
 .telemetry-content { display: flex; flex-direction: column; flex-grow: 1; min-height: 0; }
 .panel-divider { height: 1px; background: var(--md-sys-color-outline); margin: 16px 0; flex-shrink: 0; }

@@ -7,10 +7,11 @@ import { LoanRepository } from '../../../../core/repositories/loan.repository';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { computeStatusPajak } from '../../../../shared/asset-grouping';
 import { toVehicleView } from '../../../../core/adapters/vehicle-view.model';
+import { TanggalIdPipe } from '../../../../shared/pipes/tanggal-id.pipe';
 
 @Component({
   selector: 'app-dashboard-pegawai',
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, TanggalIdPipe],
   templateUrl: './dashboard-pegawai.html',
   standalone: true
 })

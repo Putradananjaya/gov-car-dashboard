@@ -53,6 +53,11 @@ export class IndexedDbSignalStore<Name extends StoreNames<BangliDbSchema>> {
     return db.count(this.storeName);
   }
 
+  /** Muat ulang eksplisit — dipakai repository untuk memenuhi kontrak refresh(). */
+  public refresh(): Promise<void> {
+    return this.reload();
+  }
+
   private async reload(): Promise<void> {
     const db = await openBangliDb();
     const all = await db.getAll(this.storeName);

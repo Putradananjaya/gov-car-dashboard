@@ -22,6 +22,10 @@ export class IndexedDbVehicleAssetRepository implements VehicleAssetRepository {
     return this.store.delete(nibar);
   }
 
+  public refresh(): Promise<void> {
+    return this.store.refresh();
+  }
+
   public softDelete(nibar: string): Promise<void> {
     const asset = this.findByNibar(nibar);
     if (!asset) return Promise.resolve();

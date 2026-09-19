@@ -88,7 +88,7 @@
               @for (loan of antreanPersetujuan(); track loan.id) {
                 <tr>
                   <td>{{ vehicleLabel(loan.nibar) }}</td>
-                  <td>{{ loan.rencanaMulai }}</td>
+                  <td>{{ loan.rencanaMulai | tanggalId }}</td>
                 </tr>
               }
             </tbody>
@@ -118,7 +118,7 @@
                 </div>
                 <div class="item-details">
                   <p class="name">{{ v.merek }} {{ v.tipe }} <span class="plate font-mono">{{ v.nomorPolisi }}</span></p>
-                  <p class="desc">Masa pajak: {{ v.masaBerlakuPajak || 'Tidak diketahui' }}</p>
+                  <p class="desc">Masa pajak: {{ v.masaBerlakuPajak | tanggalId:'auto':'Tidak diketahui' }}</p>
                 </div>
               </div>
             }

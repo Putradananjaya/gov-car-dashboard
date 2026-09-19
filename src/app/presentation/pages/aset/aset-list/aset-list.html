@@ -169,7 +169,7 @@
                       'badge-danger': computeStatusPajak(v.masaBerlakuPajak) === 'kadaluarsa'
                     }">
                       <span class="badge-dot"></span>
-                      {{ v.masaBerlakuPajak || 'Tidak diketahui' }}
+                      {{ v.masaBerlakuPajak | tanggalId:'auto':'Tidak diketahui' }}
                     </span>
                   </td>
                   @if (permissionService.can('aset.lihatDataSensitif')) {

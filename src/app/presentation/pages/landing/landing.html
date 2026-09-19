@@ -26,8 +26,8 @@
       </div>
 
       <div style="display: flex; align-items: center; gap: 14px;">
-        <button routerLink="/login" class="btn-secondary" style="padding: 8px 18px; font-size: 0.8rem; border-radius: var(--md-shape-corner-medium);">
-          Masuk Admin
+        <button [routerLink]="aksiMasuk().tujuan" class="btn-secondary" style="padding: 8px 18px; font-size: 0.8rem; border-radius: var(--md-shape-corner-medium);">
+          {{ aksiMasuk().label }}
         </button>
       </div>
     </nav>
@@ -47,7 +47,7 @@
       </p>
 
       <div class="landing-ctas">
-        <button routerLink="/login" class="btn-primary" style="padding: 14px 28px; font-size: 0.95rem;">
+        <button [routerLink]="aksiMasuk().tujuan" class="btn-primary" style="padding: 14px 28px; font-size: 0.95rem;">
           Pantau Dashboard Aset
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <line x1="5" y1="12" x2="19" y2="12"></line>

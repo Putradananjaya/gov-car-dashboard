@@ -35,7 +35,7 @@
               <tbody>
                 @for (loan of grup.loans; track loan.id) {
                   <tr>
-                    <td style="font-size: 0.75rem;">{{ loan.rencanaMulai }} s/d {{ loan.rencanaSelesai }}</td>
+                    <td style="font-size: 0.75rem;">{{ loan.rencanaMulai | tanggalId }} s/d {{ loan.rencanaSelesai | tanggalId }}</td>
                     <td>{{ pemohonNama(loan.pemohonId) }}</td>
                     <td>
                       <div class="car-info-col">

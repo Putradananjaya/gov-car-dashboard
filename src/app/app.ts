@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed, inject } from '@angular/core';
+import { Component, LOCALE_ID, OnDestroy, OnInit, signal, computed, inject } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router, NavigationEnd } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { filter } from 'rxjs/operators';
@@ -8,8 +8,33 @@ import { TelemetrySimulatorService } from './data/simulation/telemetry-simulator
 import { AuthService } from './core/auth/auth.service';
 import { PermissionService } from './core/auth/permission.service';
 import { HasPermissionDirective } from './presentation/components/has-permission/has-permission.directive';
+import { formatTanggalId } from './shared/pipes/tanggal-id.pipe';
 
 const GPS_SIMULATION_STORAGE_KEY = 'pusaka_bangli_simulasi_gps';
+
+/** Awalan rute yang memakai kerangka dashboard (sidebar + header). */
+const AWALAN_RUTE_APLIKASI = '/app';
+
+/**
+ * Alamat yang sedang dibuka, dibaca langsung dari browser. Dipakai sebagai
+ * nilai awal currentUrl supaya kerangka dashboard tidak sempat berkedip
+ * sebelum NavigationEnd pertama tiba.
+ */
+function alamatSekarang(): string {
+  if (typeof location === 'undefined') return AWALAN_RUTE_APLIKASI;
+  return `${location.pathname}${location.search}`;
+}
+
+/**
+ * Kerangka dashboard (sidebar + header) hanya untuk rute di bawah /app.
+ *
+ * Status login saja tidak cukup: halaman publik ("/" dan "/masuk") tetap bisa
+ * dibuka selagi sesi masih hidup — mis. menempel tautan beranda di tab baru —
+ * dan dulu halaman itu ikut terbungkus sidebar dashboard.
+ */
+export function pakaiKerangkaAplikasi(sudahMasuk: boolean, alamat: string): boolean {
+  return sudahMasuk && alamat.startsWith(AWALAN_RUTE_APLIKASI);
+}
 
 const LABEL_PERAN: Record<string, string> = {
   superadmin: 'Superadmin',
@@ -25,20 +50,25 @@ const LABEL_PERAN: Record<string, string> = {
   templateUrl: './app.html',
   standalone: true
 })
-export class App implements OnInit {
+export class App implements OnInit, OnDestroy {
   private carRepository = inject(CarRepository);
   private router = inject(Router);
   private authService = inject(AuthService);
   private telemetrySimulator = inject(TelemetrySimulatorService);
   public permissionService = inject(PermissionService);
+  private readonly locale = inject(LOCALE_ID);
 
   public sidebarCollapsed = false;
   public isDarkTheme = signal<boolean>(false);
   public showReportModal = signal<boolean>(false);
   public showSettingsModal = signal<boolean>(false);
 
-  public currentUrl = signal<string>('/app/beranda');
+  public currentUrl = signal<string>(alamatSekarang());
   public isAuthenticated = computed(() => this.authService.isLoggedIn());
+
+  public showAppShell = computed(() =>
+    pakaiKerangkaAplikasi(this.isAuthenticated(), this.currentUrl())
+  );
   public currentUser = this.authService.currentUser;
   public currentUserLabel = computed(() => {
     const user = this.currentUser();
@@ -58,6 +88,7 @@ export class App implements OnInit {
 
   public currentDate = signal<string>('');
   public gpsSimulationEnabled = signal<boolean>(false);
+  private jamTimer: ReturnType<typeof setInterval> | null = null;
 
   cars = computed(() => this.carRepository.cars());
   
@@ -66,6 +97,17 @@ export class App implements OnInit {
   borrowedCount = computed(() => this.cars().filter(c => c.status === 'Digunakan').length);
   maintenanceCount = computed(() => this.cars().filter(c => c.status === 'Service').length);
   brokenCount = computed(() => this.cars().filter(c => c.status === 'Rusak').length);
+
+  private perbaruiTanggal(): void {
+    this.currentDate.set(formatTanggalId(new Date(), this.locale, 'lengkap'));
+  }
+
+  ngOnDestroy(): void {
+    if (this.jamTimer !== null) {
+      clearInterval(this.jamTimer);
+      this.jamTimer = null;
+    }
+  }
 
   ngOnInit() {
     // Force Light theme unconditionally as requested
@@ -82,11 +124,11 @@ export class App implements OnInit {
       this.currentUrl.set(this.router.url);
     });
 
-    // Current Date formatting
-    const now = new Date();
-    const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-    const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-    this.currentDate.set(`${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`);
+    // Tanggal header memakai format baku aplikasi (lihat TanggalIdPipe).
+    // Karena formatnya menyertakan jam, nilainya disegarkan berkala supaya
+    // tidak berhenti di menit halaman pertama kali dimuat.
+    this.perbaruiTanggal();
+    this.jamTimer = setInterval(() => this.perbaruiTanggal(), 30_000);
 
     // Simulasi GPS mati secara default (K4); nyalakan hanya bila pengguna
     // sebelumnya sudah mengaktifkannya lewat toggle di Pengaturan.

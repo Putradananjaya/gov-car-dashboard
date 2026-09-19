@@ -29,4 +29,8 @@ export abstract class LoanRepository {
   public abstract serahTerima(id: string, payload: SerahTerimaPayload): Promise<Loan>;
   public abstract tolak(id: string, catatanPenolakan: string): Promise<Loan>;
   public abstract kembalikan(id: string, payload: KembalikanPayload): Promise<Loan>;
+
+  /** Muat ulang dari server — dipakai oleh DataSyncService supaya perubahan
+   * dari pengguna/perangkat lain ikut tampil tanpa memuat ulang halaman. */
+  public abstract refresh(): Promise<void>;
 }

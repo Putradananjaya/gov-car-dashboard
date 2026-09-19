@@ -7,10 +7,11 @@ import { AuthService } from '../../../../core/auth/auth.service';
 import { Peran, User } from '../../../../core/models/user.model';
 import { KNOWN_OPD_LIST } from '../../../../shared/known-opd-list';
 import { generateTemporaryPassword } from '../../../../shared/password-generator';
+import { TanggalIdPipe } from '../../../../shared/pipes/tanggal-id.pipe';
 
 @Component({
   selector: 'app-pengguna-list',
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, TanggalIdPipe],
   templateUrl: './pengguna-list.html',
   standalone: true
 })

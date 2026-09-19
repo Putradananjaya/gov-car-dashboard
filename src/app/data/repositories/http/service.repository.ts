@@ -5,12 +5,14 @@ import { ServiceRepository } from '../../../core/repositories/service.repository
 import { ServiceRecord } from '../../../core/models/service-record.model';
 import { API_BASE_URL } from '../../../core/config/api.config';
 import { AuthService } from '../../../core/auth/auth.service';
+import { MuatanSignal } from './muatan-signal';
 
 @Injectable({ providedIn: 'root' })
 export class HttpServiceRepository implements ServiceRepository {
   private http = inject(HttpClient);
   private authService = inject(AuthService);
   private itemsSignal = signal<ServiceRecord[]>([]);
+  private muatan = new MuatanSignal(this.itemsSignal);
 
   public readonly records = this.itemsSignal.asReadonly();
   public readonly ready: Promise<void>;
@@ -28,7 +30,7 @@ export class HttpServiceRepository implements ServiceRepository {
   private async reload(): Promise<void> {
     try {
       const items = await firstValueFrom(this.http.get<ServiceRecord[]>(`${API_BASE_URL}/service-records`));
-      this.itemsSignal.set(items);
+      this.muatan.set(items);
     } catch {
       // Belum login / sesi belum pulih — bukan galat fatal untuk `ready`.
     }
@@ -46,5 +48,9 @@ export class HttpServiceRepository implements ServiceRepository {
   public async remove(id: string): Promise<void> {
     await firstValueFrom(this.http.delete<void>(`${API_BASE_URL}/service-records/${id}`));
     await this.reload();
+  }
+
+  public refresh(): Promise<void> {
+    return this.reload();
   }
 }

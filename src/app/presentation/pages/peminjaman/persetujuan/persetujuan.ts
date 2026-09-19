@@ -9,10 +9,11 @@ import { Loan } from '../../../../core/models/loan.model';
 import { TolakModalComponent } from '../../../components/tolak-modal/tolak-modal';
 import { SerahTerimaModalComponent } from '../../../components/serah-terima-modal/serah-terima-modal';
 import { BastPrintComponent, BastMode } from '../../../components/bast-print/bast-print';
+import { TanggalIdPipe } from '../../../../shared/pipes/tanggal-id.pipe';
 
 @Component({
   selector: 'app-persetujuan',
-  imports: [CommonModule, TolakModalComponent, SerahTerimaModalComponent, BastPrintComponent],
+  imports: [CommonModule, TolakModalComponent, SerahTerimaModalComponent, BastPrintComponent, TanggalIdPipe],
   templateUrl: './persetujuan.html',
   standalone: true
 })

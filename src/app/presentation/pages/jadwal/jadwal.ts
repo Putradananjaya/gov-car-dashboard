@@ -4,6 +4,7 @@ import { VehicleAssetRepository } from '../../../core/repositories/vehicle-asset
 import { LoanRepository } from '../../../core/repositories/loan.repository';
 import { UserRepository } from '../../../core/repositories/user.repository';
 import { Loan, StatusPeminjaman } from '../../../core/models/loan.model';
+import { TanggalIdPipe } from '../../../shared/pipes/tanggal-id.pipe';
 
 const STATUS_MEMBLOKIR_JADWAL: StatusPeminjaman[] = ['Diajukan', 'Disetujui', 'Berjalan'];
 
@@ -15,7 +16,7 @@ export interface KelompokJadwal {
 
 @Component({
   selector: 'app-jadwal',
-  imports: [CommonModule],
+  imports: [CommonModule, TanggalIdPipe],
   templateUrl: './jadwal.html',
   standalone: true
 })

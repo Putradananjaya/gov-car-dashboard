@@ -7,6 +7,7 @@ import { LoanRepository } from '../../../../core/repositories/loan.repository';
 import { AuditRepository } from '../../../../core/repositories/audit.repository';
 import { UserRepository } from '../../../../core/repositories/user.repository';
 import { CarRepository } from '../../../../core/repositories/car.repository';
+import { TanggalIdPipe } from '../../../../shared/pipes/tanggal-id.pipe';
 
 const STATUS_COLORS: Record<string, string> = {
   Tersedia: '#10b981',
@@ -17,7 +18,7 @@ const STATUS_COLORS: Record<string, string> = {
 
 @Component({
   selector: 'app-dashboard-superadmin',
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, TanggalIdPipe],
   templateUrl: './dashboard-superadmin.html',
   standalone: true
 })

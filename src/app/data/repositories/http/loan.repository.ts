@@ -5,12 +5,14 @@ import { KembalikanPayload, LoanRepository, SerahTerimaPayload } from '../../../
 import { Loan } from '../../../core/models/loan.model';
 import { API_BASE_URL } from '../../../core/config/api.config';
 import { AuthService } from '../../../core/auth/auth.service';
+import { MuatanSignal } from './muatan-signal';
 
 @Injectable({ providedIn: 'root' })
 export class HttpLoanRepository implements LoanRepository {
   private http = inject(HttpClient);
   private authService = inject(AuthService);
   private itemsSignal = signal<Loan[]>([]);
+  private muatan = new MuatanSignal(this.itemsSignal);
 
   public readonly loans = this.itemsSignal.asReadonly();
   public readonly ready: Promise<void>;
@@ -28,7 +30,7 @@ export class HttpLoanRepository implements LoanRepository {
   private async reload(): Promise<void> {
     try {
       const items = await firstValueFrom(this.http.get<Loan[]>(`${API_BASE_URL}/loans`));
-      this.itemsSignal.set(items);
+      this.muatan.set(items);
     } catch {
       // Belum login / sesi belum pulih — bukan galat fatal untuk `ready`.
     }
@@ -72,5 +74,9 @@ export class HttpLoanRepository implements LoanRepository {
     const result = await firstValueFrom(this.http.post<Loan>(`${API_BASE_URL}/loans/${id}/kembalikan`, payload));
     await this.reload();
     return result;
+  }
+
+  public refresh(): Promise<void> {
+    return this.reload();
   }
 }

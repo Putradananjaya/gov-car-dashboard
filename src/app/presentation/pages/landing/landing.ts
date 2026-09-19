@@ -1,11 +1,25 @@
-import { Component, OnInit, OnDestroy, signal, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, computed, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { API_BASE_URL } from '../../../core/config/api.config';
+import { AuthService } from '../../../core/auth/auth.service';
 
 const HERO_SLIDE_INTERVAL_MS = 5000;
+
+/**
+ * Tujuan dan label tombol masuk di halaman publik, mengikuti sesi yang sedang
+ * aktif. Halaman ini tetap bisa dibuka tanpa logout lebih dulu, jadi tautan
+ * yang mati ke formulir login membuat pengguna yang sudah masuk diminta login
+ * lagi — persis kebingungan yang sama seperti halaman publik yang dulu
+ * terbungkus kerangka dashboard.
+ */
+export function tentukanAksiMasuk(sudahMasuk: boolean): { tujuan: string; label: string } {
+  return sudahMasuk
+    ? { tujuan: '/app/beranda', label: 'Buka Dashboard' }
+    : { tujuan: '/masuk', label: 'Masuk Admin' };
+}
 
 interface PublicStats {
   totalKendaraan: number;
@@ -22,6 +36,9 @@ interface PublicStats {
 })
 export class LandingComponent implements OnInit, OnDestroy {
   private http = inject(HttpClient);
+  private authService = inject(AuthService);
+
+  public readonly aksiMasuk = computed(() => tentukanAksiMasuk(this.authService.isLoggedIn()));
 
   isDarkTheme = signal<boolean>(false);
   stats = signal<PublicStats | null>(null);

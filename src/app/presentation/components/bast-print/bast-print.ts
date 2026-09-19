@@ -2,12 +2,13 @@ import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { VehicleAssetRepository } from '../../../core/repositories/vehicle-asset.repository';
 import { Loan } from '../../../core/models/loan.model';
+import { TanggalIdPipe } from '../../../shared/pipes/tanggal-id.pipe';
 
 export type BastMode = 'serah' | 'kembali';
 
 @Component({
   selector: 'app-bast-print',
-  imports: [CommonModule],
+  imports: [CommonModule, TanggalIdPipe],
   templateUrl: './bast-print.html',
   standalone: true
 })

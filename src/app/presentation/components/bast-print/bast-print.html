@@ -28,7 +28,7 @@
           }
           <tr>
             <th>Rencana Penggunaan</th>
-            <td>{{ loan.rencanaMulai }} s/d {{ loan.rencanaSelesai }}</td>
+            <td>{{ loan.rencanaMulai | tanggalId }} s/d {{ loan.rencanaSelesai | tanggalId }}</td>
           </tr>
         </tbody>
       </table>
@@ -74,9 +74,9 @@
           </tr>
           <tr>
             <th>Waktu Serah/Terima Kunci</th>
-            <td>{{ loan.kunciDiserahkanPada ? (loan.kunciDiserahkanPada | date: 'medium') : '—' }}</td>
+            <td>{{ loan.kunciDiserahkanPada | tanggalId }}</td>
             @if (mode === 'kembali') {
-              <td>{{ loan.kunciDikembalikanPada ? (loan.kunciDikembalikanPada | date: 'medium') : '—' }}</td>
+              <td>{{ loan.kunciDikembalikanPada | tanggalId }}</td>
             }
           </tr>
         </tbody>

@@ -1,10 +1,11 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AuditRepository } from '../../../../core/repositories/audit.repository';
+import { TanggalIdPipe } from '../../../../shared/pipes/tanggal-id.pipe';
 
 @Component({
   selector: 'app-audit-list',
-  imports: [CommonModule],
+  imports: [CommonModule, TanggalIdPipe],
   templateUrl: './audit-list.html',
   standalone: true
 })

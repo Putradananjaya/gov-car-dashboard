@@ -1,4 +1,4 @@
-import { Injectable, computed, inject, signal } from '@angular/core';
+import { Injectable, LOCALE_ID, computed, inject, signal } from '@angular/core';
 import { CarRepository } from '../../../core/repositories/car.repository';
 import { Car } from '../../../core/models/car.model';
 import { TravelLog } from '../../../core/models/log.model';
@@ -10,6 +10,7 @@ import { TelemetrySimulatorService } from '../../simulation/telemetry-simulator.
 import { carToVehicleAsset, carToVehicleOperational, deterministicRestingPosition, vehicleToCarBase } from '../../db/car-vehicle-mapper';
 import { buildSeedFleet } from '../../db/seed';
 import { INITIAL_LOGS } from '../../db/legacy-car-generator';
+import { formatTanggalId } from '../../../shared/pipes/tanggal-id.pipe';
 
 const LOGS_STORAGE_KEY = 'bangli_car_logs';
 
@@ -27,6 +28,7 @@ export class CarCompatRepository implements CarRepository {
   private auditRepository = inject(AuditRepository);
   private authService = inject(AuthService);
   private telemetrySimulator = inject(TelemetrySimulatorService);
+  private readonly locale = inject(LOCALE_ID);
 
   private logsSignal = signal<TravelLog[]>([]);
   public readonly logs = computed(() => this.logsSignal());
@@ -189,9 +191,8 @@ export class CarCompatRepository implements CarRepository {
     activity: string,
     type: 'info' | 'warning' | 'success' | 'danger' = 'info'
   ): void {
-    const now = new Date();
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agt', 'Sep', 'Okt', 'Nov', 'Des'];
-    const dateStr = `${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
+    // Format tanggal baku aplikasi (lihat TanggalIdPipe).
+    const dateStr = formatTanggalId(new Date(), this.locale, 'lengkap');
     const logType: 'info' | 'warning' | 'success' = type === 'danger' ? 'warning' : type;
 
     const newLog: TravelLog = {

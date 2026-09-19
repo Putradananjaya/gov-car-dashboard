@@ -200,11 +200,11 @@
             </div>
             <div class="date-item">
               <span class="label">Servis Terakhir</span>
-              <span class="val">{{ (selectedCar()?.lastServiceDate | date: 'dd MMM yyyy') || '—' }}</span>
+              <span class="val">{{ selectedCar()?.lastServiceDate | tanggalId }}</span>
             </div>
             <div class="date-item">
               <span class="label">Jadwal Servis</span>
-              <span class="val">{{ (selectedCar()?.nextServiceDate | date: 'dd MMM yyyy') || '—' }}</span>
+              <span class="val">{{ selectedCar()?.nextServiceDate | tanggalId }}</span>
             </div>
             <div class="date-item">
               <span class="label">Kategori Mobil</span>

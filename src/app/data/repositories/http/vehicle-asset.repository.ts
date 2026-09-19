@@ -5,12 +5,14 @@ import { VehicleAssetRepository } from '../../../core/repositories/vehicle-asset
 import { VehicleAsset } from '../../../core/models/vehicle-asset.model';
 import { API_BASE_URL } from '../../../core/config/api.config';
 import { AuthService } from '../../../core/auth/auth.service';
+import { MuatanSignal } from './muatan-signal';
 
 @Injectable({ providedIn: 'root' })
 export class HttpVehicleAssetRepository implements VehicleAssetRepository {
   private http = inject(HttpClient);
   private authService = inject(AuthService);
   private itemsSignal = signal<VehicleAsset[]>([]);
+  private muatan = new MuatanSignal(this.itemsSignal);
 
   public readonly assets = this.itemsSignal.asReadonly();
   public readonly ready: Promise<void>;
@@ -35,7 +37,7 @@ export class HttpVehicleAssetRepository implements VehicleAssetRepository {
       const items = await firstValueFrom(
         this.http.get<VehicleAsset[]>(`${API_BASE_URL}/vehicle-assets`)
       );
-      this.itemsSignal.set(items);
+      this.muatan.set(items);
     } catch {
       // Belum login / sesi belum pulih — bukan galat fatal untuk `ready`
       // (lihat komentar di constructor). Biarkan kosong sampai effect() di
@@ -64,5 +66,9 @@ export class HttpVehicleAssetRepository implements VehicleAssetRepository {
       this.http.post<VehicleAsset>(`${API_BASE_URL}/vehicle-assets/${nibar}/soft-delete`, {})
     );
     await this.reload();
+  }
+
+  public refresh(): Promise<void> {
+    return this.reload();
   }
 }

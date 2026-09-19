@@ -8,4 +8,8 @@ export abstract class ServiceRepository {
   public abstract findByNibar(nibar: string): ServiceRecord[];
   public abstract upsert(record: ServiceRecord): Promise<void>;
   public abstract remove(id: string): Promise<void>;
+
+  /** Muat ulang dari server — dipakai oleh DataSyncService supaya perubahan
+   * dari pengguna/perangkat lain ikut tampil tanpa memuat ulang halaman. */
+  public abstract refresh(): Promise<void>;
 }

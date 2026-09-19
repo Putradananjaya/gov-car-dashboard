@@ -124,7 +124,7 @@
               @for (loan of loansTerbaru(); track loan.id) {
                 <tr>
                   <td>{{ vehicleLabel(loan.nibar) }}</td>
-                  <td>{{ loan.rencanaMulai }}</td>
+                  <td>{{ loan.rencanaMulai | tanggalId }}</td>
                   <td>
                     <span class="badge" [ngClass]="{
                       'badge-info': loan.status === 'Diajukan',
@@ -185,7 +185,7 @@
                   <p class="title">{{ entry.aksi }} — {{ entry.entitas }}</p>
                   <p class="desc">oleh {{ entry.pelakuNama }}</p>
                 </div>
-                <span class="notif-time">{{ entry.waktu | date: 'dd MMM HH:mm' }}</span>
+                <span class="notif-time">{{ entry.waktu | tanggalId }}</span>
               </div>
             }
           </div>

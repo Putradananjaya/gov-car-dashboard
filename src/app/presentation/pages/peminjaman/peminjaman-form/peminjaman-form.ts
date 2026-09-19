@@ -10,13 +10,14 @@ import { AuditRepository } from '../../../../core/repositories/audit.repository'
 import { AuthService } from '../../../../core/auth/auth.service';
 import { JenisKendaraan, JenisPermohonan, Loan, StatusPermohonan, TingkatUrgensi } from '../../../../core/models/loan.model';
 import { LoanDocument } from '../../../../core/models/loan-document.model';
+import { TanggalIdPipe } from '../../../../shared/pipes/tanggal-id.pipe';
 
 const MAX_UKURAN_BERKAS = 5 * 1024 * 1024; // 5MB
 const TIPE_BERKAS_DIIZINKAN = ['application/pdf', 'image/jpeg', 'image/png'];
 
 @Component({
   selector: 'app-peminjaman-form',
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, TanggalIdPipe],
   templateUrl: './peminjaman-form.html',
   standalone: true
 })

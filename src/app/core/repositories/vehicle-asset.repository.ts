@@ -12,4 +12,8 @@ export abstract class VehicleAssetRepository {
   public abstract remove(nibar: string): Promise<void>;
   /** Tandai terhapus tanpa menghilangkan baris (aset.hapus, admin/superadmin). */
   public abstract softDelete(nibar: string): Promise<void>;
+
+  /** Muat ulang dari server — dipakai oleh DataSyncService supaya perubahan
+   * dari pengguna/perangkat lain ikut tampil tanpa memuat ulang halaman. */
+  public abstract refresh(): Promise<void>;
 }

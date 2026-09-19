@@ -10,10 +10,11 @@ import { HasPermissionDirective } from '../../components/has-permission/has-perm
 import { KembalikanModalComponent } from '../../components/kembalikan-modal/kembalikan-modal';
 import { BastPrintComponent, BastMode } from '../../components/bast-print/bast-print';
 import { Loan } from '../../../core/models/loan.model';
+import { TanggalIdPipe } from '../../../shared/pipes/tanggal-id.pipe';
 
 @Component({
   selector: 'app-peminjaman',
-  imports: [CommonModule, RouterLink, HasPermissionDirective, KembalikanModalComponent, BastPrintComponent],
+  imports: [CommonModule, RouterLink, HasPermissionDirective, KembalikanModalComponent, BastPrintComponent, TanggalIdPipe],
   templateUrl: './peminjaman.html',
   standalone: true
 })

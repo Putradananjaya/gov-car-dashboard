@@ -52,7 +52,7 @@
                   {{ user.aktif ? 'Aktif' : 'Nonaktif' }}
                 </span>
               </td>
-              <td style="font-size: 0.72rem; color: var(--text-muted);">{{ user.terakhirMasuk ? (user.terakhirMasuk | date: 'medium') : 'Belum pernah' }}</td>
+              <td style="font-size: 0.72rem; color: var(--text-muted);">{{ user.terakhirMasuk | tanggalId:'auto':'Belum pernah' }}</td>
               <td>
                 <div class="actions-col">
                   <button class="action-btn edit" title="Edit" (click)="openEditModal(user)">

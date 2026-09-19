@@ -19,4 +19,8 @@ export abstract class UserRepository {
   public abstract create(input: CreateUserInput): Promise<void>;
   public abstract update(user: User): Promise<void>;
   public abstract resetPassword(id: string, password: string): Promise<void>;
+
+  /** Muat ulang dari server — dipakai oleh DataSyncService supaya perubahan
+   * dari pengguna/perangkat lain ikut tampil tanpa memuat ulang halaman. */
+  public abstract refresh(): Promise<void>;
 }

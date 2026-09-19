@@ -63,7 +63,7 @@
             <div style="padding: 8px 0; border-bottom: 1px solid var(--md-sys-color-outline); display: flex; justify-content: space-between; align-items: center;">
               <div>
                 <p style="font-size: 0.8rem; font-weight: 600;">{{ v.merek }} {{ v.tipe }} — {{ v.nomorPolisi }}</p>
-                <p style="font-size: 0.72rem; color: var(--text-muted);">Masa pajak: {{ v.masaBerlakuPajak || 'Tidak diketahui' }}</p>
+                <p style="font-size: 0.72rem; color: var(--text-muted);">Masa pajak: {{ v.masaBerlakuPajak | tanggalId:'auto':'Tidak diketahui' }}</p>
               </div>
               <span class="badge" [ngClass]="{
                 'badge-success': computeStatusPajak(v.masaBerlakuPajak) === 'berlaku',
@@ -90,7 +90,7 @@
               @for (loan of pengajuanSaya(); track loan.id) {
                 <tr>
                   <td>{{ vehicleLabel(loan.nibar) }}</td>
-                  <td>{{ loan.rencanaMulai }}</td>
+                  <td>{{ loan.rencanaMulai | tanggalId }}</td>
                   <td>
                     <span class="badge" [ngClass]="{
                       'badge-info': loan.status === 'Diajukan',

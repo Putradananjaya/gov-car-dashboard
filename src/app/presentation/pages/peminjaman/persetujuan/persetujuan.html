@@ -40,7 +40,7 @@
                       <span style="font-size: 0.7rem; color: var(--text-muted);">{{ loan.tujuan }}</span>
                     </div>
                   </td>
-                  <td style="font-size: 0.75rem;">{{ loan.rencanaMulai }} s/d {{ loan.rencanaSelesai }}</td>
+                  <td style="font-size: 0.75rem;">{{ loan.rencanaMulai | tanggalId }} s/d {{ loan.rencanaSelesai | tanggalId }}</td>
                   <td>
                     <div class="actions-col">
                       @if (canSetujuiTahap1()) {
@@ -92,7 +92,7 @@
                       <span style="font-size: 0.7rem; color: var(--text-muted);">{{ loan.tujuan }}</span>
                     </div>
                   </td>
-                  <td style="font-size: 0.75rem;">{{ loan.rencanaMulai }} s/d {{ loan.rencanaSelesai }}</td>
+                  <td style="font-size: 0.75rem;">{{ loan.rencanaMulai | tanggalId }} s/d {{ loan.rencanaSelesai | tanggalId }}</td>
                   <td>
                     <div class="actions-col">
                       @if (canSerahTerima()) {

@@ -61,7 +61,7 @@
                 <p><strong>Harga Satuan:</strong> Rp {{ view()!.hargaSatuanPerolehan | number }}</p>
                 <p><strong>Nilai Perolehan:</strong> Rp {{ view()!.nilaiPerolehan | number }}</p>
                 <p><strong>Cara Perolehan:</strong> {{ view()!.caraPerolehan }}</p>
-                <p><strong>Tanggal Perolehan:</strong> {{ view()!.tanggalPerolehan }}</p>
+                <p><strong>Tanggal Perolehan:</strong> {{ view()!.tanggalPerolehan | tanggalId }}</p>
               </div>
             </div>
           }
@@ -75,7 +75,7 @@
             <div class="form-section">
               <h3>Status Saat Ini</h3>
               <p>
-                <strong>Masa Berlaku Pajak:</strong> {{ view()!.masaBerlakuPajak || 'Tidak diketahui' }}
+                <strong>Masa Berlaku Pajak:</strong> {{ view()!.masaBerlakuPajak | tanggalId:'auto':'Tidak diketahui' }}
                 <span class="badge" [ngClass]="{
                   'badge-success': computeStatusPajak(view()!.masaBerlakuPajak) === 'berlaku',
                   'badge-warning': computeStatusPajak(view()!.masaBerlakuPajak) === 'segera-habis',
@@ -85,7 +85,7 @@
                   {{ computeStatusPajak(view()!.masaBerlakuPajak) }}
                 </span>
               </p>
-              <p><strong>Masa Berlaku STNK:</strong> {{ view()!.masaBerlakuStnk || 'Tidak diketahui' }}</p>
+              <p><strong>Masa Berlaku STNK:</strong> {{ view()!.masaBerlakuStnk | tanggalId:'auto':'Tidak diketahui' }}</p>
             </div>
           </div>
 
@@ -182,7 +182,7 @@
             @for (loan of loans(); track loan.id) {
               <div style="padding: 10px 0; border-bottom: 1px solid var(--md-sys-color-outline);">
                 <p style="font-weight: 600; font-size: 0.8rem;">{{ loan.keperluan }} — {{ loan.status }}</p>
-                <p style="font-size: 0.75rem; color: var(--md-sys-color-on-surface-variant);">{{ loan.rencanaMulai }} s/d {{ loan.rencanaSelesai }}</p>
+                <p style="font-size: 0.75rem; color: var(--md-sys-color-on-surface-variant);">{{ loan.rencanaMulai | tanggalId }} s/d {{ loan.rencanaSelesai | tanggalId }}</p>
               </div>
             }
           }
@@ -215,7 +215,7 @@
             @for (entry of auditEntries(); track entry.id) {
               <div style="padding: 10px 0; border-bottom: 1px solid var(--md-sys-color-outline);">
                 <p style="font-weight: 600; font-size: 0.8rem;">{{ entry.aksi }} — {{ entry.pelakuNama }}</p>
-                <p style="font-size: 0.72rem; color: var(--text-muted);">{{ entry.waktu | date: 'medium' }}</p>
+                <p style="font-size: 0.72rem; color: var(--text-muted);">{{ entry.waktu | tanggalId }}</p>
               </div>
             }
           }

@@ -1,6 +1,8 @@
-import { ApplicationConfig, provideBrowserGlobalErrorListeners, provideAppInitializer, inject, EnvironmentInjector, runInInjectionContext } from '@angular/core';
+import { ApplicationConfig, LOCALE_ID, provideBrowserGlobalErrorListeners, provideAppInitializer, inject, EnvironmentInjector, runInInjectionContext } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { registerLocaleData } from '@angular/common';
+import localeId from '@angular/common/locales/id';
 
 import { routes } from './app.routes';
 import { AuthService } from './core/auth/auth.service';
@@ -26,9 +28,15 @@ import { HttpPhotoRepository } from './data/repositories/http/photo.repository';
 import { LoanDocumentRepository } from './core/repositories/loan-document.repository';
 import { HttpLoanDocumentRepository } from './data/repositories/http/loan-document.repository';
 import { migrateOrSeedDatabase } from './data/db/migration';
+import { DataSyncService } from './data/sync/data-sync.service';
+
+// Nama hari/bulan dan pemisah angka mengikuti Bahasa Indonesia di seluruh
+// tampilan (DatePipe, formatDate, TanggalIdPipe).
+registerLocaleData(localeId, 'id-ID');
 
 export const appConfig: ApplicationConfig = {
   providers: [
+    { provide: LOCALE_ID, useValue: 'id-ID' },
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes),
     provideHttpClient(withInterceptors([authInterceptor])),
@@ -76,7 +84,16 @@ export const appConfig: ApplicationConfig = {
             inject(LoanDocumentRepository)
           ];
           const authService = inject(AuthService);
-          return Promise.all([...repositories.map(repository => repository.ready), authService.refresh()]);
+          const dataSync = inject(DataSyncService);
+
+          return Promise.all([
+            ...repositories.map(repository => repository.ready),
+            authService.refresh()
+          ]).then(() => {
+            // Baru dinyalakan setelah muatan pertama selesai, supaya putaran
+            // sinkronisasi tidak berebut dengan permintaan awal repository.
+            dataSync.mulai();
+          });
         })
       );
     })

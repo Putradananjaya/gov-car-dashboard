@@ -15,12 +15,13 @@ import { AssetFormComponent } from '../../../components/asset-form/asset-form';
 import { toVehicleView } from '../../../../core/adapters/vehicle-view.model';
 import { computeStatusPajak } from '../../../../shared/asset-grouping';
 import { ServiceRecord } from '../../../../core/models/service-record.model';
+import { TanggalIdPipe } from '../../../../shared/pipes/tanggal-id.pipe';
 
 type Tab = 'identitas' | 'legalitas' | 'servis' | 'peminjaman' | 'foto' | 'audit';
 
 @Component({
   selector: 'app-aset-detail',
-  imports: [CommonModule, ReactiveFormsModule, HasPermissionDirective, AssetFormComponent],
+  imports: [CommonModule, ReactiveFormsModule, HasPermissionDirective, AssetFormComponent, TanggalIdPipe],
   templateUrl: './aset-detail.html',
   standalone: true
 })

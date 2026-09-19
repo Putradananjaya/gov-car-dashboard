@@ -11,10 +11,11 @@ import { toVehicleView, VehicleView } from '../../../../core/adapters/vehicle-vi
 import { AssetGroup, computeStatusPajak, groupAssetsByNamaBarang, StatusPajak } from '../../../../shared/asset-grouping';
 import { KNOWN_OPD_LIST } from '../../../../shared/known-opd-list';
 import { KondisiAset } from '../../../../core/models/vehicle-operational.model';
+import { TanggalIdPipe } from '../../../../shared/pipes/tanggal-id.pipe';
 
 @Component({
   selector: 'app-aset-list',
-  imports: [CommonModule, RouterLink, HasPermissionDirective],
+  imports: [CommonModule, RouterLink, HasPermissionDirective, TanggalIdPipe],
   templateUrl: './aset-list.html',
   standalone: true
 })

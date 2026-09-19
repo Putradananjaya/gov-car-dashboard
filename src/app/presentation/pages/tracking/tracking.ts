@@ -4,6 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import * as L from 'leaflet';
 import { CarRepository } from '../../../core/repositories/car.repository';
 import { Car } from '../../../core/models/car.model';
+import { TanggalIdPipe } from '../../../shared/pipes/tanggal-id.pipe';
 
 /**
  * Kanvas simulasi kendaraan (Car.x/Car.y) berskala 0-800 x 0-500 — dipetakan
@@ -44,7 +45,7 @@ const WARNA_STATUS: Record<Car['status'], string> = {
 
 @Component({
   selector: 'app-tracking',
-  imports: [CommonModule],
+  imports: [CommonModule, TanggalIdPipe],
   templateUrl: './tracking.html',
   standalone: true
 })
