@@ -53,7 +53,7 @@
                 <td>
                   <span class="badge" [ngClass]="{
                     'badge-muted': loan.status === 'Draft',
-                    'badge-info': loan.status === 'Diajukan' || loan.status === 'Disetujui',
+                    'badge-info': loan.status === 'Diajukan' || loan.status === 'Diverifikasi' || loan.status === 'Disetujui',
                     'badge-warning': loan.status === 'Berjalan',
                     'badge-success': loan.status === 'Selesai',
                     'badge-danger': loan.status === 'Ditolak'

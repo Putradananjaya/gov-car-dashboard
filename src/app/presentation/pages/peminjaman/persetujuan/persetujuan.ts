@@ -31,11 +31,15 @@ export class PersetujuanComponent {
 
   // Dulu memeriksa peran secara langsung sehingga lepas dari matriks hak
   // akses — sekarang keduanya ikut pengaturan superadmin.
-  public canSetujuiTahap1 = computed(() => this.permissionService.can('peminjaman.setujuiTahap1'));
+  public canVerifikasi = computed(() => this.permissionService.can('peminjaman.verifikasi'));
+
+  public canSetujui = computed(() => this.permissionService.can('peminjaman.setujui'));
 
   public canSerahTerima = computed(() => this.permissionService.can('peminjaman.serahTerima'));
 
-  public canTolak = computed(() => this.canSetujuiTahap1() || this.canSerahTerima());
+  // Penolakan sah di langkah 2 (kendaraan tidak tersedia) maupun langkah 3
+  // (permohonan ditolak disertai alasan).
+  public canTolak = computed(() => this.canVerifikasi() || this.canSetujui());
 
   private loansTerfilter = computed<Loan[]>(() => {
     const all = this.loanRepository.loans();
@@ -46,7 +50,9 @@ export class PersetujuanComponent {
     return all;
   });
 
-  public menungguPersetujuan = computed<Loan[]>(() => this.loansTerfilter().filter(l => l.status === 'Diajukan'));
+  /** Tiga antrean mengikuti langkah 2, 3, dan 4 SOP. */
+  public menungguVerifikasi = computed<Loan[]>(() => this.loansTerfilter().filter(l => l.status === 'Diajukan'));
+  public menungguPersetujuan = computed<Loan[]>(() => this.loansTerfilter().filter(l => l.status === 'Diverifikasi'));
   public menungguSerahTerima = computed<Loan[]>(() => this.loansTerfilter().filter(l => l.status === 'Disetujui'));
 
   public tolakTarget = signal<Loan | null>(null);
@@ -70,22 +76,39 @@ export class PersetujuanComponent {
     return this.currentUser()?.nama ?? 'sistem';
   }
 
-  async setujuiTahap1(loan: Loan): Promise<void> {
+  /** Langkah 2 SOP — kendaraan dinyatakan tersedia. */
+  async verifikasi(loan: Loan): Promise<void> {
     try {
-      await this.loanRepository.setujuiTahap1(loan.id);
+      await this.loanRepository.verifikasi(loan.id);
       await this.auditRepository.append({
         pelakuId: this.actorId(),
         pelakuNama: this.actorLabel(),
-        aksi: 'setujui-tahap1-peminjaman',
+        aksi: 'verifikasi-ketersediaan-peminjaman',
         entitas: 'Loan',
         entitasId: loan.id,
         nilaiLama: 'Diajukan',
+        nilaiBaru: 'Diverifikasi'
+      });
+    } catch (error: unknown) {
+      alert(this.pesanKesalahan(error) ?? 'Gagal memverifikasi ketersediaan. Periksa koneksi Anda dan coba lagi.');
+    }
+  }
+
+  /** Langkah 3 SOP — persetujuan atas permohonan yang sudah diverifikasi. */
+  async setujui(loan: Loan): Promise<void> {
+    try {
+      await this.loanRepository.setujui(loan.id);
+      await this.auditRepository.append({
+        pelakuId: this.actorId(),
+        pelakuNama: this.actorLabel(),
+        aksi: 'setujui-peminjaman',
+        entitas: 'Loan',
+        entitasId: loan.id,
+        nilaiLama: 'Diverifikasi',
         nilaiBaru: 'Disetujui'
       });
     } catch (error: unknown) {
-      console.error('Gagal menyetujui peminjaman:', error);
-      const pesan = this.pesanKesalahan(error) ?? 'Gagal menyetujui peminjaman. Periksa koneksi Anda dan coba lagi.';
-      alert(pesan);
+      alert(this.pesanKesalahan(error) ?? 'Gagal menyetujui permohonan. Periksa koneksi Anda dan coba lagi.');
     }
   }
 

@@ -93,7 +93,7 @@
                   <td>{{ loan.rencanaMulai | tanggalId }}</td>
                   <td>
                     <span class="badge" [ngClass]="{
-                      'badge-info': loan.status === 'Diajukan',
+                      'badge-info': loan.status === 'Diajukan' || loan.status === 'Diverifikasi',
                       'badge-warning': loan.status === 'Berjalan',
                       'badge-success': loan.status === 'Selesai',
                       'badge-danger': loan.status === 'Ditolak'

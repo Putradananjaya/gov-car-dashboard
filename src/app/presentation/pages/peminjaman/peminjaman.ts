@@ -62,7 +62,7 @@ export class PeminjamanComponent {
     if (loan.status !== 'Berjalan') return false;
     return (
       loan.pemohonId === this.currentUser()?.id ||
-      this.permissionService.canAny('peminjaman.setujuiTahap1', 'peminjaman.serahTerima')
+      this.permissionService.can('peminjaman.serahTerima')
     );
   }
 

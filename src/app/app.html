@@ -68,7 +68,7 @@
           <span class="nav-label">Peminjaman</span>
         </a>
 
-        @if (permissionService.canAny('peminjaman.setujuiTahap1', 'peminjaman.serahTerima')) {
+        @if (permissionService.canAny('peminjaman.verifikasi', 'peminjaman.setujui', 'peminjaman.serahTerima')) {
           <a routerLink="/app/peminjaman/persetujuan" class="nav-item" [class.active]="currentUrl().startsWith('/app/peminjaman/persetujuan')">
             <span class="nav-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

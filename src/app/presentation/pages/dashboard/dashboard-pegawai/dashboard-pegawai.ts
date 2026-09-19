@@ -55,7 +55,9 @@ export class DashboardPegawaiComponent {
       .sort((a, b) => b.rencanaMulai.localeCompare(a.rencanaMulai));
   });
 
-  public pengajuanAktifCount = computed(() => this.pengajuanSaya().filter(l => l.status === 'Diajukan' || l.status === 'Berjalan').length);
+  public pengajuanAktifCount = computed(() => this.pengajuanSaya().filter(l =>
+      l.status === 'Diajukan' || l.status === 'Diverifikasi' || l.status === 'Disetujui' || l.status === 'Berjalan'
+    ).length);
 
   vehicleLabel(nibar: string): string {
     const asset = this.assetRepository.findByNibar(nibar);

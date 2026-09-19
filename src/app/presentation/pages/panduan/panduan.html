@@ -18,12 +18,12 @@
         }
         @case ('admin') {
           <p style="font-size: 0.85rem; line-height: 1.6;">
-            Sebagai <strong>Pengurus Barang</strong>, tugas utama Anda: cek antrean di menu <strong>Persetujuan Peminjaman</strong> → tab "Menunggu Persetujuan" → klik "Setujui" jika kendaraan tersedia (sistem otomatis cek bentrok jadwal), atau "Tolak" jika tidak. Anda juga mengelola <strong>Data Kendaraan</strong>, <strong>Pemeliharaan</strong>, dan <strong>Pajak &amp; STNK</strong>.
+            Sebagai <strong>Pengurus Barang</strong>, Anda memegang dua langkah SOP. <strong>Langkah 2</strong>: buka <strong>Persetujuan Peminjaman</strong> → "Menunggu Verifikasi Ketersediaan" → klik "Kendaraan Tersedia" (sistem otomatis cek bentrok jadwal) supaya permohonan diteruskan ke Pejabat Penatausahaan, atau "Tolak" bila kendaraan tidak tersedia. <strong>Langkah 4 &amp; 6</strong>: setelah permohonan disetujui, lakukan serah terima kunci lalu terima pengembaliannya. Anda juga mengelola <strong>Data Kendaraan</strong>, <strong>Pemeliharaan</strong>, dan <strong>Pajak &amp; STNK</strong>.
           </p>
         }
         @case ('pejabat_penatausahaan') {
           <p style="font-size: 0.85rem; line-height: 1.6;">
-            Sebagai <strong>Pejabat Penatausahaan Pengguna Barang</strong>, tugas utama Anda: buka menu <strong>Persetujuan Peminjaman</strong> → tab "Menunggu Serah Terima" → klik "Serah Terima", catat odometer/BBM/kondisi kendaraan saat diserahkan, centang konfirmasi kunci, lalu cetak BAST sebagai bukti serah terima fisik.
+            Sebagai <strong>Pejabat Penatausahaan Pengguna Barang</strong>, Anda memegang <strong>langkah 3</strong> SOP: buka <strong>Persetujuan Peminjaman</strong> → "Menunggu Persetujuan" → berikan persetujuan atas permohonan yang ketersediaan kendaraannya sudah diverifikasi Pengurus Barang, atau "Tolak" disertai alasan. Penyerahan kunci dan pencatatan fisiknya dikerjakan Pengurus Barang.
           </p>
         }
         @case ('pimpinan') {
@@ -74,7 +74,7 @@
         </button>
         @if (isTerbuka('dashboard')) {
           <div style="padding: 0 20px 20px; font-size: 0.82rem; line-height: 1.6;">
-            <p><strong>Untuk siapa:</strong> semua peran (tampilan menyesuaikan otomatis — Superadmin &amp; Pimpinan melihat ringkasan lintas bidang, Admin/Pejabat Penatausahaan melihat data OPD-nya sendiri, Pegawai melihat status pengajuannya sendiri).</p>
+            <p><strong>Untuk siapa:</strong> semua peran (tampilan menyesuaikan otomatis — Superadmin &amp; Pimpinan melihat ringkasan lintas bidang, Pengurus Barang/Pejabat Penatausahaan melihat data unit kerjanya sendiri, Pemohon melihat status pengajuannya sendiri).</p>
             <p><strong>Fungsinya:</strong> halaman pertama setelah login — ringkasan cepat jumlah aset, status operasional kendaraan (tersedia/dipinjam/servis), dan aktivitas terbaru, tanpa perlu buka menu lain satu per satu.</p>
             <p><strong>Tips:</strong> gunakan Dashboard sebagai titik cek harian sebelum memutuskan perlu buka menu Peminjaman, Persetujuan, atau Pemeliharaan.</p>
           </div>
@@ -119,7 +119,7 @@
         </button>
         @if (isTerbuka('aset')) {
           <div style="padding: 0 20px 20px; font-size: 0.82rem; line-height: 1.6;">
-            <p><strong>Untuk siapa:</strong> Superadmin &amp; Admin (Pengurus Barang).</p>
+            <p><strong>Untuk siapa:</strong> Superadmin &amp; Pengurus Barang.</p>
             <p><strong>Fungsinya:</strong> "buku induk" seluruh kendaraan dinas (BMD) — data pelat nomor, merek/tipe, NIBAR (Nomor Induk Barang), OPD/Bidang pemakai, kondisi, dan status operasional. Dari sini kendaraan didaftarkan sebelum bisa dipinjam lewat menu Peminjaman.</p>
             <p><strong>Cara pakai:</strong></p>
             <ul style="padding-left: 18px; margin: 4px 0;">
@@ -144,7 +144,7 @@
         </button>
         @if (isTerbuka('pemeliharaan')) {
           <div style="padding: 0 20px 20px; font-size: 0.82rem; line-height: 1.6;">
-            <p><strong>Untuk siapa:</strong> Superadmin &amp; Admin.</p>
+            <p><strong>Untuk siapa:</strong> Superadmin &amp; Pengurus Barang.</p>
             <p><strong>Fungsinya:</strong> jalan pintas dari menu Data Kendaraan yang otomatis menyaring kendaraan berkondisi <em>"Rusak Berat"</em> — supaya kendaraan yang butuh servis mudah dipantau tanpa harus mencari manual satu per satu.</p>
           </div>
         }
@@ -163,7 +163,7 @@
         </button>
         @if (isTerbuka('pajak')) {
           <div style="padding: 0 20px 20px; font-size: 0.82rem; line-height: 1.6;">
-            <p><strong>Untuk siapa:</strong> Superadmin &amp; Admin.</p>
+            <p><strong>Untuk siapa:</strong> Superadmin &amp; Pengurus Barang.</p>
             <p><strong>Fungsinya:</strong> jalan pintas serupa Pemeliharaan, tapi menyaring kendaraan yang status pajak/STNK-nya <em>"kadaluarsa"</em> — membantu mencegah kendaraan dinas telat perpanjangan pajak.</p>
           </div>
         }
@@ -182,7 +182,7 @@
         </button>
         @if (isTerbuka('tracking')) {
           <div style="padding: 0 20px 20px; font-size: 0.82rem; line-height: 1.6;">
-            <p><strong>Untuk siapa:</strong> Superadmin &amp; Admin.</p>
+            <p><strong>Untuk siapa:</strong> Superadmin &amp; Pengurus Barang.</p>
             <p><strong>Fungsinya:</strong> peta yang menampilkan posisi kendaraan berstatus "Digunakan" secara real-time (simulasi lokasi, diperbarui tiap detik). Membantu memantau pergerakan kendaraan dinas yang sedang dipinjam.</p>
             <p><strong>Tips:</strong> simulasi GPS bisa dimatikan/dinyalakan lewat menu Pengaturan bila tidak diperlukan.</p>
           </div>
@@ -201,10 +201,11 @@
       <div style="display: flex; flex-direction: column; gap: 0;">
         @for (langkah of [
           { no: 1, judul: 'Ajukan', ket: 'Pemohon isi formulir di menu Peminjaman: tujuan, rute, tanggal, jenis kendaraan, unggah surat tugas (opsional).', peran: 'Pemohon' },
-          { no: 2, judul: 'Setujui (Tahap 1)', ket: 'Pengurus Barang cek ketersediaan kendaraan di menu Persetujuan Peminjaman. Sistem otomatis menolak jika jadwal bentrok dengan peminjaman lain.', peran: 'Pengurus Barang' },
-          { no: 3, judul: 'Serah Terima (Tahap 2)', ket: 'Pejabat Penatausahaan mencatat odometer, level BBM, kondisi kendaraan, dan konfirmasi serah kunci — lalu bisa mencetak BAST.', peran: 'Pejabat Penatausahaan' },
-          { no: 4, judul: 'Digunakan', ket: 'Kendaraan berstatus "Berjalan" — dipakai pemohon sesuai keperluan yang diajukan.', peran: 'Pemohon' },
-          { no: 5, judul: 'Kembalikan', ket: 'Pemohon (atau petugas) catat odometer/BBM/kondisi akhir + konfirmasi kunci dikembalikan, cetak BAST pengembalian.', peran: 'Pemohon / Petugas' }
+          { no: 2, judul: 'Verifikasi Ketersediaan', ket: 'Pengurus Barang memeriksa kendaraan tersedia dan layak. Sistem otomatis menolak jika jadwal bentrok. Permohonan lalu diteruskan untuk dimintakan persetujuan.', peran: 'Pengurus Barang' },
+          { no: 3, judul: 'Persetujuan', ket: 'Pejabat Penatausahaan Pengguna Barang memberi persetujuan secara elektronik, atau menolak disertai alasan.', peran: 'Pejabat Penatausahaan' },
+          { no: 4, judul: 'Serah Terima', ket: 'Pengurus Barang menetapkan kendaraan, mencatat odometer & BBM awal, menandatangani BAST dan checklist, lalu menyerahkan kunci.', peran: 'Pengurus Barang' },
+          { no: 5, judul: 'Digunakan', ket: 'Kendaraan berstatus "Berjalan" — dipakai pemohon sesuai keperluan yang diajukan, lalu dikembalikan beserta kuncinya.', peran: 'Pemohon' },
+          { no: 6, judul: 'Pengembalian', ket: 'Kondisi akhir diperiksa, odometer/BBM dicatat, konfirmasi kunci dikembalikan, dan BAST pengembalian bisa dicetak.', peran: 'Pengurus Barang' }
         ]; track langkah.no) {
           <div style="display: flex; gap: 14px;">
             <div style="display: flex; flex-direction: column; align-items: center;">
@@ -259,11 +260,12 @@
         </button>
         @if (isTerbuka('persetujuan')) {
           <div style="padding: 0 20px 20px; font-size: 0.82rem; line-height: 1.6;">
-            <p><strong>Untuk siapa:</strong> Superadmin, Admin (Pengurus Barang — tahap 1), dan Pejabat Penatausahaan Pengguna Barang (tahap 2). Tombol yang tampil otomatis menyesuaikan peran Anda.</p>
-            <p><strong>Fungsinya:</strong> memproses pengajuan peminjaman lewat 2 antrean terpisah:</p>
+            <p><strong>Untuk siapa:</strong> Superadmin, Pengurus Barang (langkah 2 &amp; 4), dan Pejabat Penatausahaan Pengguna Barang (langkah 3). Tombol yang tampil otomatis menyesuaikan hak akses peran Anda.</p>
+            <p><strong>Fungsinya:</strong> memproses pengajuan peminjaman lewat 3 antrean terpisah, mengikuti langkah 2-4 SOP:</p>
             <ul style="padding-left: 18px; margin: 4px 0;">
-              <li><strong>Menunggu Persetujuan</strong> — Pengurus Barang mengecek ketersediaan kendaraan, klik "Setujui" (otomatis dicek bentrok jadwal) atau "Tolak" (wajib isi alasan).</li>
-              <li><strong>Menunggu Serah Terima</strong> — Pejabat Penatausahaan klik "Serah Terima", isi odometer, level BBM, kondisi kendaraan, centang konfirmasi kunci diserahkan — kendaraan otomatis berubah status jadi "Dipinjam". Setelah itu bisa cetak <strong>BAST</strong> (Berita Acara Serah Terima).</li>
+              <li><strong>Menunggu Verifikasi Ketersediaan</strong> — Pengurus Barang memastikan kendaraan tersedia &amp; layak, klik "Kendaraan Tersedia" (otomatis dicek bentrok jadwal) atau "Tolak" (wajib isi alasan). Ini belum persetujuan, hanya pernyataan ketersediaan.</li>
+              <li><strong>Menunggu Persetujuan</strong> — Pejabat Penatausahaan Pengguna Barang memberi persetujuan atas permohonan yang sudah diverifikasi, atau menolaknya disertai alasan.</li>
+              <li><strong>Menunggu Serah Terima</strong> — Pengurus Barang klik "Serah Terima", isi odometer, level BBM, kondisi kendaraan, centang konfirmasi kunci diserahkan — kendaraan otomatis berubah status jadi "Dipinjam". Setelah itu bisa cetak <strong>BAST</strong> (Berita Acara Serah Terima).</li>
             </ul>
             <p><strong>Tips:</strong> jika kendaraan ternyata tidak layak dipakai saat mau diserahkan, pengajuan masih bisa ditolak dari tahap ini juga.</p>
           </div>
@@ -288,7 +290,7 @@
         </button>
         @if (isTerbuka('laporan')) {
           <div style="padding: 0 20px 20px; font-size: 0.82rem; line-height: 1.6;">
-            <p><strong>Untuk siapa:</strong> Superadmin, Admin, dan Pimpinan.</p>
+            <p><strong>Untuk siapa:</strong> Superadmin, Pengurus Barang, dan Pimpinan.</p>
             <p><strong>Fungsinya:</strong> menampilkan pratinjau laporan inventaris kendaraan dinas (total aset, status operasional per kategori) yang siap dicetak sebagai dokumen resmi.</p>
           </div>
         }

@@ -2,20 +2,73 @@
   <div class="inventory-header">
     <div class="header-title">
       <h1>Persetujuan Peminjaman</h1>
-      <p>{{ menungguPersetujuan().length }} menunggu persetujuan, {{ menungguSerahTerima().length }} menunggu serah terima</p>
+      <p>{{ menungguVerifikasi().length }} menunggu verifikasi, {{ menungguPersetujuan().length }} menunggu persetujuan,
+        {{ menungguSerahTerima().length }} menunggu serah terima</p>
     </div>
   </div>
 
   <main class="inventory-content">
     <div class="form-section full-width" style="margin-bottom: 24px;">
-      <h3>Menunggu Persetujuan</h3>
+      <h3>Langkah 2 — Menunggu Verifikasi Ketersediaan</h3>
+      @if (menungguVerifikasi().length === 0) {
+        <div class="empty-state glass-panel">
+          <svg viewBox="0 0 24 24" width="60" height="60" fill="none" stroke="var(--text-muted)" stroke-width="1.5">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+          <h3>Tidak Ada Antrean</h3>
+          <p>Tidak ada permohonan baru yang menunggu pemeriksaan ketersediaan kendaraan.</p>
+        </div>
+      } @else {
+        <div class="table-responsive glass-panel">
+          <table class="inventory-table">
+            <thead>
+              <tr>
+                <th>Kendaraan</th>
+                <th>Pemohon</th>
+                <th>Keperluan / Tujuan</th>
+                <th>Rencana</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (loan of menungguVerifikasi(); track loan.id) {
+                <tr>
+                  <td>{{ vehicleLabel(loan.nibar) }}</td>
+                  <td>{{ pemohonNama(loan.pemohonId) }}</td>
+                  <td>
+                    <div class="car-info-col">
+                      <span class="car-name">{{ loan.keperluan }}</span>
+                      <span style="font-size: 0.7rem; color: var(--text-muted);">{{ loan.tujuan }}</span>
+                    </div>
+                  </td>
+                  <td style="font-size: 0.75rem;">{{ loan.rencanaMulai | tanggalId }} s/d {{ loan.rencanaSelesai | tanggalId }}</td>
+                  <td>
+                    <div class="actions-col">
+                      @if (canVerifikasi()) {
+                        <button class="btn-primary" style="padding: 6px 12px; font-size: 0.72rem;" (click)="verifikasi(loan)">Kendaraan Tersedia</button>
+                      }
+                      @if (canTolak()) {
+                        <button class="btn-secondary" style="padding: 6px 12px; font-size: 0.72rem; border-color: rgba(239,68,68,0.3); color: #f87171;" (click)="bukaTolak(loan)">Tolak</button>
+                      }
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+
+    <div class="form-section full-width" style="margin-bottom: 24px;">
+      <h3>Langkah 3 — Menunggu Persetujuan</h3>
       @if (menungguPersetujuan().length === 0) {
         <div class="empty-state glass-panel">
           <svg viewBox="0 0 24 24" width="60" height="60" fill="none" stroke="var(--text-muted)" stroke-width="1.5">
             <polyline points="20 6 9 17 4 12"></polyline>
           </svg>
           <h3>Tidak Ada Antrean</h3>
-          <p>Semua pengajuan peminjaman sudah diputuskan.</p>
+          <p>Tidak ada permohonan terverifikasi yang menunggu persetujuan.</p>
         </div>
       } @else {
         <div class="table-responsive glass-panel">
@@ -43,8 +96,8 @@
                   <td style="font-size: 0.75rem;">{{ loan.rencanaMulai | tanggalId }} s/d {{ loan.rencanaSelesai | tanggalId }}</td>
                   <td>
                     <div class="actions-col">
-                      @if (canSetujuiTahap1()) {
-                        <button class="btn-primary" style="padding: 6px 12px; font-size: 0.72rem;" (click)="setujuiTahap1(loan)">Setujui</button>
+                      @if (canSetujui()) {
+                        <button class="btn-primary" style="padding: 6px 12px; font-size: 0.72rem;" (click)="setujui(loan)">Setujui</button>
                       }
                       @if (canTolak()) {
                         <button class="btn-secondary" style="padding: 6px 12px; font-size: 0.72rem; border-color: rgba(239,68,68,0.3); color: #f87171;" (click)="bukaTolak(loan)">Tolak</button>
@@ -60,7 +113,7 @@
     </div>
 
     <div class="form-section full-width">
-      <h3>Menunggu Serah Terima</h3>
+      <h3>Langkah 4 — Menunggu Serah Terima</h3>
       @if (menungguSerahTerima().length === 0) {
         <div class="empty-state glass-panel">
           <svg viewBox="0 0 24 24" width="60" height="60" fill="none" stroke="var(--text-muted)" stroke-width="1.5">

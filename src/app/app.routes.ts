@@ -80,7 +80,7 @@ export const routes: Routes = [
       {
         path: 'peminjaman/persetujuan',
         canActivate: [izinGuard],
-        data: { kemampuan: ['peminjaman.setujuiTahap1', 'peminjaman.serahTerima'] },
+        data: { kemampuan: ['peminjaman.verifikasi', 'peminjaman.setujui', 'peminjaman.serahTerima'] },
         loadComponent: () => import('./presentation/pages/peminjaman/persetujuan/persetujuan').then(m => m.PersetujuanComponent)
       },
       {

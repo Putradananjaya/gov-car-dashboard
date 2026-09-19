@@ -14,6 +14,7 @@ import {
   InfoKemampuan,
   Kemampuan,
   LABEL_PERAN,
+  LABEL_PERAN_SINGKAT,
   MatriksHakAkses,
   SEMUA_PERAN
 } from '../../../../core/auth/kemampuan';
@@ -48,16 +49,8 @@ export class PenggunaListComponent {
   public opdList = KNOWN_OPD_LIST;
   public peranOptions: Peran[] = ['superadmin', 'admin', 'pegawai', 'pejabat_penatausahaan', 'pimpinan'];
 
-  private static readonly LABEL_PERAN: Record<Peran, string> = {
-    superadmin: 'Superadmin (Kabid Aset)',
-    admin: 'Admin (Pengurus Barang)',
-    pegawai: 'Pegawai (Pemohon)',
-    pejabat_penatausahaan: 'Pejabat Penatausahaan Pengguna Barang',
-    pimpinan: 'Pimpinan (Kepala Dinas/Badan)'
-  };
-
   peranLabel(peran: Peran): string {
-    return PenggunaListComponent.LABEL_PERAN[peran];
+    return LABEL_PERAN[peran];
   }
 
   public showFormModal = signal(false);
@@ -247,7 +240,7 @@ export class PenggunaListComponent {
   public tab = signal<'pengguna' | 'akses'>('pengguna');
   public kelompokKemampuan = KELOMPOK_KEMAMPUAN;
   public peranKolom = SEMUA_PERAN;
-  public labelPeranSingkat = LABEL_PERAN;
+  public labelPeranSingkat = LABEL_PERAN_SINGKAT;
 
   /** Suntingan yang belum disimpan; null berarti mengikuti matriks dari server. */
   private draf = signal<MatriksHakAkses | null>(null);

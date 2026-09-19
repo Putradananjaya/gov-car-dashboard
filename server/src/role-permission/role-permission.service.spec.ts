@@ -79,10 +79,23 @@ describe('RolePermissionService', () => {
     await service.onModuleInit();
 
     await expect(
-      service.boleh('pejabat_penatausahaan', ['peminjaman.setujuiTahap1', 'peminjaman.serahTerima'])
+      service.boleh('pejabat_penatausahaan', ['peminjaman.verifikasi', 'peminjaman.setujui'])
     ).resolves.toBe(true);
-    await expect(service.boleh('pejabat_penatausahaan', ['peminjaman.setujuiTahap1'])).resolves.toBe(false);
-    await expect(service.boleh(undefined, ['peminjaman.serahTerima'])).resolves.toBe(false);
+    await expect(service.boleh('pejabat_penatausahaan', ['peminjaman.verifikasi'])).resolves.toBe(false);
+    await expect(service.boleh(undefined, ['peminjaman.setujui'])).resolves.toBe(false);
+  });
+
+  it('membagi aktor peminjaman sesuai kolom Pelaksana pada SOP', async () => {
+    const { service } = buatService();
+    await service.onModuleInit();
+
+    // Langkah 2 & 4/6 — Pengurus Barang; langkah 3 — Pejabat Penatausahaan.
+    await expect(service.boleh('admin', ['peminjaman.verifikasi'])).resolves.toBe(true);
+    await expect(service.boleh('admin', ['peminjaman.serahTerima'])).resolves.toBe(true);
+    await expect(service.boleh('admin', ['peminjaman.setujui'])).resolves.toBe(false);
+
+    await expect(service.boleh('pejabat_penatausahaan', ['peminjaman.setujui'])).resolves.toBe(true);
+    await expect(service.boleh('pejabat_penatausahaan', ['peminjaman.serahTerima'])).resolves.toBe(false);
   });
 
   it('melengkapi kemampuan yang barisnya belum ada dengan nilai bawaan', async () => {

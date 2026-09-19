@@ -9,6 +9,7 @@ import { AuthService } from './core/auth/auth.service';
 import { PermissionService } from './core/auth/permission.service';
 import { HasPermissionDirective } from './presentation/components/has-permission/has-permission.directive';
 import { formatTanggalId } from './shared/pipes/tanggal-id.pipe';
+import { LABEL_PERAN_SINGKAT } from './core/auth/kemampuan';
 
 const GPS_SIMULATION_STORAGE_KEY = 'pusaka_bangli_simulasi_gps';
 
@@ -35,14 +36,6 @@ function alamatSekarang(): string {
 export function pakaiKerangkaAplikasi(sudahMasuk: boolean, alamat: string): boolean {
   return sudahMasuk && alamat.startsWith(AWALAN_RUTE_APLIKASI);
 }
-
-const LABEL_PERAN: Record<string, string> = {
-  superadmin: 'Superadmin',
-  admin: 'Admin OPD',
-  pegawai: 'Pegawai',
-  pejabat_penatausahaan: 'Pejabat Penatausahaan',
-  pimpinan: 'Pimpinan'
-};
 
 @Component({
   selector: 'app-root',
@@ -83,7 +76,7 @@ export class App implements OnInit, OnDestroy {
   });
   public currentPeranLabel = computed(() => {
     const peran = this.authService.peran();
-    return peran ? LABEL_PERAN[peran] : '';
+    return peran ? LABEL_PERAN_SINGKAT[peran] : '';
   });
 
   public currentDate = signal<string>('');

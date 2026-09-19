@@ -69,8 +69,8 @@ export class UpsertLoanDto {
   @IsString()
   realisasiKembali!: string | null;
 
-  @IsIn(['Draft', 'Diajukan', 'Disetujui', 'Ditolak', 'Berjalan', 'Selesai'])
-  status!: 'Draft' | 'Diajukan' | 'Disetujui' | 'Ditolak' | 'Berjalan' | 'Selesai';
+  @IsIn(['Draft', 'Diajukan', 'Diverifikasi', 'Disetujui', 'Ditolak', 'Berjalan', 'Selesai'])
+  status!: 'Draft' | 'Diajukan' | 'Diverifikasi' | 'Disetujui' | 'Ditolak' | 'Berjalan' | 'Selesai';
 
   @IsOptional()
   @IsString()

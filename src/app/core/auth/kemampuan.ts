@@ -17,7 +17,8 @@ export const SEMUA_KEMAMPUAN = [
   'aset.ubahStatusOperasional',
   'aset.lihatDataSensitif',
   'peminjaman.ajukan',
-  'peminjaman.setujuiTahap1',
+  'peminjaman.verifikasi',
+  'peminjaman.setujui',
   'peminjaman.serahTerima',
   'servis.input',
   'kerusakan.lapor',
@@ -36,10 +37,27 @@ export const PERAN_DAPAT_DIATUR: Peran[] = ['admin', 'pegawai', 'pejabat_penatau
 
 export const SEMUA_PERAN: Peran[] = ['superadmin', ...PERAN_DAPAT_DIATUR];
 
+/**
+ * Penyebutan peran mengikuti dokumen "Aktor Pusaka BKPAD" — satu-satunya
+ * sumber kebenaran istilah di seluruh aplikasi.
+ *
+ * Sebelumnya peta ini ada tiga salinan dengan dua versi kata yang berbeda
+ * ("Admin OPD" di sidebar & tabel hak akses, "Admin (Pengurus Barang)" di
+ * daftar pengguna), sehingga satu peran yang sama terlihat seperti dua hal.
+ */
 export const LABEL_PERAN: Record<Peran, string> = {
-  superadmin: 'Superadmin',
-  admin: 'Admin OPD',
-  pegawai: 'Pegawai',
+  superadmin: 'Kabid Aset (Superadmin)',
+  admin: 'Pengurus Barang (Admin)',
+  pegawai: 'Pemohon',
+  pejabat_penatausahaan: 'Pejabat Penatausahaan Pengguna Barang',
+  pimpinan: 'Pimpinan (Kepala Dinas/Badan)'
+};
+
+/** Bentuk ringkas untuk tempat sempit: judul kolom matriks dan badge sidebar. */
+export const LABEL_PERAN_SINGKAT: Record<Peran, string> = {
+  superadmin: 'Kabid Aset',
+  admin: 'Pengurus Barang',
+  pegawai: 'Pemohon',
   pejabat_penatausahaan: 'Pejabat Penatausahaan',
   pimpinan: 'Pimpinan'
 };
@@ -57,8 +75,12 @@ export const MATRIKS_BAWAAN: MatriksHakAkses = {
   'aset.ubahStatusOperasional': ['superadmin', 'admin'],
   'aset.lihatDataSensitif': ['superadmin', 'admin'],
   'peminjaman.ajukan': ['superadmin', 'admin', 'pegawai', 'pejabat_penatausahaan', 'pimpinan'],
-  'peminjaman.setujuiTahap1': ['superadmin', 'admin'],
-  'peminjaman.serahTerima': ['superadmin', 'pejabat_penatausahaan'],
+  // Pembagian aktor mengikuti kolom "Pelaksana" pada SOP: Pengurus Barang
+  // memeriksa ketersediaan (langkah 2) lalu menyerahkan kunci (langkah 4 & 6),
+  // Pejabat Penatausahaan yang memberi persetujuan (langkah 3).
+  'peminjaman.verifikasi': ['superadmin', 'admin'],
+  'peminjaman.setujui': ['superadmin', 'pejabat_penatausahaan'],
+  'peminjaman.serahTerima': ['superadmin', 'admin'],
   'servis.input': ['superadmin', 'admin'],
   'kerusakan.lapor': ['superadmin', 'admin', 'pegawai'],
   'laporan.cetak': ['superadmin', 'admin', 'pimpinan'],
@@ -86,8 +108,9 @@ export const DAFTAR_KEMAMPUAN: InfoKemampuan[] = [
   { kemampuan: 'servis.input', label: 'Input riwayat servis & pajak', keterangan: 'Mencatat pemeliharaan dan perpanjangan pajak', kelompok: 'Operasional' },
   { kemampuan: 'kerusakan.lapor', label: 'Lapor kerusakan', keterangan: 'Mengirim laporan kerusakan kendaraan', kelompok: 'Operasional' },
   { kemampuan: 'peminjaman.ajukan', label: 'Ajukan peminjaman', keterangan: 'Mengisi formulir FRM-01 dan mengirim pengajuan', kelompok: 'Peminjaman' },
-  { kemampuan: 'peminjaman.setujuiTahap1', label: 'Setujui peminjaman (tahap 1)', keterangan: 'Persetujuan awal oleh pengurus barang', kelompok: 'Peminjaman' },
-  { kemampuan: 'peminjaman.serahTerima', label: 'Serah terima & pengembalian', keterangan: 'Menyerahkan kunci (tahap 2) dan menerima pengembalian', kelompok: 'Peminjaman' },
+  { kemampuan: 'peminjaman.verifikasi', label: 'Verifikasi ketersediaan kendaraan', keterangan: 'Langkah 2 SOP — memeriksa kendaraan tersedia lalu meneruskannya', kelompok: 'Peminjaman' },
+  { kemampuan: 'peminjaman.setujui', label: 'Setujui / tolak permohonan', keterangan: 'Langkah 3 SOP — persetujuan elektronik atas permohonan', kelompok: 'Peminjaman' },
+  { kemampuan: 'peminjaman.serahTerima', label: 'Serah terima & terima pengembalian', keterangan: 'Langkah 4 & 6 SOP — menyerahkan kunci lalu memeriksa kondisi akhir', kelompok: 'Peminjaman' },
   { kemampuan: 'laporan.cetak', label: 'Cetak laporan resmi', keterangan: 'Membuka menu Laporan dan mencetaknya', kelompok: 'Sistem' },
   { kemampuan: 'pengguna.kelola', label: 'Kelola pengguna & hak akses', keterangan: 'Membuka halaman ini dan mengubah isinya', kelompok: 'Sistem' },
   { kemampuan: 'audit.lihat', label: 'Lihat jejak audit', keterangan: 'Membuka riwayat seluruh aktivitas pengguna', kelompok: 'Sistem' },

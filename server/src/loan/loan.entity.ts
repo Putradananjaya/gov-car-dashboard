@@ -1,6 +1,20 @@
 import { Column, Entity, Index, PrimaryColumn } from 'typeorm';
 
-export type StatusPeminjaman = 'Draft' | 'Diajukan' | 'Disetujui' | 'Ditolak' | 'Berjalan' | 'Selesai';
+/**
+ * Mengikuti SOP Peminjaman Kendaraan Dinas No. 000.2.3.2/3336/BKPAD/2026:
+ * Diajukan (langkah 1) → Diverifikasi (langkah 2, ketersediaan diperiksa
+ * Pengurus Barang) → Disetujui (langkah 3, persetujuan Pejabat
+ * Penatausahaan) → Berjalan (langkah 4, kunci diserahkan) → Selesai
+ * (langkah 6, kondisi akhir diperiksa).
+ */
+export type StatusPeminjaman =
+  | 'Draft'
+  | 'Diajukan'
+  | 'Diverifikasi'
+  | 'Disetujui'
+  | 'Ditolak'
+  | 'Berjalan'
+  | 'Selesai';
 export type StatusPermohonan = 'Baru' | 'Perubahan' | 'Darurat';
 export type JenisPermohonan = 'Penggunaan' | 'Peminjaman';
 export type TingkatUrgensi = 'Biasa' | 'Penting' | 'Mendesak/Darurat';
@@ -84,6 +98,11 @@ export class LoanEntity {
   @Column({ type: 'varchar' })
   status!: StatusPeminjaman;
 
+  /** Pengurus Barang yang menyatakan kendaraan tersedia (langkah 2 SOP). */
+  @Column({ name: 'diverifikasi_oleh', type: 'varchar', nullable: true })
+  diverifikasiOleh!: string | null;
+
+  /** Pejabat Penatausahaan yang memberi persetujuan (langkah 3 SOP). */
   @Column({ name: 'disetujui_oleh', type: 'varchar', nullable: true })
   disetujuiOleh!: string | null;
 

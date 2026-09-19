@@ -50,8 +50,14 @@ export class HttpLoanRepository implements LoanRepository {
     await this.reload();
   }
 
-  public async setujuiTahap1(id: string): Promise<Loan> {
-    const result = await firstValueFrom(this.http.post<Loan>(`${API_BASE_URL}/loans/${id}/setujui-tahap1`, {}));
+  public async verifikasi(id: string): Promise<Loan> {
+    const result = await firstValueFrom(this.http.post<Loan>(`${API_BASE_URL}/loans/${id}/verifikasi`, {}));
+    await this.reload();
+    return result;
+  }
+
+  public async setujui(id: string): Promise<Loan> {
+    const result = await firstValueFrom(this.http.post<Loan>(`${API_BASE_URL}/loans/${id}/setujui`, {}));
     await this.reload();
     return result;
   }

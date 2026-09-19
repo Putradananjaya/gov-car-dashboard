@@ -32,11 +32,20 @@ export class LoanController {
     return this.service.upsert(id, dto);
   }
 
-  @Post(':id/setujui-tahap1')
+  /** Langkah 2 SOP — Pengurus Barang menyatakan kendaraan tersedia. */
+  @Post(':id/verifikasi')
   @UseGuards(IzinGuard)
-  @ButuhIzin('peminjaman.setujuiTahap1')
-  setujuiTahap1(@Param('id') id: string, @Req() req: RequestWithUser) {
-    return this.service.setujuiTahap1(id, req.user.sub);
+  @ButuhIzin('peminjaman.verifikasi')
+  verifikasi(@Param('id') id: string, @Req() req: RequestWithUser) {
+    return this.service.verifikasi(id, req.user.sub);
+  }
+
+  /** Langkah 3 SOP — persetujuan oleh Pejabat Penatausahaan Pengguna Barang. */
+  @Post(':id/setujui')
+  @UseGuards(IzinGuard)
+  @ButuhIzin('peminjaman.setujui')
+  setujui(@Param('id') id: string, @Req() req: RequestWithUser) {
+    return this.service.setujui(id, req.user.sub);
   }
 
   @Post(':id/serah-terima')
@@ -48,7 +57,7 @@ export class LoanController {
 
   @Post(':id/tolak')
   @UseGuards(IzinGuard)
-  @ButuhIzin('peminjaman.setujuiTahap1', 'peminjaman.serahTerima')
+  @ButuhIzin('peminjaman.verifikasi', 'peminjaman.setujui')
   tolak(@Param('id') id: string, @Body() dto: TolakLoanDto) {
     return this.service.tolak(id, dto);
   }

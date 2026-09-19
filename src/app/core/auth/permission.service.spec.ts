@@ -86,7 +86,7 @@ describe('PermissionService', () => {
 
     expect(permissionService.can('aset.lihat')).toBe(true);
     expect(permissionService.can('aset.ubah')).toBe(true);
-    expect(permissionService.can('peminjaman.setujuiTahap1')).toBe(true);
+    expect(permissionService.can('peminjaman.verifikasi')).toBe(true);
     expect(permissionService.can('aset.hapusPermanen')).toBe(false);
     expect(permissionService.can('pengguna.kelola')).toBe(false);
     expect(permissionService.can('audit.lihat')).toBe(false);
@@ -114,9 +114,9 @@ describe('PermissionService', () => {
   it('canAny terpenuhi bila salah satu kemampuan dimiliki', async () => {
     await loginAs('pejabat_penatausahaan');
 
-    expect(permissionService.can('peminjaman.setujuiTahap1')).toBe(false);
-    expect(permissionService.can('peminjaman.serahTerima')).toBe(true);
-    expect(permissionService.canAny('peminjaman.setujuiTahap1', 'peminjaman.serahTerima')).toBe(true);
+    expect(permissionService.can('peminjaman.verifikasi')).toBe(false);
+    expect(permissionService.can('peminjaman.setujui')).toBe(true);
+    expect(permissionService.canAny('peminjaman.verifikasi', 'peminjaman.setujui')).toBe(true);
     expect(permissionService.canAny('audit.lihat', 'sistem.resetBasisData')).toBe(false);
   });
 

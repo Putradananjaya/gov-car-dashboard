@@ -6,7 +6,7 @@ import { UserRepository } from '../../../core/repositories/user.repository';
 import { Loan, StatusPeminjaman } from '../../../core/models/loan.model';
 import { TanggalIdPipe } from '../../../shared/pipes/tanggal-id.pipe';
 
-const STATUS_MEMBLOKIR_JADWAL: StatusPeminjaman[] = ['Diajukan', 'Disetujui', 'Berjalan'];
+const STATUS_MEMBLOKIR_JADWAL: StatusPeminjaman[] = ['Diajukan', 'Diverifikasi', 'Disetujui', 'Berjalan'];
 
 export interface KelompokJadwal {
   nibar: string;

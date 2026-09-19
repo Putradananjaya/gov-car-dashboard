@@ -283,6 +283,7 @@ export class PeminjamanFormComponent implements OnInit {
       keteranganTambahan: values.keteranganTambahan?.trim() || null,
       realisasiKembali: this.existingLoan?.realisasiKembali ?? null,
       status,
+      diverifikasiOleh: this.existingLoan?.diverifikasiOleh ?? null,
       disetujuiOleh: this.existingLoan?.disetujuiOleh ?? null,
       catatanPenolakan: this.existingLoan?.catatanPenolakan ?? null,
       odometerKeluar: this.existingLoan?.odometerKeluar ?? null,
