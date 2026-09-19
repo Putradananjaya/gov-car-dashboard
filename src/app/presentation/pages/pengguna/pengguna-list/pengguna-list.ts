@@ -7,6 +7,7 @@ import { AuthService } from '../../../../core/auth/auth.service';
 import { Peran, User } from '../../../../core/models/user.model';
 import { KNOWN_OPD_LIST } from '../../../../shared/known-opd-list';
 import { generateTemporaryPassword } from '../../../../shared/password-generator';
+import { pesanGalat } from '../../../../shared/pesan-galat';
 import { TanggalIdPipe } from '../../../../shared/pipes/tanggal-id.pipe';
 
 @Component({
@@ -112,6 +113,27 @@ export class PenggunaListComponent {
 
     const previous = editingId ? this.userRepository.findById(editingId) : undefined;
 
+    try {
+      await this.simpan(editingId, previous, values);
+    } catch (error) {
+      // Server menolak (mis. NIP ganda, atau peran yang belum dikenal backend
+      // lama) — tanpa ini modal hanya diam dan pengguna mengira tersimpan.
+      this.formError.set(pesanGalat(error, 'Gagal menyimpan. Coba lagi.'));
+      return;
+    }
+
+    this.closeFormModal();
+  }
+
+  /**
+   * Kolom form berbeda per-mode: `password` hanya ada — dan hanya dibaca —
+   * saat membuat pengguna baru, sedangkan `nip` dikunci saat mengedit.
+   */
+  private async simpan(
+    editingId: string | null,
+    previous: User | undefined,
+    values: { nip: string; nama: string; jabatan: string; unitKerja: string; peran: Peran; password: string }
+  ): Promise<void> {
     if (editingId) {
       const user: User = { ...previous!, nama: values.nama, jabatan: values.jabatan, unitKerja: values.unitKerja, peran: values.peran };
       await this.userRepository.update(user);
@@ -143,8 +165,6 @@ export class PenggunaListComponent {
         nilaiBaru: { nama: values.nama, jabatan: values.jabatan, unitKerja: values.unitKerja, peran: values.peran }
       });
     }
-
-    this.closeFormModal();
   }
 
   async toggleAktif(user: User): Promise<void> {
@@ -158,16 +178,20 @@ export class PenggunaListComponent {
     }
 
     const updated = { ...user, aktif: !user.aktif };
-    await this.userRepository.update(updated);
-    await this.auditRepository.append({
-      pelakuId: this.actorId(),
-      pelakuNama: this.actorLabel(),
-      aksi: updated.aktif ? 'aktifkan-pengguna' : 'nonaktifkan-pengguna',
-      entitas: 'User',
-      entitasId: user.id,
-      nilaiLama: user.aktif,
-      nilaiBaru: updated.aktif
-    });
+    try {
+      await this.userRepository.update(updated);
+      await this.auditRepository.append({
+        pelakuId: this.actorId(),
+        pelakuNama: this.actorLabel(),
+        aksi: updated.aktif ? 'aktifkan-pengguna' : 'nonaktifkan-pengguna',
+        entitas: 'User',
+        entitasId: user.id,
+        nilaiLama: user.aktif,
+        nilaiBaru: updated.aktif
+      });
+    } catch (error) {
+      alert(pesanGalat(error, 'Gagal mengubah status pengguna. Coba lagi.'));
+    }
   }
 
   async resetPassword(user: User): Promise<void> {
@@ -175,14 +199,20 @@ export class PenggunaListComponent {
     if (!confirmed) return;
 
     const tempPassword = generateTemporaryPassword();
-    await this.userRepository.resetPassword(user.id, tempPassword);
-    await this.auditRepository.append({
-      pelakuId: this.actorId(),
-      pelakuNama: this.actorLabel(),
-      aksi: 'reset-kata-sandi',
-      entitas: 'User',
-      entitasId: user.id
-    });
+    try {
+      await this.userRepository.resetPassword(user.id, tempPassword);
+      await this.auditRepository.append({
+        pelakuId: this.actorId(),
+        pelakuNama: this.actorLabel(),
+        aksi: 'reset-kata-sandi',
+        entitas: 'User',
+        entitasId: user.id
+      });
+    } catch (error) {
+      // Jangan tampilkan kata sandi baru kalau server belum tentu menyimpannya.
+      alert(pesanGalat(error, 'Gagal menyetel ulang kata sandi. Coba lagi.'));
+      return;
+    }
 
     this.tempPasswordModal.set({ nama: user.nama, password: tempPassword });
   }
