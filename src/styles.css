@@ -601,12 +601,17 @@ html {
 .pct-badge { font-size: 0.65rem; font-weight: 700; padding: 1px 6px; border-radius: 4px; }
 .metric-footer .sub-label { font-size: 0.65rem; color: var(--text-muted); font-weight: 500; }
 
+/* Jumlah kartu berbeda per peran (superadmin 2 grafik & 3 panel, admin 4
+   panel, pegawai 2 panel). Dulu jumlah kolomnya dipatok, jadi peran dengan
+   kartu lebih sedikit menyisakan kolom kosong di kanan. auto-fit menutup
+   jalur yang tidak terpakai sekaligus menangani layar sempit tanpa
+   breakpoint tambahan. */
 .charts-section {
   display: grid;
-  grid-template-columns: 1.3fr 1.3fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 14px;
 }
-@media (max-width: 1100px) { .charts-section { grid-template-columns: 1fr; } }
+.bar-svg { width: 100%; height: auto; max-height: 240px; }
 
 .chart-card { padding: 18px; display: flex; flex-direction: column; }
 .chart-header h3 { font-size: 0.9rem; font-weight: 700; color: var(--md-sys-color-on-background); }
@@ -625,16 +630,27 @@ html {
 
 .bottom-section {
   display: grid;
-  grid-template-columns: 1.2fr 1fr 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 14px;
 }
-@media (max-width: 1280px) { .bottom-section { grid-template-columns: 1.2fr 1fr; } }
-@media (max-width: 768px) { .bottom-section { grid-template-columns: 1fr; } }
 
-.info-panel { padding: 18px; display: flex; flex-direction: column; height: 300px; }
+.info-panel { padding: 18px; display: flex; flex-direction: column; height: 340px; }
 .info-panel .panel-header { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--md-sys-color-outline); padding-bottom: 10px; margin-bottom: 12px; flex-shrink: 0; }
 .info-panel .panel-header h3 { font-size: 0.85rem; font-weight: 700; color: var(--md-sys-color-on-background); }
 .info-panel .panel-content { flex-grow: 1; overflow-y: auto; }
+
+/* ===== Jejak Audit ===== */
+.audit-objek { display: block; font-size: 0.78rem; font-weight: 600; color: var(--md-sys-color-on-background); }
+/* Nomor rujukan tetap ada demi keperluan pemeriksaan, tapi tidak lagi
+   mendominasi baris — dipotong dan diredupkan, lengkapnya muncul saat disorot. */
+.audit-rujukan {
+  display: block; font-family: monospace; font-size: 0.64rem; color: var(--text-muted);
+  max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.audit-perubahan { font-size: 0.72rem; max-width: 320px; }
+.audit-baris { display: block; color: var(--md-sys-color-on-background); }
+.audit-baris + .audit-baris { margin-top: 2px; }
+.audit-kosong { color: var(--text-muted); }
 
 .panel-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.72rem; }
 .panel-table th { color: var(--md-sys-color-on-surface-variant); font-weight: 600; padding-bottom: 6px; }
@@ -684,7 +700,9 @@ html {
 .item-time .date { font-size: 0.62rem; color: var(--md-sys-color-on-surface-variant); }
 .item-time .due { font-size: 0.62rem; font-weight: 700; }
 
-.map-preview-box { display: flex; align-items: center; justify-content: center; }
+.map-preview-box { display: flex; flex-direction: column; gap: 10px; }
+.map-preview-box .mini-map-container { flex: 1; min-height: 0; }
+.map-preview-box .panel-footer-link { margin-top: 0; }
 .mini-map-container { width: 100%; height: 100%; border-radius: var(--md-shape-corner-medium); overflow: hidden; border: 1px solid var(--md-sys-color-outline); }
 .mini-map-svg { width: 100%; height: 100%; display: block; }
 
@@ -949,6 +967,19 @@ html {
 .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--md-sys-color-primary); background: rgba(128, 128, 128, 0.08); }
 .form-group input:disabled { opacity: 0.65; cursor: not-allowed; }
 .form-group textarea { resize: vertical; }
+
+/* Kolom kata sandi dengan ikon mata di dalamnya. Pembungkusnya hanya melingkupi
+   input (bukan label) supaya tombolnya benar-benar terpusat vertikal. */
+.field-sandi { position: relative; display: flex; flex-direction: column; }
+.field-sandi input { padding-right: 42px; width: 100%; }
+.btn-mata {
+  position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+  background: transparent; border: none; cursor: pointer; padding: 6px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-muted); border-radius: var(--md-shape-corner-small);
+}
+.btn-mata:hover { color: var(--md-sys-color-on-surface); background: rgba(128, 128, 128, 0.08); }
+.btn-mata:focus-visible { outline: 2px solid var(--md-sys-color-primary); outline-offset: 1px; }
 
 .form-group.has-error input, .form-group.has-error select, .form-group.has-error textarea { border-color: var(--md-sys-color-error); }
 .form-group.has-error label { color: var(--md-sys-color-error); }

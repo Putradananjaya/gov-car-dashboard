@@ -61,12 +61,17 @@ export class DashboardSuperadminComponent {
     const paddingLeft = 40;
     const paddingBottom = 40;
     const paddingTop = 15;
+    const paddingRight = 20;
     const maxCount = Math.max(1, ...data.map(d => d.count));
-    const barWidth = 36;
-    const gap = 16;
+
+    // Lebar batang dihitung dari ruang yang tersedia, bukan angka tetap.
+    // Dengan lebar tetap, satu OPD saja membuat batangnya tenggelam di kanvas
+    // yang nyaris kosong — dan delapan OPD membuatnya melewati tepi kanan.
+    const slotWidth = (width - paddingLeft - paddingRight) / Math.max(1, data.length);
+    const barWidth = Math.min(64, slotWidth * 0.62);
 
     const bars = data.map((d, index) => {
-      const x = paddingLeft + index * (barWidth + gap);
+      const x = paddingLeft + index * slotWidth + (slotWidth - barWidth) / 2;
       const barHeight = (d.count / maxCount) * (height - paddingBottom - paddingTop);
       const y = height - paddingBottom - barHeight;
       return { ...d, x, y, width: barWidth, height: barHeight };
@@ -76,8 +81,13 @@ export class DashboardSuperadminComponent {
   });
 
   public statusDistribution = computed(() => {
+    // Aset yang sudah dihapus (soft delete) masih menyisakan baris operasional.
+    // Tanpa penyaringan ini jumlah di legenda tidak sama dengan angka "Total"
+    // di tengah donat, yang dihitung dari aset aktif saja.
+    const nibarAktif = new Set(this.activeAssets().map(a => a.nibar));
     const counts = new Map<string, number>();
     for (const op of this.operationalRepository.operational()) {
+      if (!nibarAktif.has(op.nibar)) continue;
       counts.set(op.status, (counts.get(op.status) ?? 0) + 1);
     }
     const total = [...counts.values()].reduce((a, b) => a + b, 0) || 1;

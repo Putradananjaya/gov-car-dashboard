@@ -1,6 +1,6 @@
 # Ringkasan Proyek: PUSAKA BANGLI (gov-car-dashboard)
 
-> Dokumen ini dibuat untuk memindahkan pemahaman arsitektur, alur bisnis, database, dan infrastruktur proyek ke pihak/AI lain yang belum familiar dengan codebase ini. Ditulis berdasarkan kondisi kode & deployment per **2026-09-17** (diperbarui setelah putaran pengerjaan SOP peminjaman, peran baru, peta GPS asli, dan publish ke Dewaweb pada tanggal yang sama).
+> Dokumen ini dibuat untuk memindahkan pemahaman arsitektur, alur bisnis, database, dan infrastruktur proyek ke pihak/AI lain yang belum familiar dengan codebase ini. Ditulis berdasarkan kondisi kode & deployment per **2026-09-20** (diperbarui setelah putaran matriks hak akses dinamis, penyelarasan alur peminjaman dengan SOP resmi, dan beberapa siklus deploy ke Dewaweb yang sempat gagal — pelajarannya dirangkum di bagian 11).
 
 ---
 
@@ -245,24 +245,112 @@ Komponen shared: `has-permission` (directive struktural, sembunyikan elemen berd
   ```
   (builder `angular-cli-ghpages:deploy`, dikonfigurasi di `angular.json` target `"deploy"`. Target ini **tidak punya konfigurasi `production` terdaftar** — jangan pakai `--configuration production`, cukup `ng deploy --branch dist-frontend`.)
 
-**Alur deploy lengkap (frontend)**:
-1. Lokal: commit & push perubahan source ke `main`.
-2. Lokal: `npx ng deploy --branch dist-frontend` → build + push hasil build ke branch `dist-frontend`.
-3. Server (cPanel Terminal): clone/pull branch `dist-frontend` ke folder temp, lalu **copy manual** (`public_html` bukan git repo dan berisi file penting yang tidak boleh hilang):
-   ```bash
-   cd ~ && rm -rf dist-frontend-tmp && \
-   git clone -b dist-frontend https://github.com/Putradananjaya/gov-car-dashboard.git dist-frontend-tmp && \
-   rm -rf dist-frontend-tmp/.git && \
-   cp -rf dist-frontend-tmp/. ~/public_html/ && \
-   rm -rf dist-frontend-tmp
-   ```
-   (`rsync` **tidak tersedia** di server ini — pakai `cp` biasa. `cp -rf source/. dest/` menyalin & menimpa file bernama sama tapi **tidak menghapus** file lain di `dest` — jadi `.well-known`, `.user.ini`, `php.ini` aman.)
+### Checklist deploy — urutan wajib: **backend dulu, baru frontend**
 
-**Alur deploy backend**:
-1. Server: `cd ~/pusaka-repo/server && git pull`.
-2. `npm install --include=dev` — **wajib** `--include=dev` atau `NODE_ENV=development npm install`, karena `@nestjs/cli` (paket penyedia command `nest`) ada di `devDependencies`, dan environment Node.js Selector cPanel biasanya set `NODE_ENV=production` yang membuat `npm install` biasa **skip devDependencies** → error `nest: command not found`.
-3. `npm run build` (`nest build` → hasil di `server/dist/`).
-4. Restart app via menu cPanel **"Setup Node.js App"**.
+> **Kenapa urutannya tidak boleh dibalik.** `main.ts` memakai
+> `ValidationPipe({ whitelist: true })` **tanpa** `forbidNonWhitelisted`, artinya
+> kolom yang tidak dikenal backend **dibuang diam-diam, bukan ditolak**. Kalau
+> frontend baru naik lebih dulu, permintaan yang membawa kolom baru tetap
+> diproses backend lama — kolomnya hilang tanpa pesan apa pun. Kasus nyata:
+> popup setel ulang kata sandi meminta kata sandi superadmin sebagai
+> re-autentikasi; dengan backend lama kolom itu dibuang dan penyetelan ulang
+> tetap berhasil **tanpa verifikasi** — keamanan palsu. Dengan urutan yang
+> benar, frontend lama justru ditolak 400 oleh backend baru: gagal dengan aman.
+
+#### Langkah 0 — Lokal (siapkan dua branch)
+
+```bash
+git add -A && git commit -m "..." && git push        # 1. source ke `main`
+npx ng deploy --branch dist-frontend                  # 2. hasil build ke `dist-frontend`
+```
+
+> ⚠️ **Jebakan yang sudah dua kali terjadi.** Branch `dist-frontend` **tidak ikut
+> berubah** saat Anda commit & push ke `main` — isinya hanya diperbarui oleh
+> `npx ng deploy` dari mesin lokal. Melewatkan langkah 2 membuat server menyalin
+> build lama, dan gejalanya membingungkan: kode sudah di-push, backend sudah
+> di-restart, tapi tampilan tidak berubah sama sekali.
+>
+> Cara cepat memastikan `dist-frontend` sudah terbaru:
+> ```bash
+> git fetch origin && git log -1 --format="%h %ad" --date=iso origin/dist-frontend
+> ```
+> Waktunya harus **lebih baru** dari commit terakhir di `main`.
+
+#### Langkah 1 — Server: backend
+
+```bash
+source /home/pusakaba/nodevenv/pusaka-repo/server/20/bin/activate && \
+cd ~/pusaka-repo/server && git pull && git log -1 --oneline
+```
+
+Pastikan commit yang muncul adalah yang baru saja di-push. Kalau masih tertinggal,
+`~/pusaka-repo` kemungkinan ada di branch lain — periksa dengan `git branch`. Lalu:
+
+```bash
+npm install --include=dev && npm run build
+```
+
+`--include=dev` **wajib** (atau `NODE_ENV=development npm install`): `@nestjs/cli`
+penyedia command `nest` ada di `devDependencies`, sedangkan Node.js Selector cPanel
+biasanya menyetel `NODE_ENV=production` sehingga `npm install` biasa melewatinya →
+`nest: command not found`.
+
+Terakhir — **dan ini yang paling sering lupa** — **restart** aplikasi lewat menu cPanel
+**"Setup Node.js App"** (ikon panah melingkar). `npm run build` hanya menulis berkas ke
+`server/dist/`; proses Node yang sedang melayani permintaan tetap memakai kode lama di
+memori sampai di-restart.
+
+#### Langkah 2 — Server: frontend
+
+```bash
+cd ~ && rm -rf dist-frontend-tmp && \
+git clone -b dist-frontend https://github.com/Putradananjaya/gov-car-dashboard.git dist-frontend-tmp && \
+rm -rf dist-frontend-tmp/.git && \
+cp -rf dist-frontend-tmp/. ~/public_html/ && \
+rm -rf dist-frontend-tmp
+```
+
+`rsync` **tidak tersedia** di server ini — pakai `cp` biasa. `cp -rf source/. dest/`
+menyalin & menimpa berkas bernama sama tapi **tidak menghapus** berkas lain di tujuan,
+jadi `.well-known/`, `.user.ini`, dan `php.ini` di `public_html` aman. Konsekuensinya:
+chunk JS dari build lama menumpuk di sana dan sesekali perlu dibersihkan manual.
+
+#### Langkah 3 — Verifikasi dari luar
+
+Jangan mengandalkan tampilan saja; pastikan versinya benar dengan memeriksa rute yang
+hanya ada di versi baru. Rute yang **ada tapi butuh login** menjawab `401`; rute yang
+**belum ada** menjawab `404`:
+
+```bash
+curl -s -o /dev/null -w "%{http_code}\n" https://api.pusaka-bangli.my.id/role-permissions
+curl -s -o /dev/null -w "%{http_code}\n" -X POST -H "Content-Type: application/json" -d '{}' \
+  https://api.pusaka-bangli.my.id/loans/x/verifikasi
+# 401 = backend baru sudah jalan · 404 = masih backend lama (restart belum dilakukan)
+
+curl -s -o /dev/null -w "%{http_code}\n" https://api.pusaka-bangli.my.id/public-stats
+# 200 = sehat (endpoint publik, tanpa login)
+
+curl -s -X POST -H "Content-Type: application/json" -d '{}' \
+  https://api.pusaka-bangli.my.id/auth/login
+# 400 berisi pesan validasi = server hidup & routing normal (tes kontrol)
+```
+
+Untuk frontend: buka situs dengan **hard refresh** (Cmd/Ctrl+Shift+R). Nama berkas JS/CSS
+ber-hash, jadi begitu `index.html` baru terambil semuanya ikut baru — hard refresh hanya
+memastikan `index.html`-nya sendiri tidak dilayani dari cache.
+
+#### Efek samping wajar setelah restart backend
+
+- **Akun baku dibuat otomatis.** `SeedService.onModuleInit()` memeriksa daftar akun
+  per-NIP dan membuat yang belum ada, dengan kata sandi bawaan yang mudah ditebak
+  (`Superadmin#123`, `Admin#123`, `Pegawai#123`, `Penatausahaan#123`, `Pimpinan#123`).
+  NIP yang sudah ada **dilewati** — jadi untuk akun yang dibuat manual lewat UI, sandi
+  bawaan itu tidak pernah berlaku. Setel ulang sandi akun penting setelah deploy.
+- **Skema tabel menyesuaikan sendiri** lewat TypeORM `synchronize: true`. Kolom baru yang
+  nullable ditambahkan tanpa mengganggu baris lama, tapi tidak ada jaring pengaman
+  migrasi — pantau log boot pertama setelah ada perubahan entity.
+- **Matriks hak akses terisi nilai bawaan** untuk kemampuan yang barisnya belum ada di
+  tabel `role_permissions` (lihat bagian 5).
 
 **Kesalahan yang pernah terjadi & pelajarannya**:
 - `git clone -b dist-frontend ... .` gagal kalau dijalankan di folder yang **sudah ada isinya** ("not an empty directory") — clone ke folder temp kosong dulu, baru copy.
@@ -274,6 +362,15 @@ Komponen shared: `has-permission` (directive struktural, sembunyikan elemen berd
   source /home/pusakaba/nodevenv/pusaka-repo/server/20/bin/activate && cd ~/pusaka-repo/server
   ```
   (`pusaka-repo/server` di tengah path itu = App Root Directory relatif dari `/home/pusakaba/`, lihat kolom "App Root Directory" di halaman Setup Node.js App). **Jangan tebak** — kalau ragu, jalankan `find /home/pusakaba/nodevenv -name "activate"` untuk dapat path persis, atau buka halaman edit aplikasi di "Setup Node.js App" (klik ikon pensil) yang menampilkan command aktivasi siap-copy secara eksplisit.
+- **Push ke `main` ≠ frontend terdeploy.** Dua kali terjadi: source sudah di-push dan
+  backend sudah naik, tapi `dist-frontend` masih build lama karena `npx ng deploy` belum
+  dijalankan. Gejalanya menyesatkan — orang mengira deploy-nya gagal, padahal yang tersalin
+  memang build kemarin.
+- **Versi campur (backend baru + frontend lama) bisa dikenali tanpa akses server.** Tanda
+  yang terbaca langsung dari layar & DevTools: istilah lama masih muncul di sidebar, jumlah
+  antrean di halaman Persetujuan tidak sesuai alur terbaru, dan tombol memanggil endpoint
+  yang sudah dihapus sehingga menjawab `404`. Kalau tiga hal itu muncul bersamaan,
+  hampir pasti frontend-nya yang tertinggal, bukan backend-nya.
 - Setelah `npm run build` di server, aplikasi Node.js yang **sedang berjalan tidak otomatis reload** — proses lama masih pakai build lama di memori sampai di-**restart manual** lewat menu "Setup Node.js App" (ikon restart/panah melingkar). Ini langkah yang paling sering lupa dilakukan.
 
 ---

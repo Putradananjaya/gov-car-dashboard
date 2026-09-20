@@ -1,7 +1,13 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { hashSync } from 'bcryptjs';
+import { compareSync, hashSync } from 'bcryptjs';
 import { UserEntity } from './user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -94,7 +100,21 @@ export class UserService {
     return toDto(entity);
   }
 
-  async resetPassword(id: string, dto: ResetPasswordDto): Promise<UserDto> {
+  /**
+   * `actorId` adalah superadmin yang sedang masuk. Kata sandi lama yang
+   * dikirim diperiksa terhadap miliknya sendiri, bukan milik `id` yang
+   * disetel ulang — pemilik akun target justru sedang tidak bisa masuk,
+   * itulah sebabnya sandinya disetel ulang.
+   */
+  async resetPassword(id: string, dto: ResetPasswordDto, actorId: string): Promise<UserDto> {
+    const aktor = await this.repository.findOneBy({ id: actorId });
+    if (!aktor || !aktor.aktif) {
+      throw new UnauthorizedException('Sesi Anda tidak lagi sah. Masuk ulang lalu coba lagi.');
+    }
+    if (!compareSync(dto.kataSandiLama, aktor.passwordHash)) {
+      throw new UnauthorizedException('Kata sandi Anda salah. Setel ulang dibatalkan.');
+    }
+
     const entity = await this.findEntity(id);
     entity.passwordHash = hashSync(dto.password, 10);
     await this.repository.save(entity);

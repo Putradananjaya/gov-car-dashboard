@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Put, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Put, Req, UseGuards } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -6,6 +6,9 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { IzinGuard } from '../auth/izin.guard';
 import { ButuhIzin } from '../auth/izin.decorator';
+import { JwtPayload } from '../auth/jwt.strategy';
+
+type RequestWithUser = Request & { user: JwtPayload };
 
 @Controller('users')
 @UseGuards(JwtAuthGuard)
@@ -34,7 +37,7 @@ export class UserController {
   @Post(':id/reset-password')
   @UseGuards(IzinGuard)
   @ButuhIzin('pengguna.kelola')
-  resetPassword(@Param('id') id: string, @Body() dto: ResetPasswordDto) {
-    return this.service.resetPassword(id, dto);
+  resetPassword(@Param('id') id: string, @Body() dto: ResetPasswordDto, @Req() req: RequestWithUser) {
+    return this.service.resetPassword(id, dto, req.user.sub);
   }
 }

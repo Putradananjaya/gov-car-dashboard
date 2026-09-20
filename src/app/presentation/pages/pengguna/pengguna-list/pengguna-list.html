@@ -25,6 +25,12 @@
 
   <main class="inventory-content">
     @if (tab() === 'pengguna') {
+    @if (resetSukses(); as nama) {
+      <div class="akses-sukses" style="display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+        <span>Kata sandi <strong>{{ nama }}</strong> berhasil disetel ulang. Sampaikan sandi barunya secara aman.</span>
+        <button type="button" class="btn-secondary" style="padding: 4px 12px; font-size: 0.72rem;" (click)="tutupSukses()">Tutup</button>
+      </div>
+    }
     <div class="table-responsive glass-panel">
       <table class="inventory-table">
         <thead>
@@ -72,7 +78,7 @@
                       <path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                     </svg>
                   </button>
-                  <button class="action-btn" title="Setel Ulang Kata Sandi" (click)="resetPassword(user)">
+                  <button class="action-btn" title="Setel Ulang Kata Sandi" (click)="bukaReset(user)">
                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
                       <path d="M21 2v6h-6"></path>
                       <path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path>
@@ -233,7 +239,24 @@
               @if (!editingId()) {
                 <div class="form-group" [class.has-error]="isInvalid('password')">
                   <label for="password">Kata Sandi Awal</label>
-                  <input type="password" id="password" formControlName="password" placeholder="Minimal 8 karakter">
+                  <div class="field-sandi">
+                    <input [type]="tampilSandiTambah() ? 'text' : 'password'" id="password" formControlName="password" placeholder="Minimal 8 karakter">
+                    <button type="button" class="btn-mata" (click)="tampilSandiTambah.set(!tampilSandiTambah())"
+                            [attr.aria-label]="tampilSandiTambah() ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'"
+                            [attr.title]="tampilSandiTambah() ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'">
+                      @if (tampilSandiTambah()) {
+                        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19M1 1l22 22"></path>
+                          <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"></path>
+                        </svg>
+                      } @else {
+                        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                          <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                      }
+                    </button>
+                  </div>
                   @if (isInvalid('password')) {
                     <span class="error-msg">Minimal 8 karakter</span>
                   }
@@ -252,30 +275,111 @@
   }
 
   <!-- MODAL: TAMPILKAN KATA SANDI SEMENTARA -->
-  @if (tempPasswordModal(); as temp) {
-    <div class="form-overlay" (click)="closeTempPasswordModal()">
-      <div class="form-modal glass-panel" style="max-width: 420px;" (click)="$event.stopPropagation()">
+  @if (resetTarget(); as target) {
+    <div class="form-overlay" (click)="tutupReset()">
+      <div class="form-modal glass-panel" style="max-width: 460px;" (click)="$event.stopPropagation()">
         <div class="modal-header">
-          <h2>Kata Sandi Baru</h2>
-          <button class="close-btn" (click)="closeTempPasswordModal()" aria-label="Tutup">
+          <h2>Setel Ulang Kata Sandi</h2>
+          <button class="close-btn" (click)="tutupReset()" aria-label="Tutup">
             <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
               <line x1="18" y1="6" x2="6" y2="18"></line>
               <line x1="6" y1="6" x2="18" y2="18"></line>
             </svg>
           </button>
         </div>
-        <div class="modal-body">
-          <p style="font-size: 0.8rem; margin-bottom: 10px;">
-            Kata sandi baru untuk <strong>{{ temp.nama }}</strong> — catat &amp; sampaikan secara aman, tidak akan
-            ditampilkan lagi setelah modal ini ditutup:
+
+        <form [formGroup]="resetForm" (ngSubmit)="simpanReset()" class="modal-body">
+          <p style="font-size: 0.8rem; margin-bottom: 14px; color: var(--md-sys-color-on-surface-variant);">
+            Menyetel ulang kata sandi untuk <strong style="color: var(--md-sys-color-on-background);">{{ target.nama }}</strong>.
+            Masukkan kata sandi Anda sendiri sebagai konfirmasi — kata sandi lama milik pengguna tersebut tidak diperlukan.
           </p>
-          <p style="font-family: monospace; font-size: 1.1rem; font-weight: 700; padding: 10px; background: rgba(128,128,128,0.08); border-radius: var(--md-shape-corner-medium); text-align: center;">
-            {{ temp.password }}
-          </p>
-        </div>
-        <div class="form-actions">
-          <button type="button" class="btn-primary" (click)="closeTempPasswordModal()">Sudah Dicatat</button>
-        </div>
+
+          @if (resetError()) {
+            <div class="login-error-alert" style="margin-bottom: 12px;">{{ resetError() }}</div>
+          }
+
+          <div class="form-group" [class.has-error]="isInvalidReset('kataSandiLama')">
+            <label for="kataSandiLama">Kata Sandi Anda (Superadmin)</label>
+            <div class="field-sandi">
+              <input [type]="tampilSandiAktor() ? 'text' : 'password'" id="kataSandiLama" formControlName="kataSandiLama" autocomplete="current-password">
+              <button type="button" class="btn-mata" (click)="tampilSandiAktor.set(!tampilSandiAktor())"
+                      [attr.aria-label]="tampilSandiAktor() ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'"
+                      [attr.title]="tampilSandiAktor() ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'">
+                @if (tampilSandiAktor()) {
+                  <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19M1 1l22 22"></path>
+                    <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"></path>
+                  </svg>
+                } @else {
+                  <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                  </svg>
+                }
+              </button>
+            </div>
+            @if (isInvalidReset('kataSandiLama')) {
+              <span class="error-msg">Wajib diisi</span>
+            }
+          </div>
+
+          <div class="form-group" [class.has-error]="isInvalidReset('password')">
+            <label for="passwordBaru">Kata Sandi Baru</label>
+            <div class="field-sandi">
+              <input [type]="tampilSandiBaru() ? 'text' : 'password'" id="passwordBaru" formControlName="password" placeholder="Minimal 8 karakter" autocomplete="new-password">
+              <button type="button" class="btn-mata" (click)="tampilSandiBaru.set(!tampilSandiBaru())"
+                      [attr.aria-label]="tampilSandiBaru() ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'"
+                      [attr.title]="tampilSandiBaru() ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'">
+                @if (tampilSandiBaru()) {
+                  <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19M1 1l22 22"></path>
+                    <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"></path>
+                  </svg>
+                } @else {
+                  <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                  </svg>
+                }
+              </button>
+            </div>
+            @if (isInvalidReset('password')) {
+              <span class="error-msg">Minimal 8 karakter</span>
+            }
+          </div>
+
+          <div class="form-group" [class.has-error]="isInvalidReset('konfirmasi')">
+            <label for="konfirmasi">Ulangi Kata Sandi Baru</label>
+            <div class="field-sandi">
+              <input [type]="tampilSandiKonfirmasi() ? 'text' : 'password'" id="konfirmasi" formControlName="konfirmasi" autocomplete="new-password">
+              <button type="button" class="btn-mata" (click)="tampilSandiKonfirmasi.set(!tampilSandiKonfirmasi())"
+                      [attr.aria-label]="tampilSandiKonfirmasi() ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'"
+                      [attr.title]="tampilSandiKonfirmasi() ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'">
+                @if (tampilSandiKonfirmasi()) {
+                  <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19M1 1l22 22"></path>
+                    <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"></path>
+                  </svg>
+                } @else {
+                  <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                  </svg>
+                }
+              </button>
+            </div>
+          </div>
+
+          <button type="button" class="btn-link" style="background: none; border: none; cursor: pointer; padding: 0; font-size: 0.75rem;" (click)="buatSandiAcak()">
+            Buat sandi acak
+          </button>
+          <div class="form-actions">
+            <button type="button" class="btn-secondary" (click)="tutupReset()" [disabled]="isResetting()">Batal</button>
+            <button type="submit" class="btn-primary" [disabled]="isResetting()">
+              {{ isResetting() ? 'Menyimpan...' : 'Setel Ulang' }}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   }

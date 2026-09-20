@@ -62,8 +62,10 @@ export class HttpUserRepository implements UserRepository {
     await this.reload();
   }
 
-  public async resetPassword(id: string, password: string): Promise<void> {
-    await firstValueFrom(this.http.post(`${API_BASE_URL}/users/${id}/reset-password`, { password }));
+  public async resetPassword(id: string, password: string, kataSandiLama: string): Promise<void> {
+    await firstValueFrom(
+      this.http.post(`${API_BASE_URL}/users/${id}/reset-password`, { kataSandiLama, password })
+    );
     await this.reload();
   }
 

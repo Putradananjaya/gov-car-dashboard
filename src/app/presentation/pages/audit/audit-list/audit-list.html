@@ -12,21 +12,21 @@
         <circle cx="11" cy="11" r="8"></circle>
         <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
       </svg>
-      <input type="text" placeholder="Cari aksi atau ID entitas..." [value]="searchQuery()" (input)="onSearchChange($event)">
+      <input type="text" placeholder="Cari kejadian, orang, atau nomor rujukan..." [value]="searchQuery()" (input)="onSearchChange($event)">
     </div>
 
     <div class="dropdown-filters">
       <div class="filter-group">
         <select (change)="onEntitasChange($event)" [value]="selectedEntitas()">
-          <option value="All">Semua Entitas</option>
+          <option value="All">Semua Jenis Data</option>
           @for (e of entitasList(); track e) {
-            <option [value]="e">{{ e }}</option>
+            <option [value]="e">{{ labelEntitas(e) }}</option>
           }
         </select>
       </div>
       <div class="filter-group">
         <select (change)="onPelakuChange($event)" [value]="selectedPelaku()">
-          <option value="All">Semua Pelaku</option>
+          <option value="All">Semua Petugas</option>
           @for (p of pelakuList(); track p) {
             <option [value]="p">{{ p }}</option>
           }
@@ -57,12 +57,10 @@
           <thead>
             <tr>
               <th>Waktu</th>
-              <th>Pelaku</th>
-              <th>Aksi</th>
-              <th>Entitas</th>
-              <th>ID Entitas</th>
-              <th>Nilai Lama</th>
-              <th>Nilai Baru</th>
+              <th>Dilakukan Oleh</th>
+              <th>Kejadian</th>
+              <th>Data Terkait</th>
+              <th>Perubahan</th>
             </tr>
           </thead>
           <tbody>
@@ -70,11 +68,20 @@
               <tr>
                 <td style="font-size: 0.72rem; white-space: nowrap;">{{ entry.waktu | tanggalId }}</td>
                 <td>{{ entry.pelakuNama }}</td>
-                <td><span class="type-badge">{{ entry.aksi }}</span></td>
-                <td>{{ entry.entitas }}</td>
-                <td style="font-family: monospace; font-size: 0.7rem; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" [title]="entry.entitasId">{{ entry.entitasId }}</td>
-                <td style="font-size: 0.7rem; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" [title]="formatNilai(entry.nilaiLama)">{{ formatNilai(entry.nilaiLama) }}</td>
-                <td style="font-size: 0.7rem; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" [title]="formatNilai(entry.nilaiBaru)">{{ formatNilai(entry.nilaiBaru) }}</td>
+                <td><span class="type-badge">{{ labelAksi(entry.aksi) }}</span></td>
+                <td>
+                  <span class="audit-objek">{{ labelEntitas(entry.entitas) }}</span>
+                  <span class="audit-rujukan" [title]="entry.entitasId">{{ entry.entitasId }}</span>
+                </td>
+                <td class="audit-perubahan" [title]="rincianTeknis(entry)">
+                  @if (perubahan(entry).length === 0) {
+                    <span class="audit-kosong">—</span>
+                  } @else {
+                    @for (baris of perubahan(entry); track baris) {
+                      <span class="audit-baris">{{ baris }}</span>
+                    }
+                  }
+                </td>
               </tr>
             }
           </tbody>

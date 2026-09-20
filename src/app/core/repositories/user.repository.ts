@@ -18,7 +18,11 @@ export abstract class UserRepository {
   public abstract findById(id: string): User | undefined;
   public abstract create(input: CreateUserInput): Promise<void>;
   public abstract update(user: User): Promise<void>;
-  public abstract resetPassword(id: string, password: string): Promise<void>;
+  /**
+   * `kataSandiLama` adalah kata sandi superadmin yang sedang masuk — bukti
+   * identitas sebelum menyetel ulang sandi milik orang lain.
+   */
+  public abstract resetPassword(id: string, password: string, kataSandiLama: string): Promise<void>;
 
   /** Muat ulang dari server — dipakai oleh DataSyncService supaya perubahan
    * dari pengguna/perangkat lain ikut tampil tanpa memuat ulang halaman. */

@@ -54,11 +54,26 @@ export class PenggunaListComponent {
   }
 
   public showFormModal = signal(false);
+  /**
+   * Kata sandi yang SEDANG DIKETIK bisa ditampilkan penuh supaya superadmin
+   * yakin tidak salah ketik sebelum menyerahkannya. Kata sandi lama pengguna
+   * tidak bisa ditampilkan di mana pun: yang tersimpan hanya hash bcrypt
+   * satu arah, tidak ada teks aslinya untuk dibuka.
+   */
+  public tampilSandiTambah = signal(false);
   public editingId = signal<string | null>(null);
   public form!: FormGroup;
   public formError = signal<string | null>(null);
 
-  public tempPasswordModal = signal<{ nama: string; password: string } | null>(null);
+  public resetTarget = signal<User | null>(null);
+  public resetForm!: FormGroup;
+  public isResetting = signal(false);
+  public resetError = signal<string | null>(null);
+  public resetSukses = signal<string | null>(null);
+  /** Hasil tombol "Buat Sandi Acak", ditampilkan polos agar bisa disalin. */
+  public tampilSandiAktor = signal(false);
+  public tampilSandiBaru = signal(false);
+  public tampilSandiKonfirmasi = signal(false);
 
   private currentUserId = computed(() => this.authService.currentUser()?.id ?? '');
 
@@ -82,6 +97,7 @@ export class PenggunaListComponent {
   openAddModal(): void {
     this.editingId.set(null);
     this.formError.set(null);
+    this.tampilSandiTambah.set(false);
     this.form = this.fb.group({
       nip: ['', [Validators.required, Validators.pattern(/^\d{8,20}$/)]],
       nama: ['', Validators.required],
@@ -208,31 +224,74 @@ export class PenggunaListComponent {
     }
   }
 
-  async resetPassword(user: User): Promise<void> {
-    const confirmed = confirm(`Setel ulang kata sandi untuk ${user.nama}? Kata sandi lama tidak akan berlaku lagi.`);
-    if (!confirmed) return;
+  bukaReset(user: User): void {
+    this.resetTarget.set(user);
+    this.tampilSandiAktor.set(false);
+    this.tampilSandiBaru.set(false);
+    this.tampilSandiKonfirmasi.set(false);
+    this.resetError.set(null);
+    this.resetSukses.set(null);
+    this.resetForm = this.fb.group({
+      kataSandiLama: ['', Validators.required],
+      password: ['', [Validators.required, Validators.minLength(8)]],
+      konfirmasi: ['', Validators.required]
+    });
+  }
 
-    const tempPassword = generateTemporaryPassword();
+  tutupReset(): void {
+    this.resetTarget.set(null);
+    this.resetError.set(null);
+  }
+
+  buatSandiAcak(): void {
+    const sandi = generateTemporaryPassword();
+    this.resetForm.patchValue({ password: sandi, konfirmasi: sandi });
+    // Sandi acak tidak ada gunanya kalau tidak terbaca — langsung dibuka
+    // supaya bisa disalin sebelum diserahkan.
+    this.tampilSandiBaru.set(true);
+    this.tampilSandiKonfirmasi.set(true);
+  }
+
+  async simpanReset(): Promise<void> {
+    const target = this.resetTarget();
+    if (!target) return;
+
+    if (this.resetForm.invalid) {
+      this.resetForm.markAllAsTouched();
+      return;
+    }
+
+    const { kataSandiLama, password, konfirmasi } = this.resetForm.getRawValue();
+    if (password !== konfirmasi) {
+      this.resetError.set('Kata sandi baru dan ulangannya tidak sama.');
+      return;
+    }
+
+    this.isResetting.set(true);
+    this.resetError.set(null);
+
     try {
-      await this.userRepository.resetPassword(user.id, tempPassword);
+      await this.userRepository.resetPassword(target.id, password, kataSandiLama);
       await this.auditRepository.append({
         pelakuId: this.actorId(),
         pelakuNama: this.actorLabel(),
         aksi: 'reset-kata-sandi',
         entitas: 'User',
-        entitasId: user.id
+        entitasId: target.id
       });
+      this.resetSukses.set(target.nama);
+      this.resetTarget.set(null);
     } catch (error) {
-      // Jangan tampilkan kata sandi baru kalau server belum tentu menyimpannya.
-      alert(pesanGalat(error, 'Gagal menyetel ulang kata sandi. Coba lagi.'));
-      return;
+      // Kata sandi superadmin salah, atau server menolak — jangan tutup modal
+      // supaya isian yang sudah diketik tidak hilang.
+      this.resetError.set(pesanGalat(error, 'Gagal menyetel ulang kata sandi. Coba lagi.'));
+    } finally {
+      this.isResetting.set(false);
     }
-
-    this.tempPasswordModal.set({ nama: user.nama, password: tempPassword });
   }
 
-  closeTempPasswordModal(): void {
-    this.tempPasswordModal.set(null);
+  tutupSukses(): void {
+    this.resetSukses.set(null);
   }
 
   // ---------- Tab "Hak Akses Peran" ----------
@@ -309,8 +368,13 @@ export class PenggunaListComponent {
     }
   }
 
+  isInvalidReset(controlName: string): boolean {
+    const control = this.resetForm?.get(controlName);
+    return !!(control && control.invalid && (control.dirty || control.touched));
+  }
+
   isInvalid(controlName: string): boolean {
-    const control = this.form.get(controlName);
+    const control = this.form?.get(controlName);
     return !!(control && control.invalid && (control.dirty || control.touched));
   }
 }
