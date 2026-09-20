@@ -26,7 +26,6 @@ export class PeminjamanComponent {
   public permissionService = inject(PermissionService);
 
   public currentUser = this.authService.currentUser;
-  private isAdmin = computed(() => this.authService.peran() === 'admin');
   private isPegawai = computed(() => this.authService.peran() === 'pegawai');
 
   public loans = computed<Loan[]>(() => {
@@ -35,10 +34,7 @@ export class PeminjamanComponent {
     if (this.isPegawai()) {
       return all.filter(l => l.pemohonId === this.currentUser()?.id);
     }
-    if (this.isAdmin()) {
-      const unitKerja = this.currentUser()?.unitKerja;
-      return all.filter(l => this.assetRepository.findByNibar(l.nibar)?.statusPenggunaan === unitKerja);
-    }
+    // Pengurus Barang menangani seluruh kendaraan dinas — lihat catatan di persetujuan.ts.
     return all;
   });
 

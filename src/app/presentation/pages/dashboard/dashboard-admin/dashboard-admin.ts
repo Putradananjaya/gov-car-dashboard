@@ -29,12 +29,11 @@ export class DashboardAdminComponent {
   // tracking/GPS di luar cakupan putaran ini.
   public miniMapCars = computed(() => this.carRepository.cars().filter(c => c.status === 'Digunakan').slice(0, 4));
 
-  private unitKerja = computed(() => this.authService.currentUser()?.unitKerja ?? '');
-
   public opdViews = computed(() => {
     const operationalByNibar = new Map(this.operationalRepository.operational().map(o => [o.nibar, o]));
     return this.assetRepository.assets()
-      .filter(a => !a.dihapusPada && a.statusPenggunaan === this.unitKerja())
+      // Seluruh kendaraan dinas, bukan per-OPD — lihat catatan di persetujuan.ts.
+      .filter(a => !a.dihapusPada)
       .map(a => {
         const operational = operationalByNibar.get(a.nibar);
         return operational ? toVehicleView(a, operational) : null;
@@ -54,7 +53,7 @@ export class DashboardAdminComponent {
   public asetRusak = computed(() => this.opdViews().filter(v => v.kondisi === 'Rusak Ringan' || v.kondisi === 'Rusak Berat'));
 
   public antreanPersetujuan = computed(() =>
-    this.loanRepository.loans().filter(l => l.status === 'Diajukan' && this.assetRepository.findByNibar(l.nibar)?.statusPenggunaan === this.unitKerja())
+    this.loanRepository.loans().filter(l => l.status === 'Diajukan')
   );
 
   public servisTerbaru = computed(() => {

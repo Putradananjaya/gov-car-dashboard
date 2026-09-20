@@ -34,8 +34,6 @@ export class AsetListComponent {
   public selectedStatusPajak = signal<'All' | StatusPajak>('All');
   public selectedNibars = signal<Set<string>>(new Set());
 
-  private isAdmin = computed(() => this.authService.peran() === 'admin');
-  private adminUnitKerja = computed(() => this.authService.currentUser()?.unitKerja ?? '');
 
   public opdList = KNOWN_OPD_LIST;
   public kondisiOptions: KondisiAset[] = ['Baik', 'Rusak Ringan', 'Rusak Berat'];
@@ -61,13 +59,8 @@ export class AsetListComponent {
     return views;
   });
 
-  public scopedViews = computed<VehicleView[]>(() => {
-    const views = this.allViews();
-    if (this.isAdmin()) {
-      return views.filter(v => v.statusPenggunaan === this.adminUnitKerja());
-    }
-    return views;
-  });
+  // Pengurus Barang mengelola seluruh kendaraan dinas — lihat catatan di persetujuan.ts.
+  public scopedViews = computed<VehicleView[]>(() => this.allViews());
 
   public kategoriList = computed(() => [...new Set(this.scopedViews().map(v => v.namaBarang))].sort());
   public tahunList = computed(() => [...new Set(this.scopedViews().map(v => v.tahunAnggaran))].sort((a, b) => b - a));

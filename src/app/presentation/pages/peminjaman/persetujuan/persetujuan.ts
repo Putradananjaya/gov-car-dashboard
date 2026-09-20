@@ -27,7 +27,6 @@ export class PersetujuanComponent {
   private permissionService = inject(PermissionService);
 
   private currentUser = this.authService.currentUser;
-  private isAdmin = computed(() => this.authService.peran() === 'admin');
 
   // Dulu memeriksa peran secara langsung sehingga lepas dari matriks hak
   // akses — sekarang keduanya ikut pengaturan superadmin.
@@ -41,14 +40,20 @@ export class PersetujuanComponent {
   // (permohonan ditolak disertai alasan).
   public canTolak = computed(() => this.canVerifikasi() || this.canSetujui());
 
-  private loansTerfilter = computed<Loan[]>(() => {
-    const all = this.loanRepository.loans();
-    if (this.isAdmin()) {
-      const unitKerja = this.currentUser()?.unitKerja;
-      return all.filter(l => this.assetRepository.findByNibar(l.nibar)?.statusPenggunaan === unitKerja);
-    }
-    return all;
-  });
+  /**
+   * Dulu daftar ini disaring `asset.statusPenggunaan === user.unitKerja` untuk
+   * peran admin. Penyaringan itu membandingkan dua kolom yang isinya tidak
+   * pernah sama: `unitKerja` dipilih dari daftar OPD (dan untuk Pengurus
+   * Barang berisi "Sekretariat Badan Keuangan, Pendapatan dan Aset Daerah"),
+   * sedangkan `statusPenggunaan` adalah OPD pemegang kendaraan hasil impor
+   * e-BMD. Akibatnya Pengurus Barang melihat daftar kosong tanpa penjelasan.
+   *
+   * SOP Peminjaman Kendaraan Dinas menunjuk SATU Pengurus Barang untuk seluruh
+   * kendaraan dinas — tidak ada pembagian per-OPD — jadi penyaringannya
+   * dihapus. Kalau kelak ada Pengurus Barang per-OPD, pembatasnya harus kolom
+   * tersendiri di data pengguna, bukan `unitKerja` yang dipakai ulang.
+   */
+  private loansTerfilter = computed<Loan[]>(() => this.loanRepository.loans());
 
   /** Tiga antrean mengikuti langkah 2, 3, dan 4 SOP. */
   public menungguVerifikasi = computed<Loan[]>(() => this.loansTerfilter().filter(l => l.status === 'Diajukan'));
