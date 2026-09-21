@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { LoanDocumentEntity } from './loan-document.entity';
 import { UpsertLoanDocumentDto } from './dto/upsert-loan-document.dto';
+import { pulihkanBilaPernahDihapus } from '../common/soft-delete';
 
 export interface LoanDocumentDto {
   id: string;
@@ -45,6 +46,8 @@ export class LoanDocumentService {
   }
 
   async upsert(id: string, dto: UpsertLoanDocumentDto): Promise<LoanDocumentDto> {
+    await pulihkanBilaPernahDihapus(this.repository, { id });
+
     const entity = new LoanDocumentEntity();
     entity.id = id;
     entity.loanId = dto.loanId;
@@ -57,8 +60,13 @@ export class LoanDocumentService {
     return toDto(await this.findEntity(id));
   }
 
+  /**
+   * Soft delete — berkasnya (bytea) tetap tersimpan di Postgres, hanya tidak
+   * lagi ikut terbaca. Dokumen peminjaman adalah lampiran surat resmi, jadi
+   * menghilangkannya sungguhan dari basis data bukan pilihan yang diinginkan.
+   */
   async remove(id: string): Promise<void> {
-    const result = await this.repository.delete({ id });
+    const result = await this.repository.softDelete({ id });
     if (result.affected === 0) {
       throw new NotFoundException(`Dokumen dengan id "${id}" tidak ditemukan.`);
     }

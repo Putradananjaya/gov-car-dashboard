@@ -154,17 +154,28 @@ export class VehicleAssetService {
     return this.findOne(nibar);
   }
 
-  async remove(nibar: string): Promise<void> {
-    const result = await this.repository.delete({ nibar });
-    if (result.affected === 0) {
-      throw new NotFoundException(`Aset dengan NIBAR "${nibar}" tidak ditemukan.`);
-    }
+  /**
+   * Dulu `DELETE` beneran. Sekarang penghapusan aset di aplikasi ini hanya
+   * ada satu rasa — soft delete — jadi endpoint lama diarahkan ke sana supaya
+   * klien versi lama tidak tiba-tiba kehilangan baris BMD. Nilai perolehan
+   * aset daerah harus tetap bisa ditelusuri sesudah barangnya dihapus dari
+   * daftar aktif; itulah gunanya baris yang tetap tinggal.
+   */
+  remove(nibar: string): Promise<VehicleAssetDto> {
+    return this.softDelete(nibar);
   }
 
+  /**
+   * Penanda `dihapusPada` di sini sengaja tetap kolom `varchar` ISO miliknya
+   * sendiri, bukan `@DeleteDateColumn` seperti entity lain: nilainya ikut
+   * terkirim di DTO dan dipakai frontend (pembatalan impor menyimpannya
+   * sebagai bagian dari snapshot), jadi ia memang harus terlihat, bukan
+   * disaring diam-diam oleh TypeORM.
+   */
   async softDelete(nibar: string): Promise<VehicleAssetDto> {
     const entity = await this.repository.findOneBy({ nibar });
     if (!entity) throw new NotFoundException(`Aset dengan NIBAR "${nibar}" tidak ditemukan.`);
-    entity.dihapusPada = new Date().toISOString();
+    entity.dihapusPada ??= new Date().toISOString();
     await this.repository.save(entity);
     return toDto(entity);
   }

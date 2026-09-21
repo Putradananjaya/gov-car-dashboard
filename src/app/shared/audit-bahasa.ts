@@ -33,6 +33,8 @@ const LABEL_AKSI: Record<string, string> = {
   'reset-kata-sandi': 'Menyetel ulang kata sandi',
   'aktifkan-pengguna': 'Mengaktifkan akun',
   'nonaktifkan-pengguna': 'Menonaktifkan akun',
+  'hapus-pengguna': 'Menghapus akun',
+  'pulihkan-pengguna': 'Memulihkan akun',
   'ubah-hak-akses': 'Mengubah hak akses peran'
 };
 

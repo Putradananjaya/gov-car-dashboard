@@ -75,7 +75,7 @@ describe('PermissionService', () => {
     await loginAs('superadmin');
 
     expect(permissionService.can('aset.lihat')).toBe(true);
-    expect(permissionService.can('aset.hapusPermanen')).toBe(true);
+    expect(permissionService.can('pengguna.hapus')).toBe(true);
     expect(permissionService.can('pengguna.kelola')).toBe(true);
     expect(permissionService.can('audit.lihat')).toBe(true);
     expect(permissionService.can('sistem.resetBasisData')).toBe(true);
@@ -87,7 +87,7 @@ describe('PermissionService', () => {
     expect(permissionService.can('aset.lihat')).toBe(true);
     expect(permissionService.can('aset.ubah')).toBe(true);
     expect(permissionService.can('peminjaman.verifikasi')).toBe(true);
-    expect(permissionService.can('aset.hapusPermanen')).toBe(false);
+    expect(permissionService.can('pengguna.hapus')).toBe(false);
     expect(permissionService.can('pengguna.kelola')).toBe(false);
     expect(permissionService.can('audit.lihat')).toBe(false);
     expect(permissionService.can('sistem.resetBasisData')).toBe(false);

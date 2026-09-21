@@ -206,6 +206,11 @@ export class AsetListComponent {
     }
   }
 
+  /**
+   * Satu-satunya cara menghapus aset di aplikasi ini. Barisnya tetap ada di
+   * basis data — yang hilang hanya kemunculannya di daftar — supaya nilai
+   * perolehan BMD tetap bisa ditelusuri sesudah kendaraannya dihapuskan.
+   */
   async softDeleteAsset(nibar: string) {
     const alasan = prompt('Alasan penghapusan aset ini:');
     if (!alasan) return;
@@ -218,30 +223,10 @@ export class AsetListComponent {
         aksi: 'hapus',
         entitas: 'VehicleAsset',
         entitasId: nibar,
-        nilaiBaru: `Dihapus (soft delete). Alasan: ${alasan}`
+        nilaiBaru: `Dihapus dari daftar. Alasan: ${alasan}`
       });
     } catch (error) {
       console.error('Gagal menghapus aset:', error);
-      alert('Gagal menghapus aset. Periksa koneksi Anda dan coba lagi.');
-    }
-  }
-
-  async removeAssetPermanently(nibar: string) {
-    const confirmed = confirm('Aset akan dihapus PERMANEN dan tidak bisa dikembalikan. Lanjutkan?');
-    if (!confirmed) return;
-
-    try {
-      await this.assetRepository.remove(nibar);
-      await this.operationalRepository.remove(nibar);
-      await this.auditRepository.append({
-        pelakuId: this.actorId(),
-        pelakuNama: this.actorLabel(),
-        aksi: 'hapus-permanen',
-        entitas: 'VehicleAsset',
-        entitasId: nibar
-      });
-    } catch (error) {
-      console.error('Gagal menghapus aset secara permanen:', error);
       alert('Gagal menghapus aset. Periksa koneksi Anda dan coba lagi.');
     }
   }

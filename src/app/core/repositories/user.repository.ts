@@ -13,6 +13,12 @@ export interface CreateUserInput {
 export abstract class UserRepository {
   public abstract readonly ready: Promise<void>;
   public abstract readonly users: Signal<User[]>;
+  /**
+   * Arsip akun terhapus. Kosong sampai `muatTerhapus()` dipanggil — daftarnya
+   * hanya dibutuhkan saat superadmin membuka tab arsip, jadi tidak ikut dimuat
+   * di setiap putaran sinkronisasi.
+   */
+  public abstract readonly usersTerhapus: Signal<User[]>;
 
   public abstract findByNip(nip: string): User | undefined;
   public abstract findById(id: string): User | undefined;
@@ -23,6 +29,14 @@ export abstract class UserRepository {
    * identitas sebelum menyetel ulang sandi milik orang lain.
    */
   public abstract resetPassword(id: string, password: string, kataSandiLama: string): Promise<void>;
+
+  /**
+   * Soft delete: akun hilang dari `users` dan tidak bisa dipakai masuk lagi,
+   * tapi barisnya tetap ada di basis data dan muncul di `usersTerhapus`.
+   */
+  public abstract softDelete(id: string): Promise<void>;
+  public abstract restore(id: string): Promise<void>;
+  public abstract muatTerhapus(): Promise<void>;
 
   /** Muat ulang dari server — dipakai oleh DataSyncService supaya perubahan
    * dari pengguna/perangkat lain ikut tampil tanpa memuat ulang halaman. */

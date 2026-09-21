@@ -9,6 +9,8 @@ import { KNOWN_OPD_LIST } from '../../../../shared/known-opd-list';
 import { generateTemporaryPassword } from '../../../../shared/password-generator';
 import { pesanGalat } from '../../../../shared/pesan-galat';
 import { RolePermissionRepository } from '../../../../core/repositories/role-permission.repository';
+import { PermissionService } from '../../../../core/auth/permission.service';
+import { HasPermissionDirective } from '../../../components/has-permission/has-permission.directive';
 import {
   DAFTAR_KEMAMPUAN,
   InfoKemampuan,
@@ -33,7 +35,7 @@ const KELOMPOK_KEMAMPUAN: { kelompok: string; isi: InfoKemampuan[] }[] = (() => 
 
 @Component({
   selector: 'app-pengguna-list',
-  imports: [CommonModule, ReactiveFormsModule, TanggalIdPipe],
+  imports: [CommonModule, ReactiveFormsModule, TanggalIdPipe, HasPermissionDirective],
   templateUrl: './pengguna-list.html',
   standalone: true
 })
@@ -43,8 +45,20 @@ export class PenggunaListComponent {
   private auditRepository = inject(AuditRepository);
   private authService = inject(AuthService);
   private rolePermissionRepository = inject(RolePermissionRepository);
+  public permissionService = inject(PermissionService);
 
   public users = computed(() => this.userRepository.users().slice().sort((a, b) => a.nama.localeCompare(b.nama)));
+
+  /** Akun terhapus, yang terbaru di atas — itu yang paling mungkin dicari. */
+  public usersTerhapus = computed(() =>
+    this.userRepository
+      .usersTerhapus()
+      .slice()
+      .sort((a, b) => (b.dihapusPada ?? '').localeCompare(a.dihapusPada ?? ''))
+  );
+
+  public arsipMemuat = signal(false);
+  public arsipError = signal<string | null>(null);
 
   public opdList = KNOWN_OPD_LIST;
   public peranOptions: Peran[] = ['superadmin', 'admin', 'pegawai', 'pejabat_penatausahaan', 'pimpinan'];
@@ -224,6 +238,84 @@ export class PenggunaListComponent {
     }
   }
 
+  /**
+   * Menghapus akun = soft delete: barisnya tetap ada di basis data lengkap
+   * dengan NIP dan riwayatnya, hanya pindah ke arsip dan berhenti bisa
+   * dipakai masuk. Riwayat peminjaman orang itu tidak ikut hilang — `loans`
+   * menyimpan salinan data pemohon, bukan sambungan ke tabel pengguna.
+   *
+   * Menonaktifkan tetap ada dan tetap berbeda maksudnya: akun nonaktif masih
+   * terlihat di daftar (mis. sedang cuti panjang), akun terhapus tidak.
+   */
+  async hapusPengguna(user: User): Promise<void> {
+    if (user.id === this.currentUserId()) {
+      alert('Tidak bisa menghapus akun Anda sendiri saat sedang masuk.');
+      return;
+    }
+    if (this.isLastActiveSuperadmin(user.id)) {
+      alert('Tidak bisa menghapus superadmin terakhir yang masih aktif.');
+      return;
+    }
+
+    const alasan = prompt(
+      `Hapus akun "${user.nama}" dari daftar?\n\n` +
+        'Datanya tetap tersimpan di basis data dan bisa dipulihkan lewat tab ' +
+        '"Pengguna Terhapus". Tulis alasan penghapusan:'
+    );
+    if (!alasan) return;
+
+    try {
+      await this.userRepository.softDelete(user.id);
+      await this.auditRepository.append({
+        pelakuId: this.actorId(),
+        pelakuNama: this.actorLabel(),
+        aksi: 'hapus-pengguna',
+        entitas: 'User',
+        entitasId: user.id,
+        nilaiLama: { nama: user.nama, nip: user.nip, peran: user.peran, unitKerja: user.unitKerja },
+        nilaiBaru: `Dihapus dari daftar. Alasan: ${alasan}`
+      });
+    } catch (error) {
+      alert(pesanGalat(error, 'Gagal menghapus pengguna. Coba lagi.'));
+    }
+  }
+
+  async pulihkanPengguna(user: User): Promise<void> {
+    if (!confirm(`Pulihkan akun "${user.nama}"? Akun akan muncul lagi di daftar pengguna.`)) return;
+
+    try {
+      await this.userRepository.restore(user.id);
+      await this.auditRepository.append({
+        pelakuId: this.actorId(),
+        pelakuNama: this.actorLabel(),
+        aksi: 'pulihkan-pengguna',
+        entitas: 'User',
+        entitasId: user.id,
+        nilaiBaru: { nama: user.nama, nip: user.nip, peran: user.peran, unitKerja: user.unitKerja }
+      });
+    } catch (error) {
+      alert(pesanGalat(error, 'Gagal memulihkan pengguna. Coba lagi.'));
+    }
+  }
+
+  /**
+   * Arsip tidak ikut dimuat saat halaman dibuka — baru ditarik saat tabnya
+   * dipilih, dan ditarik ulang setiap kali supaya tidak menampilkan daftar
+   * basi kalau superadmin lain menghapus akun di sela-sela.
+   */
+  async bukaArsip(): Promise<void> {
+    this.tab.set('arsip');
+    this.arsipError.set(null);
+    this.arsipMemuat.set(true);
+    try {
+      await this.userRepository.muatTerhapus();
+    } catch (error) {
+      this.arsipError.set(pesanGalat(error, 'Gagal memuat daftar pengguna terhapus.'));
+    } finally {
+      this.arsipMemuat.set(false);
+    }
+  }
+
   bukaReset(user: User): void {
     this.resetTarget.set(user);
     this.tampilSandiAktor.set(false);
@@ -296,7 +388,7 @@ export class PenggunaListComponent {
 
   // ---------- Tab "Hak Akses Peran" ----------
 
-  public tab = signal<'pengguna' | 'akses'>('pengguna');
+  public tab = signal<'pengguna' | 'arsip' | 'akses'>('pengguna');
   public kelompokKemampuan = KELOMPOK_KEMAMPUAN;
   public peranKolom = SEMUA_PERAN;
   public labelPeranSingkat = LABEL_PERAN_SINGKAT;

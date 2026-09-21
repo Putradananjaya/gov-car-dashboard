@@ -1,9 +1,10 @@
 import { Column, Entity, Index, PrimaryColumn } from 'typeorm';
+import { EntitasSoftDelete } from '../common/soft-delete';
 
 export type JenisDokumenPeminjaman = 'utama' | 'lain';
 
 @Entity('loan_documents')
-export class LoanDocumentEntity {
+export class LoanDocumentEntity extends EntitasSoftDelete {
   @PrimaryColumn({ type: 'varchar' })
   id!: string;
 

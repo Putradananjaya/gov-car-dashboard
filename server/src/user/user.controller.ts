@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Put, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, Req, UseGuards } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -20,6 +20,18 @@ export class UserController {
     return this.service.findAll();
   }
 
+  /**
+   * Arsip akun terhapus. Rutenya statis dan harus dideklarasikan sebelum
+   * `@Get(':id')` kalau kelak rute itu ditambahkan — Nest mencocokkan rute
+   * sesuai urutan deklarasi.
+   */
+  @Get('terhapus')
+  @UseGuards(IzinGuard)
+  @ButuhIzin('pengguna.hapus')
+  findTerhapus() {
+    return this.service.findTerhapus();
+  }
+
   @Post()
   @UseGuards(IzinGuard)
   @ButuhIzin('pengguna.kelola')
@@ -32,6 +44,21 @@ export class UserController {
   @ButuhIzin('pengguna.kelola')
   update(@Param('id') id: string, @Body() dto: UpdateUserDto) {
     return this.service.update(id, dto);
+  }
+
+  /** Soft delete — lihat `UserService.softDelete`. */
+  @Delete(':id')
+  @UseGuards(IzinGuard)
+  @ButuhIzin('pengguna.hapus')
+  remove(@Param('id') id: string, @Req() req: RequestWithUser) {
+    return this.service.softDelete(id, req.user.sub);
+  }
+
+  @Post(':id/pulihkan')
+  @UseGuards(IzinGuard)
+  @ButuhIzin('pengguna.hapus')
+  restore(@Param('id') id: string) {
+    return this.service.restore(id);
   }
 
   @Post(':id/reset-password')

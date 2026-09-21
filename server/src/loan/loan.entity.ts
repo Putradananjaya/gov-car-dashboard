@@ -1,4 +1,5 @@
 import { Column, Entity, Index, PrimaryColumn } from 'typeorm';
+import { EntitasSoftDelete } from '../common/soft-delete';
 
 /**
  * Mengikuti SOP Peminjaman Kendaraan Dinas No. 000.2.3.2/3336/BKPAD/2026:
@@ -31,7 +32,7 @@ export interface LoanApplicantSnapshot {
 
 /** Field & label mengikuti FRM-01 — lihat `src/app/core/models/loan.model.ts` (frontend) untuk penjelasan tiap kolom. */
 @Entity('loans')
-export class LoanEntity {
+export class LoanEntity extends EntitasSoftDelete {
   @PrimaryColumn({ type: 'varchar' })
   id!: string;
 

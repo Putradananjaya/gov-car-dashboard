@@ -27,9 +27,14 @@ export class VehicleAssetController {
     return this.service.upsert(nibar, dto);
   }
 
+  /**
+   * Dipertahankan demi klien lama; perilakunya kini sama persis dengan
+   * `POST :nibar/soft-delete` — tidak ada lagi penghapusan permanen di
+   * aplikasi ini.
+   */
   @Delete(':nibar')
   @UseGuards(IzinGuard)
-  @ButuhIzin('aset.hapusPermanen', 'aset.impor')
+  @ButuhIzin('aset.hapus', 'aset.impor')
   remove(@Param('nibar') nibar: string) {
     return this.service.remove(nibar);
   }

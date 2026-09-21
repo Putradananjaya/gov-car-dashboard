@@ -135,7 +135,9 @@ export class InventoryComponent implements OnInit {
   }
 
   deleteCar(carId: string) {
-    const confirmDelete = confirm('Apakah Anda yakin ingin menghapus data aset mobil dinas ini?');
+    const confirmDelete = confirm(
+      'Hapus data aset mobil dinas ini dari daftar? Datanya tetap tersimpan di basis data dan bisa dipulihkan.'
+    );
     if (confirmDelete) {
       this.carRepository.deleteCar(carId);
     }

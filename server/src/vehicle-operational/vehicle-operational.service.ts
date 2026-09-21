@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { VehicleOperationalEntity } from './vehicle-operational.entity';
 import { UpsertVehicleOperationalDto } from './dto/upsert-vehicle-operational.dto';
+import { pulihkanBilaPernahDihapus } from '../common/soft-delete';
 
 @Injectable()
 export class VehicleOperationalService {
@@ -24,6 +25,8 @@ export class VehicleOperationalService {
   }
 
   async upsert(nibar: string, dto: UpsertVehicleOperationalDto): Promise<VehicleOperationalEntity> {
+    await pulihkanBilaPernahDihapus(this.repository, { nibar });
+
     const entity = new VehicleOperationalEntity();
     entity.nibar = nibar;
     entity.kondisi = dto.kondisi;
@@ -38,8 +41,9 @@ export class VehicleOperationalService {
     return this.findOne(nibar);
   }
 
+  /** Soft delete — barisnya tetap ada di Postgres, sekadar tidak ikut terbaca lagi. */
   async remove(nibar: string): Promise<void> {
-    const result = await this.repository.delete({ nibar });
+    const result = await this.repository.softDelete({ nibar });
     if (result.affected === 0) {
       throw new NotFoundException(`Data operasional untuk NIBAR "${nibar}" tidak ditemukan.`);
     }

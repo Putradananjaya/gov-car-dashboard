@@ -184,7 +184,11 @@ export class App implements OnInit, OnDestroy {
       return;
     }
 
-    const confirmReset = confirm('Apakah Anda yakin ingin menyetel ulang database ke kondisi bawaan awal? Seluruh data mobil buatan Anda akan terhapus.');
+    const confirmReset = confirm(
+      'Setel ulang database ke kondisi bawaan awal? Seluruh data mobil buatan Anda akan hilang dari ' +
+        'tampilan. Barisnya tetap tersimpan di basis data (penghapusan di aplikasi ini selalu soft ' +
+        'delete), tapi tidak ada layar untuk memulihkannya kembali.'
+    );
     if (confirmReset) {
       if (this.carRepository instanceof CarCompatRepository) {
         await this.carRepository.resetDatabase();

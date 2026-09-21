@@ -13,4 +13,10 @@ export interface User {
   // lagi dipakai auth) tetap type-compatible tanpa perlu diubah.
   passwordHash?: string;
   terakhirMasuk: string | null;
+  /**
+   * Waktu akun dihapus (soft delete). Hanya terisi pada daftar arsip
+   * (`UserRepository.usersTerhapus`) — akun di `users` selalu null, karena
+   * yang sudah dihapus tidak pernah ikut terkirim ke sana.
+   */
+  dihapusPada?: string | null;
 }

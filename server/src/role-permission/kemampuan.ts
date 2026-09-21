@@ -12,7 +12,6 @@ export const SEMUA_KEMAMPUAN = [
   'aset.lihat',
   'aset.ubah',
   'aset.hapus',
-  'aset.hapusPermanen',
   'aset.impor',
   'aset.ubahStatusOperasional',
   'aset.lihatDataSensitif',
@@ -24,6 +23,7 @@ export const SEMUA_KEMAMPUAN = [
   'kerusakan.lapor',
   'laporan.cetak',
   'pengguna.kelola',
+  'pengguna.hapus',
   'audit.lihat',
   'sistem.resetBasisData'
 ] as const;
@@ -48,7 +48,6 @@ export const MATRIKS_BAWAAN: Record<Kemampuan, Peran[]> = {
   'aset.lihat': ['superadmin', 'admin'],
   'aset.ubah': ['superadmin', 'admin'],
   'aset.hapus': ['superadmin', 'admin'],
-  'aset.hapusPermanen': ['superadmin'],
   'aset.impor': ['superadmin', 'admin'],
   'aset.ubahStatusOperasional': ['superadmin', 'admin'],
   'aset.lihatDataSensitif': ['superadmin', 'admin'],
@@ -63,6 +62,7 @@ export const MATRIKS_BAWAAN: Record<Kemampuan, Peran[]> = {
   'kerusakan.lapor': ['superadmin', 'admin', 'pegawai'],
   'laporan.cetak': ['superadmin', 'admin', 'pimpinan'],
   'pengguna.kelola': ['superadmin'],
+  'pengguna.hapus': ['superadmin'],
   'audit.lihat': ['superadmin'],
   'sistem.resetBasisData': ['superadmin']
 };

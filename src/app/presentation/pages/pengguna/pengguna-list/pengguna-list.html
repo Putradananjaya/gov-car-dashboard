@@ -4,12 +4,15 @@
       <h1>Manajemen Pengguna</h1>
       @if (tab() === 'pengguna') {
         <p>Total: {{ users().length }} akun terdaftar</p>
+      } @else if (tab() === 'arsip') {
+        <p>Akun yang dihapus dari daftar — datanya masih tersimpan dan bisa dipulihkan</p>
       } @else {
         <p>Atur kemampuan tiap peran — menu dan tombolnya ikut menyesuaikan</p>
       }
     </div>
     <div class="page-tabs">
       <button type="button" [class.active]="tab() === 'pengguna'" (click)="tab.set('pengguna')">Daftar Pengguna</button>
+      <button type="button" *hasPermission="'pengguna.hapus'" [class.active]="tab() === 'arsip'" (click)="bukaArsip()">Pengguna Terhapus</button>
       <button type="button" [class.active]="tab() === 'akses'" (click)="tab.set('akses')">Hak Akses Peran</button>
     </div>
     @if (tab() === 'pengguna') {
@@ -86,7 +89,7 @@
                       <path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path>
                     </svg>
                   </button>
-                  <button class="action-btn delete" [title]="user.aktif ? 'Nonaktifkan' : 'Aktifkan'" (click)="toggleAktif(user)">
+                  <button class="action-btn" [title]="user.aktif ? 'Nonaktifkan' : 'Aktifkan'" (click)="toggleAktif(user)">
                     @if (user.aktif) {
                       <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="12" cy="12" r="10"></circle>
@@ -98,6 +101,12 @@
                       </svg>
                     }
                   </button>
+                  <button *hasPermission="'pengguna.hapus'" class="action-btn delete" title="Hapus dari daftar" (click)="hapusPengguna(user)">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="3 6 5 6 21 6"></polyline>
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                  </button>
                 </div>
               </td>
             </tr>
@@ -105,6 +114,72 @@
         </tbody>
       </table>
     </div>
+    }
+
+    @if (tab() === 'arsip') {
+      <div class="akses-catatan glass-panel" style="padding: 12px 16px; margin-bottom: 12px;">
+        Menghapus akun tidak menghilangkan datanya dari basis data — barisnya tetap ada beserta NIP,
+        jabatan, dan jejak auditnya, hanya berhenti muncul di daftar dan tidak bisa dipakai masuk.
+        Selama akun masih di sini, <strong>NIP-nya tetap terpakai</strong>: untuk memakai NIP yang sama,
+        pulihkan akunnya, bukan membuat akun baru.
+      </div>
+
+      @if (arsipError()) {
+        <div class="login-error-alert" style="margin-bottom: 12px;">{{ arsipError() }}</div>
+      }
+
+      @if (arsipMemuat()) {
+        <div class="table-responsive glass-panel" style="padding: 24px; text-align: center; color: var(--text-muted);">
+          Memuat daftar pengguna terhapus…
+        </div>
+      } @else if (usersTerhapus().length === 0) {
+        <div class="table-responsive glass-panel" style="padding: 24px; text-align: center; color: var(--text-muted);">
+          Belum ada akun yang dihapus.
+        </div>
+      } @else {
+        <div class="table-responsive glass-panel">
+          <table class="inventory-table">
+            <thead>
+              <tr>
+                <th>Nama</th>
+                <th>NIP</th>
+                <th>Jabatan</th>
+                <th>Unit Kerja</th>
+                <th>Peran</th>
+                <th>Dihapus Pada</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (user of usersTerhapus(); track user.id) {
+                <tr>
+                  <td>{{ user.nama }}</td>
+                  <td style="font-family: monospace;">{{ user.nip }}</td>
+                  <td>{{ user.jabatan }}</td>
+                  <td>{{ user.unitKerja }}</td>
+                  <td>
+                    <span class="badge badge-warning">
+                      <span class="badge-dot"></span>
+                      {{ peranLabel(user.peran) }}
+                    </span>
+                  </td>
+                  <td style="font-size: 0.72rem; color: var(--text-muted);">{{ user.dihapusPada | tanggalId }}</td>
+                  <td>
+                    <div class="actions-col">
+                      <button class="action-btn" title="Pulihkan akun" (click)="pulihkanPengguna(user)">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M3 2v6h6"></path>
+                          <path d="M3 13a9 9 0 1 0 3-7.7L3 8"></path>
+                        </svg>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
     }
 
     @if (tab() === 'akses') {

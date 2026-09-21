@@ -1,9 +1,10 @@
 import { Column, Entity, PrimaryColumn } from 'typeorm';
+import { EntitasSoftDelete } from '../common/soft-delete';
 
 export type Peran = 'superadmin' | 'admin' | 'pegawai' | 'pejabat_penatausahaan' | 'pimpinan';
 
 @Entity('users')
-export class UserEntity {
+export class UserEntity extends EntitasSoftDelete {
   @PrimaryColumn({ type: 'varchar' })
   id!: string;
 

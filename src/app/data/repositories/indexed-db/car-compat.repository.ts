@@ -39,6 +39,11 @@ export class CarCompatRepository implements CarRepository {
 
     const result: Car[] = [];
     for (const asset of this.assetRepository.assets()) {
+      // Aset yang sudah dihapus tetap terkirim dari server (penandanya ikut
+      // di DTO), jadi penyaringannya di sini — kalau tidak, aset terhapus
+      // masih muncul di Inventaris, Monitoring GPS, dan kartu dasbor yang
+      // membaca lewat adapter Car ini.
+      if (asset.dihapusPada) continue;
       const operational = operationalByNibar.get(asset.nibar);
       if (!operational) continue;
 
@@ -162,13 +167,15 @@ export class CarCompatRepository implements CarRepository {
       });
   }
 
+  /** Soft delete — barisnya tetap di basis data, lihat VehicleAssetRepository. */
   public deleteCar(id: string): void {
     const asset = this.assetRepository.findByNibar(id);
     if (!asset) return;
 
-    void Promise.all([this.assetRepository.remove(id), this.operationalRepository.remove(id)])
+    void this.assetRepository
+      .softDelete(id)
       .then(() => {
-        this.addLog(id, asset.nomorPolisi, asset.pemegang ?? '', `${asset.lokasi} • Aset dihapus dari sistem`, 'warning');
+        this.addLog(id, asset.nomorPolisi, asset.pemegang ?? '', `${asset.lokasi} • Aset dihapus dari daftar`, 'warning');
         void this.auditRepository.append({
           pelakuId: this.actorId(),
           pelakuNama: this.actorLabel(),

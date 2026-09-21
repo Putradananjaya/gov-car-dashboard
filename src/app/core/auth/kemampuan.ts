@@ -12,7 +12,6 @@ export const SEMUA_KEMAMPUAN = [
   'aset.lihat',
   'aset.ubah',
   'aset.hapus',
-  'aset.hapusPermanen',
   'aset.impor',
   'aset.ubahStatusOperasional',
   'aset.lihatDataSensitif',
@@ -24,6 +23,7 @@ export const SEMUA_KEMAMPUAN = [
   'kerusakan.lapor',
   'laporan.cetak',
   'pengguna.kelola',
+  'pengguna.hapus',
   'audit.lihat',
   'sistem.resetBasisData'
 ] as const;
@@ -70,7 +70,6 @@ export const MATRIKS_BAWAAN: MatriksHakAkses = {
   'aset.lihat': ['superadmin', 'admin'],
   'aset.ubah': ['superadmin', 'admin'],
   'aset.hapus': ['superadmin', 'admin'],
-  'aset.hapusPermanen': ['superadmin'],
   'aset.impor': ['superadmin', 'admin'],
   'aset.ubahStatusOperasional': ['superadmin', 'admin'],
   'aset.lihatDataSensitif': ['superadmin', 'admin'],
@@ -85,6 +84,7 @@ export const MATRIKS_BAWAAN: MatriksHakAkses = {
   'kerusakan.lapor': ['superadmin', 'admin', 'pegawai'],
   'laporan.cetak': ['superadmin', 'admin', 'pimpinan'],
   'pengguna.kelola': ['superadmin'],
+  'pengguna.hapus': ['superadmin'],
   'audit.lihat': ['superadmin'],
   'sistem.resetBasisData': ['superadmin']
 };
@@ -100,8 +100,7 @@ export interface InfoKemampuan {
 export const DAFTAR_KEMAMPUAN: InfoKemampuan[] = [
   { kemampuan: 'aset.lihat', label: 'Lihat data aset', keterangan: 'Membuka menu Data Kendaraan & daftar aset', kelompok: 'Aset & BMD' },
   { kemampuan: 'aset.ubah', label: 'Tambah & ubah aset', keterangan: 'Menyimpan data BMD baru atau perubahannya', kelompok: 'Aset & BMD' },
-  { kemampuan: 'aset.hapus', label: 'Hapus aset', keterangan: 'Menandai aset terhapus (masih bisa dipulihkan)', kelompok: 'Aset & BMD' },
-  { kemampuan: 'aset.hapusPermanen', label: 'Hapus aset permanen', keterangan: 'Menghapus baris aset dari basis data', kelompok: 'Aset & BMD' },
+  { kemampuan: 'aset.hapus', label: 'Hapus aset', keterangan: 'Menyembunyikan aset dari daftar — barisnya tetap tersimpan di basis data', kelompok: 'Aset & BMD' },
   { kemampuan: 'aset.impor', label: 'Impor berkas e-BMD', keterangan: 'Mengunggah Excel e-BMD dan membatalkan impor', kelompok: 'Aset & BMD' },
   { kemampuan: 'aset.lihatDataSensitif', label: 'Lihat nomor rangka & BPKB', keterangan: 'Menampilkan kolom identitas legal kendaraan', kelompok: 'Aset & BMD' },
   { kemampuan: 'aset.ubahStatusOperasional', label: 'Ubah kondisi & status operasional', keterangan: 'Mengubah status pakai dan kondisi kendaraan', kelompok: 'Operasional' },
@@ -113,6 +112,7 @@ export const DAFTAR_KEMAMPUAN: InfoKemampuan[] = [
   { kemampuan: 'peminjaman.serahTerima', label: 'Serah terima & terima pengembalian', keterangan: 'Langkah 4 & 6 SOP — menyerahkan kunci lalu memeriksa kondisi akhir', kelompok: 'Peminjaman' },
   { kemampuan: 'laporan.cetak', label: 'Cetak laporan resmi', keterangan: 'Membuka menu Laporan dan mencetaknya', kelompok: 'Sistem' },
   { kemampuan: 'pengguna.kelola', label: 'Kelola pengguna & hak akses', keterangan: 'Membuka halaman ini dan mengubah isinya', kelompok: 'Sistem' },
+  { kemampuan: 'pengguna.hapus', label: 'Hapus & pulihkan pengguna', keterangan: 'Menghapus akun dari daftar aktif, serta memulihkannya dari arsip', kelompok: 'Sistem' },
   { kemampuan: 'audit.lihat', label: 'Lihat jejak audit', keterangan: 'Membuka riwayat seluruh aktivitas pengguna', kelompok: 'Sistem' },
   { kemampuan: 'sistem.resetBasisData', label: 'Setel ulang basis data', keterangan: 'Mengembalikan data ke kondisi bawaan', kelompok: 'Sistem' }
 ];

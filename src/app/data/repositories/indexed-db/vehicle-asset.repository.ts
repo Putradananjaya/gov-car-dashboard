@@ -18,8 +18,9 @@ export class IndexedDbVehicleAssetRepository implements VehicleAssetRepository {
     return this.store.put(asset);
   }
 
+  /** Alias lawas — penghapusan aset selalu soft delete, lihat VehicleAssetRepository. */
   public remove(nibar: string): Promise<void> {
-    return this.store.delete(nibar);
+    return this.softDelete(nibar);
   }
 
   public refresh(): Promise<void> {

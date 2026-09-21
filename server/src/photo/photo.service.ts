@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { VehiclePhotoEntity } from './vehicle-photo.entity';
 import { UpsertVehiclePhotoDto } from './dto/upsert-vehicle-photo.dto';
+import { pulihkanBilaPernahDihapus } from '../common/soft-delete';
 
 export interface VehiclePhotoDto {
   nibar: string;
@@ -37,6 +38,8 @@ export class PhotoService {
   }
 
   async upsert(nibar: string, dto: UpsertVehiclePhotoDto): Promise<VehiclePhotoDto> {
+    await pulihkanBilaPernahDihapus(this.repository, { nibar });
+
     const entity = new VehiclePhotoEntity();
     entity.nibar = nibar;
     entity.mimeType = dto.mimeType;
@@ -45,8 +48,9 @@ export class PhotoService {
     return toDto(await this.findEntity(nibar));
   }
 
+  /** Soft delete — barisnya tetap ada di Postgres, sekadar tidak ikut terbaca lagi. */
   async remove(nibar: string): Promise<void> {
-    const result = await this.repository.delete({ nibar });
+    const result = await this.repository.softDelete({ nibar });
     if (result.affected === 0) {
       throw new NotFoundException(`Foto untuk NIBAR "${nibar}" tidak ditemukan.`);
     }

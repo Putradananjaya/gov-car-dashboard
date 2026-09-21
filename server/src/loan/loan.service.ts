@@ -9,6 +9,7 @@ import { KembalikanLoanDto } from './dto/kembalikan-loan.dto';
 import { UserEntity, Peran } from '../user/user.entity';
 import { VehicleOperationalEntity } from '../vehicle-operational/vehicle-operational.entity';
 import { RolePermissionService } from '../role-permission/role-permission.service';
+import { pulihkanBilaPernahDihapus } from '../common/soft-delete';
 
 const STATUS_TERKUNCI: StatusPeminjaman[] = ['Diverifikasi', 'Disetujui', 'Berjalan', 'Ditolak', 'Selesai'];
 const STATUS_MEMBLOKIR_JADWAL: StatusPeminjaman[] = ['Diajukan', 'Diverifikasi', 'Disetujui', 'Berjalan'];
@@ -41,6 +42,8 @@ export class LoanService {
     if (STATUS_TERKUNCI.includes(dto.status)) {
       throw new BadRequestException('Gunakan endpoint aksi khusus untuk mengubah status peminjaman.');
     }
+    await pulihkanBilaPernahDihapus(this.repository, { id });
+
     const entity = new LoanEntity();
     Object.assign(entity, dto);
     entity.id = id;
@@ -48,8 +51,13 @@ export class LoanService {
     return this.findOne(id);
   }
 
+  /**
+   * Soft delete — barisnya tetap ada di Postgres. Peminjaman yang "dihapus"
+   * juga berhenti memblokir jadwal kendaraan, karena `assertNoScheduleConflict`
+   * memakai QueryBuilder yang ikut menyaring baris terhapus.
+   */
   async remove(id: string): Promise<void> {
-    const result = await this.repository.delete({ id });
+    const result = await this.repository.softDelete({ id });
     if (result.affected === 0) {
       throw new NotFoundException(`Peminjaman dengan id "${id}" tidak ditemukan.`);
     }

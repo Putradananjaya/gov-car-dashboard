@@ -57,13 +57,17 @@ describe('IndexedDbVehicleAssetRepository', () => {
     expect(repo.findByNibar('tidak-ada')).toBeUndefined();
   });
 
-  it('removes an asset', async () => {
+  // Menghapus aset selalu soft delete — barisnya tetap tersimpan, hanya
+  // ditandai, dan tampilanlah yang menyaringnya. `remove()` dipertahankan
+  // sebagai alias `softDelete()` demi pemanggil lama (pembatalan impor).
+  it.each(['remove', 'softDelete'] as const)('%s() menandai aset terhapus tanpa membuang barisnya', async metode => {
     const repo = new IndexedDbVehicleAssetRepository();
     await repo.ready;
     await repo.upsert(SAMPLE_ASSET);
 
-    await repo.remove('nibar-1');
+    await repo[metode]('nibar-1');
 
-    expect(repo.assets()).toEqual([]);
+    expect(repo.assets().length).toBe(1);
+    expect(repo.findByNibar('nibar-1')?.dihapusPada).toBeTruthy();
   });
 });

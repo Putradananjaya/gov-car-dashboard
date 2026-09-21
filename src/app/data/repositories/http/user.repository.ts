@@ -13,8 +13,10 @@ export class HttpUserRepository implements UserRepository {
   private authService = inject(AuthService);
   private itemsSignal = signal<User[]>([]);
   private muatan = new MuatanSignal(this.itemsSignal);
+  private terhapusSignal = signal<User[]>([]);
 
   public readonly users = this.itemsSignal.asReadonly();
+  public readonly usersTerhapus = this.terhapusSignal.asReadonly();
   public readonly ready: Promise<void>;
 
   constructor() {
@@ -67,6 +69,25 @@ export class HttpUserRepository implements UserRepository {
       this.http.post(`${API_BASE_URL}/users/${id}/reset-password`, { kataSandiLama, password })
     );
     await this.reload();
+  }
+
+  public async softDelete(id: string): Promise<void> {
+    await firstValueFrom(this.http.delete<User>(`${API_BASE_URL}/users/${id}`));
+    await Promise.all([this.reload(), this.muatTerhapus()]);
+  }
+
+  public async restore(id: string): Promise<void> {
+    await firstValueFrom(this.http.post<User>(`${API_BASE_URL}/users/${id}/pulihkan`, {}));
+    await Promise.all([this.reload(), this.muatTerhapus()]);
+  }
+
+  /**
+   * Sengaja di luar `reload()`: arsip hanya dibaca saat tab-nya dibuka, jadi
+   * putaran sinkronisasi berkala tidak ikut menarik daftar ini.
+   */
+  public async muatTerhapus(): Promise<void> {
+    const items = await firstValueFrom(this.http.get<User[]>(`${API_BASE_URL}/users/terhapus`));
+    this.terhapusSignal.set(items);
   }
 
   public refresh(): Promise<void> {

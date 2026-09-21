@@ -110,7 +110,13 @@ export class SeedService implements OnModuleInit {
     let dibuat = 0;
 
     for (const account of AKUN_BAKU) {
-      const sudahAda = await this.userRepository.findOneBy({ nip: account.nip });
+      // `withDeleted` supaya akun baku yang sengaja dihapus superadmin tidak
+      // dibangkitkan ulang diam-diam tiap kali server boot — barisnya masih
+      // ada, hanya tersembunyi, dan pemulihannya lewat arsip Manajemen Pengguna.
+      const sudahAda = await this.userRepository.findOne({
+        where: { nip: account.nip },
+        withDeleted: true
+      });
       if (sudahAda) continue;
 
       await this.userRepository.save({

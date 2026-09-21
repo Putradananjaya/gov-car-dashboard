@@ -27,9 +27,10 @@ export class VehicleOperationalController {
     return this.service.upsert(nibar, dto);
   }
 
+  /** Soft delete — lihat `VehicleOperationalService.remove`. */
   @Delete(':nibar')
   @UseGuards(IzinGuard)
-  @ButuhIzin('aset.hapusPermanen', 'aset.impor')
+  @ButuhIzin('aset.hapus', 'aset.impor')
   remove(@Param('nibar') nibar: string) {
     return this.service.remove(nibar);
   }

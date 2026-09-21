@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ServiceRecordEntity } from './service-record.entity';
 import { UpsertServiceRecordDto } from './dto/upsert-service-record.dto';
+import { pulihkanBilaPernahDihapus } from '../common/soft-delete';
 
 @Injectable()
 export class ServiceRecordService {
@@ -22,6 +23,8 @@ export class ServiceRecordService {
   }
 
   async upsert(id: string, dto: UpsertServiceRecordDto): Promise<ServiceRecordEntity> {
+    await pulihkanBilaPernahDihapus(this.repository, { id });
+
     const entity = new ServiceRecordEntity();
     Object.assign(entity, dto);
     entity.id = id;
@@ -29,8 +32,9 @@ export class ServiceRecordService {
     return this.findOne(id);
   }
 
+  /** Soft delete — barisnya tetap ada di Postgres, sekadar tidak ikut terbaca lagi. */
   async remove(id: string): Promise<void> {
-    const result = await this.repository.delete({ id });
+    const result = await this.repository.softDelete({ id });
     if (result.affected === 0) {
       throw new NotFoundException(`Riwayat servis dengan id "${id}" tidak ditemukan.`);
     }

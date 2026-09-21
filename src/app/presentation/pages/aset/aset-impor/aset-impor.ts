@@ -347,7 +347,7 @@ export class AsetImporComponent {
     const batch = this.appliedBatch();
     if (!batch) return;
 
-    const confirmed = confirm('Batalkan impor ini? Aset baru akan dihapus permanen, aset yang diperbarui akan dikembalikan ke kondisi sebelumnya.');
+    const confirmed = confirm('Batalkan impor ini? Aset baru akan dihapus dari daftar, aset yang diperbarui akan dikembalikan ke kondisi sebelumnya.');
     if (!confirmed) return;
 
     this.isUndoing.set(true);

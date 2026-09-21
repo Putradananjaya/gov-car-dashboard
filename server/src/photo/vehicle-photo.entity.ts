@@ -1,7 +1,8 @@
 import { Column, Entity, PrimaryColumn } from 'typeorm';
+import { EntitasSoftDelete } from '../common/soft-delete';
 
 @Entity('vehicle_photos')
-export class VehiclePhotoEntity {
+export class VehiclePhotoEntity extends EntitasSoftDelete {
   @PrimaryColumn({ type: 'varchar', length: 45 })
   nibar!: string;
 

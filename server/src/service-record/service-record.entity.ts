@@ -1,9 +1,10 @@
 import { Column, Entity, Index, PrimaryColumn } from 'typeorm';
+import { EntitasSoftDelete } from '../common/soft-delete';
 
 export type SumberServis = 'impor' | 'input-manual';
 
 @Entity('service_records')
-export class ServiceRecordEntity {
+export class ServiceRecordEntity extends EntitasSoftDelete {
   @PrimaryColumn({ type: 'varchar' })
   id!: string;
 

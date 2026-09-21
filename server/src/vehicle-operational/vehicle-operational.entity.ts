@@ -1,4 +1,5 @@
 import { Column, Entity, PrimaryColumn } from 'typeorm';
+import { EntitasSoftDelete } from '../common/soft-delete';
 
 export type KondisiAset = 'Baik' | 'Rusak Ringan' | 'Rusak Berat';
 export type StatusOperasional = 'Tersedia' | 'Dipinjam' | 'Servis' | 'Tidak Layak';
@@ -13,7 +14,7 @@ export interface Telemetri {
 }
 
 @Entity('vehicle_operational')
-export class VehicleOperationalEntity {
+export class VehicleOperationalEntity extends EntitasSoftDelete {
   @PrimaryColumn({ type: 'varchar', length: 45 })
   nibar!: string;
 

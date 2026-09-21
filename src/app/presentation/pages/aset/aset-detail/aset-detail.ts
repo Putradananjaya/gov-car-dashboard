@@ -51,7 +51,17 @@ export class AsetDetailComponent implements OnInit {
 
   computeStatusPajak = computeStatusPajak;
 
-  public asset = computed(() => this.assetRepository.findByNibar(this.nibar()));
+  /**
+   * Aset yang sudah dihapus diperlakukan seperti tidak ada — halaman ini bisa
+   * dibuka lewat URL langsung, dan tanpa saringan ini penghapusan hanya
+   * menyembunyikan aset dari daftar tapi detailnya masih terbuka lebar.
+   * `findByNibar` sendiri tidak menyaring: jalur impor justru perlu melihat
+   * aset terhapus supaya NIBAR yang sama terhitung sebagai pembaruan.
+   */
+  public asset = computed(() => {
+    const asset = this.assetRepository.findByNibar(this.nibar());
+    return asset?.dihapusPada ? undefined : asset;
+  });
   public operational = computed(() => this.operationalRepository.findByNibar(this.nibar()));
   public view = computed(() => {
     const asset = this.asset();
