@@ -29,6 +29,8 @@ import { LoanDocumentRepository } from './core/repositories/loan-document.reposi
 import { RolePermissionRepository } from './core/repositories/role-permission.repository';
 import { HttpRolePermissionRepository } from './data/repositories/http/role-permission.repository';
 import { HttpLoanDocumentRepository } from './data/repositories/http/loan-document.repository';
+import { PaktaIntegritasRepository } from './core/repositories/pakta-integritas.repository';
+import { HttpPaktaIntegritasRepository } from './data/repositories/http/pakta-integritas.repository';
 import { migrateOrSeedDatabase } from './data/db/migration';
 import { DataSyncService } from './data/sync/data-sync.service';
 
@@ -58,6 +60,7 @@ export const appConfig: ApplicationConfig = {
     { provide: PhotoRepository, useClass: HttpPhotoRepository },
     { provide: LoanDocumentRepository, useClass: HttpLoanDocumentRepository },
     { provide: RolePermissionRepository, useClass: HttpRolePermissionRepository },
+    { provide: PaktaIntegritasRepository, useClass: HttpPaktaIntegritasRepository },
     // Pastikan skema/migrasi/seed IndexedDB & semua repository selesai memuat
     // SEBELUM navigasi/guard pertama jalan — plus pulihkan sesi login (kalau
     // ada cookie refresh token valid) lewat AuthService.refresh(), supaya

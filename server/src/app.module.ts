@@ -12,6 +12,7 @@ import { LoanModule } from './loan/loan.module';
 import { AuditModule } from './audit/audit.module';
 import { ServiceRecordModule } from './service-record/service-record.module';
 import { PhotoModule } from './photo/photo.module';
+import { PaktaIntegritasModule } from './pakta-integritas/pakta-integritas.module';
 import { PublicStatsModule } from './public-stats/public-stats.module';
 import { RolePermissionModule } from './role-permission/role-permission.module';
 
@@ -64,6 +65,7 @@ import { RolePermissionModule } from './role-permission/role-permission.module';
     AuditModule,
     ServiceRecordModule,
     PhotoModule,
+    PaktaIntegritasModule,
     PublicStatsModule
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }]

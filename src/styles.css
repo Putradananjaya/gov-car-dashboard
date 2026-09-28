@@ -633,6 +633,17 @@ html {
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 14px;
 }
+/* Dashboard admin: panel kedua ("Pajak Segera Jatuh Tempo") diberi porsi
+   sedikit lebih lebar supaya nama kendaraan & pelat tidak terpecah per kata.
+   Titik henti mengikuti kapan auto-fit di atas beralih ke 3 dan 4 kolom
+   (sidebar terbuka), jadi susunan baris tetap sama — hanya proporsinya.
+   minmax(0, …) mencegah teks nowrap di panel servis melebarkan kolomnya. */
+@media (min-width: 1170px) {
+  .bottom-section-admin { grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr) minmax(0, 1fr); }
+}
+@media (min-width: 1464px) {
+  .bottom-section-admin { grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr) minmax(0, 1fr) minmax(0, 1fr); }
+}
 
 .info-panel { padding: 18px; display: flex; flex-direction: column; height: 340px; }
 .info-panel .panel-header { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--md-sys-color-outline); padding-bottom: 10px; margin-bottom: 12px; flex-shrink: 0; }
@@ -769,6 +780,15 @@ html {
 .driver-col { display: flex; flex-direction: column; }
 .driver-name { font-weight: 700; color: var(--md-sys-color-on-background); }
 .driver-phone { font-size: 0.7rem; color: var(--text-muted); }
+
+/* Kolom Pakta Integritas (Data Kendaraan) */
+.pakta-col { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+.pakta-aksi { display: flex; align-items: center; gap: 10px; }
+.pakta-btn { background: none; border: none; padding: 0; font: inherit; font-size: 0.7rem; font-weight: 700; color: var(--md-sys-color-primary); cursor: pointer; white-space: nowrap; }
+.pakta-btn:hover { text-decoration: underline; }
+.pakta-btn-hapus { color: var(--md-sys-color-error); }
+.pakta-btn:disabled, .pakta-btn.disabled { opacity: 0.5; cursor: wait; pointer-events: none; }
+.pakta-tidak-perlu { color: var(--text-muted); }
 
 .fuel-progress-wrapper { display: flex; flex-direction: column; gap: 4px; width: 100px; }
 .fuel-text { display: flex; justify-content: space-between; font-size: 0.7rem; font-weight: 600; color: var(--md-sys-color-on-background); }

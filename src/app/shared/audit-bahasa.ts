@@ -27,6 +27,8 @@ const LABEL_AKSI: Record<string, string> = {
   'ubah-legalitas': 'Memperbarui pajak & STNK',
   'ubah-kondisi-massal': 'Mengubah kondisi kendaraan (banyak sekaligus)',
   'tetapkan-pemegang-massal': 'Menetapkan pemegang kendaraan (banyak sekaligus)',
+  'unggah-pakta-integritas': 'Mengunggah pakta integritas',
+  'hapus-pakta-integritas': 'Menghapus pakta integritas',
   impor: 'Mengunggah berkas e-BMD',
   'terapkan-impor': 'Menerapkan hasil impor',
   'batalkan-impor': 'Membatalkan impor',
@@ -45,6 +47,7 @@ const LABEL_ENTITAS: Record<string, string> = {
   VehicleOperational: 'Status operasional',
   ServiceRecord: 'Riwayat servis',
   ImportBatch: 'Berkas impor',
+  PaktaIntegritas: 'Pakta integritas',
   HakAkses: 'Hak akses'
 };
 

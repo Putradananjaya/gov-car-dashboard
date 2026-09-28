@@ -12,6 +12,11 @@ import { AssetGroup, computeStatusPajak, groupAssetsByNamaBarang, StatusPajak } 
 import { KNOWN_OPD_LIST } from '../../../../shared/known-opd-list';
 import { KondisiAset } from '../../../../core/models/vehicle-operational.model';
 import { TanggalIdPipe } from '../../../../shared/pipes/tanggal-id.pipe';
+import { PaktaIntegritasRepository } from '../../../../core/repositories/pakta-integritas.repository';
+import { PaktaIntegritas } from '../../../../core/models/pakta-integritas.model';
+
+const MAX_UKURAN_PAKTA = 5 * 1024 * 1024; // 5MB — sama dengan batas di server
+const TIPE_PAKTA_DIIZINKAN = ['application/pdf', 'image/jpeg', 'image/png'];
 
 @Component({
   selector: 'app-aset-list',
@@ -23,6 +28,7 @@ export class AsetListComponent {
   private assetRepository = inject(VehicleAssetRepository);
   private operationalRepository = inject(VehicleOperationalRepository);
   private auditRepository = inject(AuditRepository);
+  private paktaRepository = inject(PaktaIntegritasRepository);
   private authService = inject(AuthService);
   private route = inject(ActivatedRoute);
   public permissionService = inject(PermissionService);
@@ -33,12 +39,16 @@ export class AsetListComponent {
   public selectedKondisi = signal<'All' | KondisiAset>('All');
   public selectedStatusPajak = signal<'All' | StatusPajak>('All');
   public selectedNibars = signal<Set<string>>(new Set());
+  /** NIBAR yang pakta integritasnya sedang diunggah/dibuka/dihapus — tombolnya dinonaktifkan sementara. */
+  public paktaSedangDiproses = signal<string | null>(null);
 
 
   public opdList = KNOWN_OPD_LIST;
   public kondisiOptions: KondisiAset[] = ['Baik', 'Rusak Ringan', 'Rusak Berat'];
 
   constructor() {
+    void this.paktaRepository.refresh();
+
     this.route.queryParamMap.subscribe(params => {
       const kondisi = params.get('kondisi');
       const statusPajak = params.get('statusPajak');
@@ -93,6 +103,12 @@ export class AsetListComponent {
   public groups = computed<AssetGroup[]>(() => groupAssetsByNamaBarang(this.filteredViews()));
 
   public totalNilai = computed(() => this.filteredViews().reduce((sum, v) => sum + v.nilaiPerolehan, 0));
+
+  private paktaPerNibar = computed(() => new Map(this.paktaRepository.pakta().map(p => [p.nibar, p])));
+
+  paktaUntuk(nibar: string): PaktaIntegritas | undefined {
+    return this.paktaPerNibar().get(nibar);
+  }
 
   computeStatusPajak = computeStatusPajak;
 
@@ -203,6 +219,92 @@ export class AsetListComponent {
     const value = prompt('Tetapkan pemegang untuk aset terpilih (kosongkan untuk kendaraan operasional bersama):');
     if (value !== null) {
       void this.bulkTetapkanPemegang(value);
+    }
+  }
+
+  async unggahPakta(v: VehicleView, event: Event) {
+    const input = event.target as HTMLInputElement;
+    const berkas = input.files?.[0];
+    // Dikosongkan supaya memilih berkas yang sama lagi tetap memicu (change).
+    input.value = '';
+    if (!berkas) return;
+
+    if (!TIPE_PAKTA_DIIZINKAN.includes(berkas.type)) {
+      alert('Format berkas pakta integritas harus PDF, JPG, atau PNG.');
+      return;
+    }
+    if (berkas.size > MAX_UKURAN_PAKTA) {
+      alert('Ukuran berkas pakta integritas melebihi 5 MB.');
+      return;
+    }
+
+    const lama = this.paktaUntuk(v.nibar);
+    this.paktaSedangDiproses.set(v.nibar);
+    try {
+      await this.paktaRepository.upsert(v.nibar, berkas, this.actorLabel());
+      await this.auditRepository.append({
+        pelakuId: this.actorId(),
+        pelakuNama: this.actorLabel(),
+        aksi: 'unggah-pakta-integritas',
+        entitas: 'PaktaIntegritas',
+        entitasId: v.nibar,
+        nilaiLama: lama ? lama.fileName : null,
+        nilaiBaru: `${berkas.name} (pemegang: ${v.pemegang})`
+      });
+    } catch (error) {
+      console.error('Gagal mengunggah pakta integritas:', error);
+      alert('Gagal mengunggah pakta integritas. Periksa koneksi Anda dan coba lagi.');
+    } finally {
+      this.paktaSedangDiproses.set(null);
+    }
+  }
+
+  async lihatPakta(nibar: string) {
+    // Tab dibuka lebih dulu (masih dalam klik pengguna) supaya tidak diblokir
+    // pemblokir pop-up; isinya diisi setelah berkas selesai diambil.
+    const tab = window.open('', '_blank');
+    this.paktaSedangDiproses.set(nibar);
+    try {
+      const url = URL.createObjectURL(await this.paktaRepository.ambilBerkas(nibar));
+      if (tab) {
+        tab.location.href = url;
+      } else {
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = this.paktaUntuk(nibar)?.fileName ?? `pakta-integritas-${nibar}`;
+        a.click();
+      }
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch (error) {
+      tab?.close();
+      console.error('Gagal membuka pakta integritas:', error);
+      alert('Gagal membuka pakta integritas. Periksa koneksi Anda dan coba lagi.');
+    } finally {
+      this.paktaSedangDiproses.set(null);
+    }
+  }
+
+  async hapusPakta(nibar: string) {
+    const pakta = this.paktaUntuk(nibar);
+    if (!pakta) return;
+    if (!confirm(`Hapus pakta integritas atas nama ${pakta.pemegang}?`)) return;
+
+    this.paktaSedangDiproses.set(nibar);
+    try {
+      await this.paktaRepository.remove(nibar);
+      await this.auditRepository.append({
+        pelakuId: this.actorId(),
+        pelakuNama: this.actorLabel(),
+        aksi: 'hapus-pakta-integritas',
+        entitas: 'PaktaIntegritas',
+        entitasId: nibar,
+        nilaiLama: `${pakta.fileName} (pemegang: ${pakta.pemegang})`
+      });
+    } catch (error) {
+      console.error('Gagal menghapus pakta integritas:', error);
+      alert('Gagal menghapus pakta integritas. Periksa koneksi Anda dan coba lagi.');
+    } finally {
+      this.paktaSedangDiproses.set(null);
     }
   }
 
