@@ -1,0 +1,1 @@
+function t(a,e){return a.isOperasionalBersama||!a.pemegang?"tidak-perlu":e?e.pemegang===a.pemegang?"ada":"pemegang-berganti":"belum-ada"}export{t};
