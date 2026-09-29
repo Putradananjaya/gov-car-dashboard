@@ -77,6 +77,16 @@
           <option value="kadaluarsa">Kadaluarsa</option>
         </select>
       </div>
+
+      <div class="filter-group">
+        <select (change)="onStatusPaktaChange($event)" [value]="selectedStatusPakta()">
+          <option value="All">Semua Status Pakta</option>
+          <option value="ada">Pakta Sudah Ada</option>
+          <option value="belum-ada">Pakta Belum Ada</option>
+          <option value="pemegang-berganti">Pemegang Berganti</option>
+          <option value="tidak-perlu">Operasional Bersama</option>
+        </select>
+      </div>
     </div>
   </section>
 
@@ -186,7 +196,7 @@
                             @if (permissionService.can('aset.ubah')) {
                               <label class="pakta-btn" [class.disabled]="paktaSedangDiproses() === v.nibar">
                                 Ganti
-                                <input type="file" accept=".pdf,.jpg,.jpeg,.png" hidden [disabled]="paktaSedangDiproses() === v.nibar" (change)="unggahPakta(v, $event)">
+                                <input type="file" [accept]="acceptPakta" hidden [disabled]="paktaSedangDiproses() === v.nibar" (change)="unggahPakta(v, $event)">
                               </label>
                               <button type="button" class="pakta-btn pakta-btn-hapus" [disabled]="paktaSedangDiproses() === v.nibar" (click)="hapusPakta(v.nibar)">Hapus</button>
                             }
@@ -200,7 +210,7 @@
                             <div class="pakta-aksi">
                               <label class="pakta-btn" [class.disabled]="paktaSedangDiproses() === v.nibar">
                                 {{ paktaSedangDiproses() === v.nibar ? 'Mengunggah…' : 'Unggah' }}
-                                <input type="file" accept=".pdf,.jpg,.jpeg,.png" hidden [disabled]="paktaSedangDiproses() === v.nibar" (change)="unggahPakta(v, $event)">
+                                <input type="file" [accept]="acceptPakta" hidden [disabled]="paktaSedangDiproses() === v.nibar" (change)="unggahPakta(v, $event)">
                               </label>
                             </div>
                           }

@@ -18,7 +18,7 @@
         }
         @case ('admin') {
           <p style="font-size: 0.85rem; line-height: 1.6;">
-            Sebagai <strong>Pengurus Barang</strong>, Anda memegang dua langkah SOP. <strong>Langkah 2</strong>: buka <strong>Persetujuan Peminjaman</strong> → "Menunggu Verifikasi Ketersediaan" → klik "Kendaraan Tersedia" (sistem otomatis cek bentrok jadwal) supaya permohonan diteruskan ke Pejabat Penatausahaan, atau "Tolak" bila kendaraan tidak tersedia. <strong>Langkah 4 &amp; 6</strong>: setelah permohonan disetujui, lakukan serah terima kunci lalu terima pengembaliannya. Anda juga mengelola <strong>Data Kendaraan</strong>, <strong>Pemeliharaan</strong>, dan <strong>Pajak &amp; STNK</strong>.
+            Sebagai <strong>Pengurus Barang</strong>, Anda memegang dua langkah SOP. <strong>Langkah 2</strong>: buka <strong>Persetujuan Peminjaman</strong> → "Menunggu Verifikasi Ketersediaan" → klik "Kendaraan Tersedia" (bentrok jadwal dicek otomatis) supaya permohonan diteruskan ke Pejabat Penatausahaan, atau "Tolak" bila kendaraan tidak tersedia. <strong>Langkah 4 &amp; 6</strong>: setelah permohonan disetujui, lakukan serah terima kunci lalu terima pengembaliannya. Anda juga mengelola <strong>Data Kendaraan</strong>, <strong>Pemeliharaan</strong>, dan <strong>Pajak &amp; STNK</strong>.
           </p>
         }
         @case ('pejabat_penatausahaan') {
@@ -96,7 +96,7 @@
           <div style="padding: 0 20px 20px; font-size: 0.82rem; line-height: 1.6;">
             <p><strong>Untuk siapa:</strong> semua peran.</p>
             <p><strong>Fungsinya:</strong> menampilkan daftar peminjaman yang sudah <em>diajukan</em>, <em>disetujui</em>, atau sedang <em>berjalan</em>, dikelompokkan per kendaraan. Berguna untuk mengecek apakah sebuah kendaraan sudah "dipesan" orang lain pada rentang tanggal tertentu sebelum mengajukan peminjaman baru.</p>
-            <p><strong>Tips:</strong> sistem sebenarnya sudah otomatis menolak pengajuan yang bentrok jadwal saat disetujui — tapi cek menu ini dulu supaya pengajuan Anda tidak perlu ditolak karena kendaraan sudah dipakai orang lain di tanggal yang sama.</p>
+            <p><strong>Tips:</strong> pengajuan yang bentrok jadwal sebenarnya sudah otomatis ditolak saat disetujui — tapi cek menu ini dulu supaya pengajuan Anda tidak perlu ditolak karena kendaraan sudah dipakai orang lain di tanggal yang sama.</p>
           </div>
         }
       </div>
@@ -201,7 +201,7 @@
       <div style="display: flex; flex-direction: column; gap: 0;">
         @for (langkah of [
           { no: 1, judul: 'Ajukan', ket: 'Pemohon isi formulir di menu Peminjaman: tujuan, rute, tanggal, jenis kendaraan, unggah surat tugas (opsional).', peran: 'Pemohon' },
-          { no: 2, judul: 'Verifikasi Ketersediaan', ket: 'Pengurus Barang memeriksa kendaraan tersedia dan layak. Sistem otomatis menolak jika jadwal bentrok. Permohonan lalu diteruskan untuk dimintakan persetujuan.', peran: 'Pengurus Barang' },
+          { no: 2, judul: 'Verifikasi Ketersediaan', ket: 'Pengurus Barang memeriksa kendaraan tersedia dan layak. Permohonan otomatis ditolak jika jadwal bentrok. Permohonan lalu diteruskan untuk dimintakan persetujuan.', peran: 'Pengurus Barang' },
           { no: 3, judul: 'Persetujuan', ket: 'Pejabat Penatausahaan Pengguna Barang memberi persetujuan secara elektronik, atau menolak disertai alasan.', peran: 'Pejabat Penatausahaan' },
           { no: 4, judul: 'Serah Terima', ket: 'Pengurus Barang menetapkan kendaraan, mencatat odometer & BBM awal, menandatangani BAST dan checklist, lalu menyerahkan kunci.', peran: 'Pengurus Barang' },
           { no: 5, judul: 'Digunakan', ket: 'Kendaraan berstatus "Berjalan" — dipakai pemohon sesuai keperluan yang diajukan, lalu dikembalikan beserta kuncinya.', peran: 'Pemohon' },
@@ -310,15 +310,15 @@
         @if (isTerbuka('audit')) {
           <div style="padding: 0 20px 20px; font-size: 0.82rem; line-height: 1.6;">
             <p><strong>Untuk siapa:</strong> Superadmin saja.</p>
-            <p><strong>Fungsinya:</strong> catatan lengkap "siapa melakukan apa dan kapan" di seluruh sistem — pengajuan, persetujuan, penolakan, perubahan data pengguna, dst. Dipakai untuk investigasi/pertanggungjawaban bila ada aktivitas mencurigakan atau perlu ditelusuri ulang.</p>
+            <p><strong>Fungsinya:</strong> catatan lengkap "siapa melakukan apa dan kapan" di seluruh aplikasi — pengajuan, persetujuan, penolakan, perubahan data pengguna, dst. Dipakai untuk investigasi/pertanggungjawaban bila ada aktivitas mencurigakan atau perlu ditelusuri ulang.</p>
           </div>
         }
       </div>
     }
 
-    <!-- KATEGORI: ADMINISTRASI SISTEM -->
+    <!-- KATEGORI: ADMINISTRASI -->
     @if (adaYangCocok(['pengguna', 'pengaturan'])) {
-      <h3 style="font-size: 0.8rem; font-weight: 700; color: var(--md-sys-color-primary); text-transform: uppercase; letter-spacing: 0.05em; margin: 24px 0 10px;">Administrasi Sistem</h3>
+      <h3 style="font-size: 0.8rem; font-weight: 700; color: var(--md-sys-color-primary); text-transform: uppercase; letter-spacing: 0.05em; margin: 24px 0 10px;">Administrasi</h3>
     }
 
     @if (cocokPencarian('pengguna')) {
@@ -334,7 +334,7 @@
         @if (isTerbuka('pengguna')) {
           <div style="padding: 0 20px 20px; font-size: 0.82rem; line-height: 1.6;">
             <p><strong>Untuk siapa:</strong> Superadmin saja.</p>
-            <p><strong>Fungsinya:</strong> mengelola seluruh akun pengguna sistem — tambah akun baru, ubah nama/jabatan/unit kerja/peran, nonaktifkan akun, dan setel ulang kata sandi.</p>
+            <p><strong>Fungsinya:</strong> mengelola seluruh akun pengguna — tambah akun baru, ubah nama/jabatan/unit kerja/peran, nonaktifkan akun, dan setel ulang kata sandi.</p>
             <p><strong>Cara pakai:</strong></p>
             <ul style="padding-left: 18px; margin: 4px 0;">
               <li>Klik <strong>Tambah Pengguna</strong>, isi NIP, nama, jabatan, unit kerja (Bidang/OPD), pilih peran yang sesuai, dan kata sandi awal.</li>
@@ -369,7 +369,7 @@
     <h3 style="font-size: 0.8rem; font-weight: 700; color: var(--md-sys-color-primary); text-transform: uppercase; letter-spacing: 0.05em; margin: 24px 0 10px;">Istilah &amp; Singkatan</h3>
     <div class="glass-panel" style="padding: 20px;">
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px 24px;">
-        <div><strong style="font-size: 0.82rem;">NIBAR</strong><p style="font-size: 0.78rem; color: var(--md-sys-color-on-surface-variant); margin-top: 2px;">Nomor Induk Barang — kode unik identitas tiap unit kendaraan/aset dalam sistem BMD.</p></div>
+        <div><strong style="font-size: 0.82rem;">NIBAR</strong><p style="font-size: 0.78rem; color: var(--md-sys-color-on-surface-variant); margin-top: 2px;">Nomor Induk Barang — kode unik identitas tiap unit kendaraan/aset dalam pencatatan BMD.</p></div>
         <div><strong style="font-size: 0.82rem;">OPD / Bidang</strong><p style="font-size: 0.78rem; color: var(--md-sys-color-on-surface-variant); margin-top: 2px;">Organisasi Perangkat Daerah — unit kerja/dinas/bidang tempat pengguna bernaung.</p></div>
         <div><strong style="font-size: 0.82rem;">BAST</strong><p style="font-size: 0.78rem; color: var(--md-sys-color-on-surface-variant); margin-top: 2px;">Berita Acara Serah Terima — dokumen cetak bukti serah/terima fisik kendaraan, dilengkapi kolom tanda tangan.</p></div>
         <div><strong style="font-size: 0.82rem;">SOP</strong><p style="font-size: 0.78rem; color: var(--md-sys-color-on-surface-variant); margin-top: 2px;">Standar Operasional Prosedur — dasar resmi alur kerja peminjaman kendaraan dinas yang diikuti aplikasi ini.</p></div>

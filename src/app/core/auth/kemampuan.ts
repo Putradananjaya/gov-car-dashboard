@@ -110,9 +110,9 @@ export const DAFTAR_KEMAMPUAN: InfoKemampuan[] = [
   { kemampuan: 'peminjaman.verifikasi', label: 'Verifikasi ketersediaan kendaraan', keterangan: 'Langkah 2 SOP — memeriksa kendaraan tersedia lalu meneruskannya', kelompok: 'Peminjaman' },
   { kemampuan: 'peminjaman.setujui', label: 'Setujui / tolak permohonan', keterangan: 'Langkah 3 SOP — persetujuan elektronik atas permohonan', kelompok: 'Peminjaman' },
   { kemampuan: 'peminjaman.serahTerima', label: 'Serah terima & terima pengembalian', keterangan: 'Langkah 4 & 6 SOP — menyerahkan kunci lalu memeriksa kondisi akhir', kelompok: 'Peminjaman' },
-  { kemampuan: 'laporan.cetak', label: 'Cetak laporan resmi', keterangan: 'Membuka menu Laporan dan mencetaknya', kelompok: 'Sistem' },
-  { kemampuan: 'pengguna.kelola', label: 'Kelola pengguna & hak akses', keterangan: 'Membuka halaman ini dan mengubah isinya', kelompok: 'Sistem' },
-  { kemampuan: 'pengguna.hapus', label: 'Hapus & pulihkan pengguna', keterangan: 'Menghapus akun dari daftar aktif, serta memulihkannya dari arsip', kelompok: 'Sistem' },
-  { kemampuan: 'audit.lihat', label: 'Lihat jejak audit', keterangan: 'Membuka riwayat seluruh aktivitas pengguna', kelompok: 'Sistem' },
-  { kemampuan: 'sistem.resetBasisData', label: 'Setel ulang basis data', keterangan: 'Mengembalikan data ke kondisi bawaan', kelompok: 'Sistem' }
+  { kemampuan: 'laporan.cetak', label: 'Cetak laporan resmi', keterangan: 'Membuka menu Laporan dan mencetaknya', kelompok: 'Administrasi' },
+  { kemampuan: 'pengguna.kelola', label: 'Kelola pengguna & hak akses', keterangan: 'Membuka halaman ini dan mengubah isinya', kelompok: 'Administrasi' },
+  { kemampuan: 'pengguna.hapus', label: 'Hapus & pulihkan pengguna', keterangan: 'Menghapus akun dari daftar aktif, serta memulihkannya dari arsip', kelompok: 'Administrasi' },
+  { kemampuan: 'audit.lihat', label: 'Lihat jejak audit', keterangan: 'Membuka riwayat seluruh aktivitas pengguna', kelompok: 'Administrasi' },
+  { kemampuan: 'sistem.resetBasisData', label: 'Setel ulang basis data', keterangan: 'Mengembalikan data ke kondisi bawaan', kelompok: 'Administrasi' }
 ];

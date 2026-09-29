@@ -16,8 +16,11 @@ import { toVehicleView } from '../../../../core/adapters/vehicle-view.model';
 import { computeStatusPajak } from '../../../../shared/asset-grouping';
 import { ServiceRecord } from '../../../../core/models/service-record.model';
 import { TanggalIdPipe } from '../../../../shared/pipes/tanggal-id.pipe';
+import { PaktaIntegritasRepository } from '../../../../core/repositories/pakta-integritas.repository';
+import { ACCEPT_PAKTA, PaktaIntegritasAksi } from '../../../components/pakta-integritas/pakta-integritas-aksi';
+import { statusPakta } from '../../../../shared/status-pakta';
 
-type Tab = 'identitas' | 'legalitas' | 'servis' | 'peminjaman' | 'foto' | 'audit';
+type Tab = 'identitas' | 'legalitas' | 'pakta' | 'servis' | 'peminjaman' | 'foto' | 'audit';
 
 @Component({
   selector: 'app-aset-detail',
@@ -35,6 +38,8 @@ export class AsetDetailComponent implements OnInit {
   private loanRepository = inject(LoanRepository);
   private auditRepository = inject(AuditRepository);
   private photoRepository = inject(PhotoRepository);
+  private paktaRepository = inject(PaktaIntegritasRepository);
+  public paktaAksi = inject(PaktaIntegritasAksi);
   private authService = inject(AuthService);
   private destroyRef = inject(DestroyRef);
   public permissionService = inject(PermissionService);
@@ -82,11 +87,24 @@ export class AsetDetailComponent implements OnInit {
       .sort((a, b) => b.waktu.localeCompare(a.waktu))
   );
 
+  public pakta = computed(() => this.paktaRepository.pakta().find(p => p.nibar === this.nibar()));
+  public statusPakta = computed(() => {
+    const asset = this.asset();
+    return asset ? statusPakta(asset, this.pakta()) : 'tidak-perlu';
+  });
+  public acceptPakta = ACCEPT_PAKTA;
+
+  unggahPakta(event: Event): void {
+    void this.paktaAksi.unggahDariInput(this.nibar(), this.asset()?.pemegang ?? '', event);
+  }
+
   private photoBlob = computed(() => this.photoRepository.findByNibar(this.nibar())?.blob ?? null);
   /** Dicabut (revokeObjectURL) tiap kali foto berganti & saat komponen dihancurkan (dokumen v2 bag. 4.4). */
   public photoUrl = signal<string | null>(null);
 
   constructor() {
+    void this.paktaRepository.refresh();
+
     effect(() => {
       const blob = this.photoBlob();
       const previousUrl = untracked(() => this.photoUrl());

@@ -648,7 +648,7 @@ html {
 .info-panel { padding: 18px; display: flex; flex-direction: column; height: 340px; }
 .info-panel .panel-header { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--md-sys-color-outline); padding-bottom: 10px; margin-bottom: 12px; flex-shrink: 0; }
 .info-panel .panel-header h3 { font-size: 0.85rem; font-weight: 700; color: var(--md-sys-color-on-background); }
-.info-panel .panel-content { flex-grow: 1; overflow-y: auto; }
+.info-panel .panel-content { flex-grow: 1; overflow-y: auto; overflow-x: hidden; }
 
 /* ===== Jejak Audit ===== */
 .audit-objek { display: block; font-size: 0.78rem; font-weight: 600; color: var(--md-sys-color-on-background); }
@@ -704,8 +704,11 @@ html {
 .schedule-list { display: flex; flex-direction: column; gap: 8px; }
 .schedule-item { display: flex; align-items: center; gap: 10px; padding: 8px; background: rgba(128,128,128,0.02); border: 1px solid var(--md-sys-color-outline-variant); border-radius: var(--md-shape-corner-medium); }
 .item-icon-bg { width: 28px; height: 28px; border-radius: var(--md-shape-corner-small); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+/* flex:1 + min-width:0 membuat teks memakai sisa lebar kartu dan membungkus
+   di dalamnya, bukan melebarkan panel sampai muncul scroll horizontal. */
+.item-details { flex: 1; min-width: 0; overflow-wrap: break-word; }
 .item-details .name { font-size: 0.72rem; font-weight: 700; color: var(--md-sys-color-on-background); }
-.item-details .plate { font-size: 0.62rem; background: rgba(128,128,128,0.05); padding: 1px 3px; border-radius: 2px; }
+.item-details .plate { display: inline-block; white-space: nowrap; font-size: 0.62rem; background: rgba(128,128,128,0.05); padding: 1px 3px; border-radius: 2px; }
 .item-details .desc { font-size: 0.62rem; color: var(--md-sys-color-on-surface-variant); }
 .item-time { text-align: right; }
 .item-time .date { font-size: 0.62rem; color: var(--md-sys-color-on-surface-variant); }
@@ -789,6 +792,8 @@ html {
 .pakta-btn-hapus { color: var(--md-sys-color-error); }
 .pakta-btn:disabled, .pakta-btn.disabled { opacity: 0.5; cursor: wait; pointer-events: none; }
 .pakta-tidak-perlu { color: var(--text-muted); }
+.pakta-form-info { font-size: 0.75rem; color: var(--md-sys-color-on-surface-variant); }
+.pakta-form-hint { font-size: 0.68rem; color: var(--text-muted); }
 
 .fuel-progress-wrapper { display: flex; flex-direction: column; gap: 4px; width: 100px; }
 .fuel-text { display: flex; justify-content: space-between; font-size: 0.7rem; font-weight: 600; color: var(--md-sys-color-on-background); }

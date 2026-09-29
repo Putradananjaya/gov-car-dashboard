@@ -14,9 +14,9 @@ import { KondisiAset } from '../../../../core/models/vehicle-operational.model';
 import { TanggalIdPipe } from '../../../../shared/pipes/tanggal-id.pipe';
 import { PaktaIntegritasRepository } from '../../../../core/repositories/pakta-integritas.repository';
 import { PaktaIntegritas } from '../../../../core/models/pakta-integritas.model';
+import { StatusPakta, statusPakta } from '../../../../shared/status-pakta';
+import { ACCEPT_PAKTA, PaktaIntegritasAksi } from '../../../components/pakta-integritas/pakta-integritas-aksi';
 
-const MAX_UKURAN_PAKTA = 5 * 1024 * 1024; // 5MB — sama dengan batas di server
-const TIPE_PAKTA_DIIZINKAN = ['application/pdf', 'image/jpeg', 'image/png'];
 
 @Component({
   selector: 'app-aset-list',
@@ -29,6 +29,7 @@ export class AsetListComponent {
   private operationalRepository = inject(VehicleOperationalRepository);
   private auditRepository = inject(AuditRepository);
   private paktaRepository = inject(PaktaIntegritasRepository);
+  private paktaAksi = inject(PaktaIntegritasAksi);
   private authService = inject(AuthService);
   private route = inject(ActivatedRoute);
   public permissionService = inject(PermissionService);
@@ -38,9 +39,10 @@ export class AsetListComponent {
   public selectedTahun = signal('All');
   public selectedKondisi = signal<'All' | KondisiAset>('All');
   public selectedStatusPajak = signal<'All' | StatusPajak>('All');
+  public selectedStatusPakta = signal<'All' | StatusPakta>('All');
   public selectedNibars = signal<Set<string>>(new Set());
-  /** NIBAR yang pakta integritasnya sedang diunggah/dibuka/dihapus — tombolnya dinonaktifkan sementara. */
-  public paktaSedangDiproses = signal<string | null>(null);
+  public paktaSedangDiproses = this.paktaAksi.sedangDiproses;
+  public acceptPakta = ACCEPT_PAKTA;
 
 
   public opdList = KNOWN_OPD_LIST;
@@ -81,6 +83,7 @@ export class AsetListComponent {
     const tahun = this.selectedTahun();
     const kondisi = this.selectedKondisi();
     const statusPajak = this.selectedStatusPajak();
+    const statusPaktaDipilih = this.selectedStatusPakta();
 
     return this.scopedViews().filter(v => {
       const matchesSearch =
@@ -95,8 +98,9 @@ export class AsetListComponent {
       const matchesTahun = tahun === 'All' || String(v.tahunAnggaran) === tahun;
       const matchesKondisi = kondisi === 'All' || v.kondisi === kondisi;
       const matchesStatusPajak = statusPajak === 'All' || computeStatusPajak(v.masaBerlakuPajak) === statusPajak;
+      const matchesStatusPakta = statusPaktaDipilih === 'All' || statusPakta(v, this.paktaUntuk(v.nibar)) === statusPaktaDipilih;
 
-      return matchesSearch && matchesKategori && matchesTahun && matchesKondisi && matchesStatusPajak;
+      return matchesSearch && matchesKategori && matchesTahun && matchesKondisi && matchesStatusPajak && matchesStatusPakta;
     });
   });
 
@@ -130,6 +134,10 @@ export class AsetListComponent {
 
   onStatusPajakChange(event: Event) {
     this.selectedStatusPajak.set((event.target as HTMLSelectElement).value as 'All' | StatusPajak);
+  }
+
+  onStatusPaktaChange(event: Event) {
+    this.selectedStatusPakta.set((event.target as HTMLSelectElement).value as 'All' | StatusPakta);
   }
 
   toggleSelection(nibar: string) {
@@ -222,90 +230,16 @@ export class AsetListComponent {
     }
   }
 
-  async unggahPakta(v: VehicleView, event: Event) {
-    const input = event.target as HTMLInputElement;
-    const berkas = input.files?.[0];
-    // Dikosongkan supaya memilih berkas yang sama lagi tetap memicu (change).
-    input.value = '';
-    if (!berkas) return;
-
-    if (!TIPE_PAKTA_DIIZINKAN.includes(berkas.type)) {
-      alert('Format berkas pakta integritas harus PDF, JPG, atau PNG.');
-      return;
-    }
-    if (berkas.size > MAX_UKURAN_PAKTA) {
-      alert('Ukuran berkas pakta integritas melebihi 5 MB.');
-      return;
-    }
-
-    const lama = this.paktaUntuk(v.nibar);
-    this.paktaSedangDiproses.set(v.nibar);
-    try {
-      await this.paktaRepository.upsert(v.nibar, berkas, this.actorLabel());
-      await this.auditRepository.append({
-        pelakuId: this.actorId(),
-        pelakuNama: this.actorLabel(),
-        aksi: 'unggah-pakta-integritas',
-        entitas: 'PaktaIntegritas',
-        entitasId: v.nibar,
-        nilaiLama: lama ? lama.fileName : null,
-        nilaiBaru: `${berkas.name} (pemegang: ${v.pemegang})`
-      });
-    } catch (error) {
-      console.error('Gagal mengunggah pakta integritas:', error);
-      alert('Gagal mengunggah pakta integritas. Periksa koneksi Anda dan coba lagi.');
-    } finally {
-      this.paktaSedangDiproses.set(null);
-    }
+  unggahPakta(v: VehicleView, event: Event) {
+    void this.paktaAksi.unggahDariInput(v.nibar, v.pemegang ?? '', event);
   }
 
-  async lihatPakta(nibar: string) {
-    // Tab dibuka lebih dulu (masih dalam klik pengguna) supaya tidak diblokir
-    // pemblokir pop-up; isinya diisi setelah berkas selesai diambil.
-    const tab = window.open('', '_blank');
-    this.paktaSedangDiproses.set(nibar);
-    try {
-      const url = URL.createObjectURL(await this.paktaRepository.ambilBerkas(nibar));
-      if (tab) {
-        tab.location.href = url;
-      } else {
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = this.paktaUntuk(nibar)?.fileName ?? `pakta-integritas-${nibar}`;
-        a.click();
-      }
-      setTimeout(() => URL.revokeObjectURL(url), 60_000);
-    } catch (error) {
-      tab?.close();
-      console.error('Gagal membuka pakta integritas:', error);
-      alert('Gagal membuka pakta integritas. Periksa koneksi Anda dan coba lagi.');
-    } finally {
-      this.paktaSedangDiproses.set(null);
-    }
+  lihatPakta(nibar: string) {
+    void this.paktaAksi.lihat(nibar);
   }
 
-  async hapusPakta(nibar: string) {
-    const pakta = this.paktaUntuk(nibar);
-    if (!pakta) return;
-    if (!confirm(`Hapus pakta integritas atas nama ${pakta.pemegang}?`)) return;
-
-    this.paktaSedangDiproses.set(nibar);
-    try {
-      await this.paktaRepository.remove(nibar);
-      await this.auditRepository.append({
-        pelakuId: this.actorId(),
-        pelakuNama: this.actorLabel(),
-        aksi: 'hapus-pakta-integritas',
-        entitas: 'PaktaIntegritas',
-        entitasId: nibar,
-        nilaiLama: `${pakta.fileName} (pemegang: ${pakta.pemegang})`
-      });
-    } catch (error) {
-      console.error('Gagal menghapus pakta integritas:', error);
-      alert('Gagal menghapus pakta integritas. Periksa koneksi Anda dan coba lagi.');
-    } finally {
-      this.paktaSedangDiproses.set(null);
-    }
+  hapusPakta(nibar: string) {
+    void this.paktaAksi.hapus(nibar);
   }
 
   /**

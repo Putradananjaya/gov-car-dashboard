@@ -48,7 +48,8 @@ export class HttpPaktaIntegritasRepository implements PaktaIntegritasRepository 
     await firstValueFrom(
       this.http.put<PaktaIntegritas>(`${API_BASE_URL}/pakta-integritas/${nibar}`, {
         fileName: berkas.name,
-        mimeType: berkas.type,
+        // Sebagian peramban mengirim type kosong untuk PDF; validasi sudah memastikan ekstensinya .pdf.
+        mimeType: berkas.type || 'application/pdf',
         blobBase64,
         diunggahOleh
       })

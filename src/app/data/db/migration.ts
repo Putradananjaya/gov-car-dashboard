@@ -42,7 +42,7 @@ export async function migrateOrSeedDatabase(): Promise<void> {
     const { assets, operational } = legacyCars
       ? {
           assets: legacyCars.map(car => carToVehicleAsset(car, MIGRATION_TAHUN_ANGGARAN, MIGRATION_KODE_LOKASI, MIGRATION_SUMBER_IMPOR_ID)),
-          operational: legacyCars.map(car => carToVehicleOperational(car, 'sistem (migrasi fase 2)'))
+          operational: legacyCars.map(car => carToVehicleOperational(car, 'migrasi fase 2'))
         }
       : buildSeedFleet();
 

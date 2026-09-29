@@ -8,6 +8,9 @@ import { AuthService } from '../../../core/auth/auth.service';
 import { VehicleAsset } from '../../../core/models/vehicle-asset.model';
 import { KondisiAset, StatusOperasional, VehicleOperational } from '../../../core/models/vehicle-operational.model';
 import { KNOWN_OPD_LIST } from '../../../shared/known-opd-list';
+import { PaktaIntegritasRepository } from '../../../core/repositories/pakta-integritas.repository';
+import { PaktaIntegritas } from '../../../core/models/pakta-integritas.model';
+import { ACCEPT_PAKTA, PaktaIntegritasAksi } from '../pakta-integritas/pakta-integritas-aksi';
 
 @Component({
   selector: 'app-asset-form',
@@ -21,6 +24,8 @@ export class AssetFormComponent implements OnInit, OnChanges {
   private operationalRepository = inject(VehicleOperationalRepository);
   private auditRepository = inject(AuditRepository);
   private authService = inject(AuthService);
+  private paktaRepository = inject(PaktaIntegritasRepository);
+  private paktaAksi = inject(PaktaIntegritasAksi);
 
   /** null = mode tambah aset baru; diisi = mode edit aset yang sudah ada. */
   @Input() nibar: string | null = null;
@@ -36,7 +41,13 @@ export class AssetFormComponent implements OnInit, OnChanges {
   public kondisiOptions: KondisiAset[] = ['Baik', 'Rusak Ringan', 'Rusak Berat'];
   public statusOptions: StatusOperasional[] = ['Tersedia', 'Dipinjam', 'Servis', 'Tidak Layak'];
 
+  /** Berkas pakta integritas yang dipilih — baru diunggah setelah aset tersimpan (NIBAR aset baru belum ada sebelumnya). */
+  public paktaBerkas = signal<File | null>(null);
+  public paktaGalat = signal<string | null>(null);
+  public acceptPakta = ACCEPT_PAKTA;
+
   ngOnInit(): void {
+    void this.paktaRepository.refresh();
     this.buildForm();
     this.loadExisting();
   }
@@ -100,6 +111,30 @@ export class AssetFormComponent implements OnInit, OnChanges {
       telepon: operational?.telepon ?? '',
       catatan: operational?.catatan ?? ''
     });
+  }
+
+  /** Pakta hanya untuk kendaraan yang dibawa perorangan — field unggah muncul bila pemegang diisi. */
+  get butuhPakta(): boolean {
+    return !!this.form.get('pemegang')?.value?.trim();
+  }
+
+  get paktaTersimpan(): PaktaIntegritas | undefined {
+    return this.nibar ? this.paktaRepository.findByNibar(this.nibar) : undefined;
+  }
+
+  onPaktaDipilih(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const berkas = input.files?.[0] ?? null;
+    input.value = '';
+    if (!berkas) return;
+    const galat = this.paktaAksi.validasi(berkas);
+    this.paktaGalat.set(galat);
+    this.paktaBerkas.set(galat ? null : berkas);
+  }
+
+  batalPilihPakta(): void {
+    this.paktaBerkas.set(null);
+    this.paktaGalat.set(null);
   }
 
   private actorLabel(): string {
@@ -181,6 +216,19 @@ export class AssetFormComponent implements OnInit, OnChanges {
         nilaiLama: previousAsset,
         nilaiBaru: asset
       });
+
+      // Aset sudah tersimpan, jadi kegagalan unggah pakta tidak membatalkan
+      // simpan — pakta masih bisa diunggah ulang dari daftar atau detail aset.
+      const paktaBerkas = this.paktaBerkas();
+      if (paktaBerkas && pemegang) {
+        try {
+          await this.paktaAksi.unggah(nibar, pemegang, paktaBerkas);
+          this.paktaBerkas.set(null);
+        } catch (error) {
+          console.error('Gagal mengunggah pakta integritas:', error);
+          alert('Aset tersimpan, tetapi pakta integritas gagal diunggah. Silakan unggah ulang dari halaman detail aset.');
+        }
+      }
 
       this.saved.emit(nibar);
     } catch {

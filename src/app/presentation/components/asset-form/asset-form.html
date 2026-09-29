@@ -51,6 +51,32 @@
         <label for="pemegang">Pemegang (kosongkan bila kendaraan operasional bersama)</label>
         <input type="text" id="pemegang" formControlName="pemegang" placeholder="Nama pemegang, atau kosongkan">
       </div>
+
+      @if (butuhPakta) {
+        <div class="form-group">
+          <label for="paktaIntegritas">Surat Pakta Integritas (PDF, maks. 5 MB)</label>
+          @if (paktaTersimpan; as pakta) {
+            <p class="pakta-form-info">
+              Tersimpan: <strong>{{ pakta.fileName }}</strong> atas nama {{ pakta.pemegang }}
+              @if (pakta.pemegang !== form.get('pemegang')?.value?.trim()) {
+                <span class="badge badge-warning" style="margin-left: 6px;"><span class="badge-dot"></span>Pemegang berganti</span>
+              }
+            </p>
+          }
+          @if (paktaBerkas(); as berkas) {
+            <p class="pakta-form-info">
+              Akan diunggah: <strong>{{ berkas.name }}</strong>
+              <button type="button" class="pakta-btn pakta-btn-hapus" style="margin-left: 8px;" (click)="batalPilihPakta()">Batal</button>
+            </p>
+          } @else {
+            <input type="file" id="paktaIntegritas" [accept]="acceptPakta" (change)="onPaktaDipilih($event)">
+            <span class="pakta-form-hint">{{ paktaTersimpan ? 'Pilih berkas baru untuk mengganti pakta yang tersimpan.' : 'Boleh dikosongkan dan diunggah nanti.' }}</span>
+          }
+          @if (paktaGalat()) {
+            <span class="error-msg">{{ paktaGalat() }}</span>
+          }
+        </div>
+      }
     </div>
 
     <!-- SEKSI 2: IDENTITAS KENDARAAN -->

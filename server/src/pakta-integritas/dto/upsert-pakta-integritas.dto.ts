@@ -1,6 +1,7 @@
 import { IsIn, IsString } from 'class-validator';
 
-export const TIPE_BERKAS_PAKTA = ['application/pdf', 'image/jpeg', 'image/png'] as const;
+// Pakta integritas berupa surat — hanya PDF. Berkas gambar lama tetap bisa dibuka.
+export const TIPE_BERKAS_PAKTA = ['application/pdf'] as const;
 
 export class UpsertPaktaIntegritasDto {
   @IsString()

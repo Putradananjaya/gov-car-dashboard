@@ -18,6 +18,7 @@
     <div class="filters-bar glass-panel" style="gap: 6px;">
       <button class="tab-btn" [class.active]="activeTab() === 'identitas'" (click)="setTab('identitas')">Identitas</button>
       <button class="tab-btn" [class.active]="activeTab() === 'legalitas'" (click)="setTab('legalitas')">Legalitas</button>
+      <button class="tab-btn" [class.active]="activeTab() === 'pakta'" (click)="setTab('pakta')">Pakta Integritas</button>
       <button class="tab-btn" [class.active]="activeTab() === 'servis'" (click)="setTab('servis')">Riwayat Servis</button>
       <button class="tab-btn" [class.active]="activeTab() === 'peminjaman'" (click)="setTab('peminjaman')">Riwayat Peminjaman</button>
       <button class="tab-btn" [class.active]="activeTab() === 'foto'" (click)="setTab('foto')">Foto</button>
@@ -108,6 +109,52 @@
                 <p class="error-msg" style="width: 100%;">{{ legalitasError() }}</p>
               }
             </form>
+          }
+        </div>
+      }
+
+      <!-- TAB: PAKTA INTEGRITAS -->
+      @if (activeTab() === 'pakta') {
+        <div class="glass-panel" style="padding: 20px;">
+          @if (statusPakta() === 'tidak-perlu') {
+            <div class="empty-state">
+              <h3>Tidak Memerlukan Pakta Integritas</h3>
+              <p>Kendaraan operasional bersama tidak memerlukan pakta integritas. Isi pemegang di tab Identitas bila kendaraan dibawa perorangan.</p>
+            </div>
+          } @else {
+            <div class="form-section">
+              <h3>Surat Pakta Integritas</h3>
+              <p>
+                <strong>Status:</strong>
+                @switch (statusPakta()) {
+                  @case ('ada') { <span class="badge badge-success" style="margin-left: 8px;"><span class="badge-dot"></span>Sudah ada</span> }
+                  @case ('pemegang-berganti') { <span class="badge badge-warning" style="margin-left: 8px;"><span class="badge-dot"></span>Pemegang berganti — unggah pakta yang baru</span> }
+                  @default { <span class="badge badge-danger" style="margin-left: 8px;"><span class="badge-dot"></span>Belum ada</span> }
+                }
+              </p>
+              <p><strong>Pemegang saat ini:</strong> {{ view()!.pemegang }}</p>
+              @if (pakta(); as p) {
+                <p><strong>Pakta atas nama:</strong> {{ p.pemegang }}</p>
+                <p><strong>Berkas:</strong> {{ p.fileName }} ({{ (p.size / 1024) | number:'1.0-0' }} KB)</p>
+                <p><strong>Diunggah:</strong> {{ p.diunggahPada | tanggalId }} oleh {{ p.diunggahOleh }}</p>
+              }
+
+              <div class="pakta-aksi" style="margin-top: 8px; gap: 10px;">
+                @if (pakta()) {
+                  <button type="button" class="btn-secondary" [disabled]="paktaAksi.sedangDiproses() === nibar()" (click)="paktaAksi.lihat(nibar())">Lihat PDF</button>
+                }
+                @if (permissionService.can('aset.ubah')) {
+                  <label class="btn-primary" [class.disabled]="paktaAksi.sedangDiproses() === nibar()" style="cursor: pointer;">
+                    {{ paktaAksi.sedangDiproses() === nibar() ? 'Memproses…' : (pakta() ? 'Ganti PDF' : 'Unggah PDF') }}
+                    <input type="file" [accept]="acceptPakta" hidden [disabled]="paktaAksi.sedangDiproses() === nibar()" (change)="unggahPakta($event)">
+                  </label>
+                  @if (pakta()) {
+                    <button type="button" class="btn-secondary" style="color: var(--md-sys-color-error);" [disabled]="paktaAksi.sedangDiproses() === nibar()" (click)="paktaAksi.hapus(nibar())">Hapus</button>
+                  }
+                }
+              </div>
+              <p class="pakta-form-hint">Format PDF, maksimal 5 MB. Unggah ulang akan menggantikan berkas yang tersimpan.</p>
+            </div>
           }
         </div>
       }

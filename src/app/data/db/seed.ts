@@ -13,7 +13,7 @@ export function buildSeedFleet(): { assets: VehicleAsset[]; operational: Vehicle
   const cars = generateLegacyCars();
   return {
     assets: cars.map(car => carToVehicleAsset(car, SEED_TAHUN_ANGGARAN, SEED_KODE_LOKASI, SEED_SUMBER_IMPOR_ID)),
-    operational: cars.map(car => carToVehicleOperational(car, 'sistem (data bawaan)'))
+    operational: cars.map(car => carToVehicleOperational(car, 'data bawaan'))
   };
 }
 
